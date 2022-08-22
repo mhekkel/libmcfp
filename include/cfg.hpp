@@ -28,17 +28,57 @@
 
 #include <cstring>
 
+#include <charconv>
+#include <deque>
 #include <memory>
 #include <optional>
 
 namespace cfg
 {
 
+class config_option_error : public std::runtime_error
+{
+  public:
+	config_option_error(const std::string &err)
+		: runtime_error(err)
+	{
+	}
+};
+
 class unknown_option_error : public std::runtime_error
 {
   public:
 	unknown_option_error(const std::string &err)
-		: runtime_error(err) {}
+		: runtime_error(err)
+	{
+	}
+};
+
+class no_param_error : public std::runtime_error
+{
+  public:
+	no_param_error(const std::string &err)
+		: runtime_error(err)
+	{
+	}
+};
+
+class invalid_param_type_error : public std::runtime_error
+{
+  public:
+	invalid_param_type_error(const std::string &err)
+		: runtime_error(err)
+	{
+	}
+};
+
+class invalid_argument_error : public std::runtime_error
+{
+  public:
+	invalid_argument_error(const std::string &err)
+		: runtime_error(err)
+	{
+	}
 };
 
 class config
@@ -56,7 +96,12 @@ class config
 			: m_name(name)
 			, m_short_name(0)
 		{
-			if (m_name.length() > 2 and m_name[m_name.length() - 2] == ',')
+			if (m_name.length() == 1)
+			{
+				m_short_name = m_name.front();
+				m_name.clear();
+			}
+			else if (m_name.length() > 2 and m_name[m_name.length() - 2] == ',')
 			{
 				m_short_name = m_name.back();
 				m_name.erase(m_name.end() - 2, m_name.end());
@@ -66,12 +111,17 @@ class config
 		virtual ~option_base() = default;
 		virtual option_base *clone() = 0;
 		virtual bool is_flag() const = 0;
+
+		virtual void set_value(std::string_view argument)
+		{
+			assert(false);
+		}
 	};
 
 	template <typename T>
 	struct option : public option_base
 	{
-		std::optional<T> m_default;
+		std::optional<T> m_value;
 
 		option(const option &rhs) = default;
 
@@ -82,7 +132,7 @@ class config
 
 		option(std::string_view name, const T &v)
 			: option_base(name)
-			, m_default(v)
+			, m_value(v)
 		{
 		}
 
@@ -92,12 +142,14 @@ class config
 		}
 
 		bool is_flag() const override { return false; }
+
+		void set_value(std::string_view argument) override;
 	};
 
 	template <typename... Options>
 	void init(Options... options)
 	{
-		m_impl.reset(new config_impl(std::forward<Options>(options)... ));
+		m_impl.reset(new config_impl(std::forward<Options>(options)...));
 	}
 
 	void parse(int argc, const char *const argv[])
@@ -108,41 +160,85 @@ class config
 		{
 			const char *arg = argv[i];
 
+			if (arg == nullptr)
+				break;
+
+			std::deque<option_base *> need_param;
+
 			if (*arg == '-')
 			{
 				++arg;
-				
-				if (*arg == '-')	// double --, start of new argument
+
+				if (*arg == '-') // double --, start of new argument
 				{
 					++arg;
 
 					if (*arg == 0)
 						break;
-					
-					auto option = m_impl->get_option(arg);
+
+					std::string_view s_arg(arg);
+					std::string_view::size_type p = s_arg.find('=');
+					std::string_view p_arg;
+
+					if (p != std::string_view::npos)
+					{
+						p_arg = s_arg.substr(p + 1);
+						s_arg = s_arg.substr(0, p);
+					}
+
+					auto option = m_impl->get_option(s_arg);
 					if (option == nullptr)
 					{
 						if (m_ignore_unknown_options)
 							continue;
-						
-						throw unknown_option_error("Unkown option "s + arg);
+
+						throw unknown_option_error("Unkown option "s + std::string{ s_arg });
 					}
-						
-					++option->m_seen;
 
 					if (option->is_flag())
+					{
+						if (not p_arg.empty())
+							throw config_option_error("Option " + option->m_name + " does not accept an argument");
+
+						++option->m_seen;
 						continue;
+					}
+
+					if (p_arg.empty())
+					{
+						if (i + 1 == argc)
+							throw config_option_error("Missing argument for option " + option->m_name);
+						
+						++i;
+						p_arg = argv[i];
+					}
+
+					++option->m_seen;
+					option->set_value(p_arg);
+					continue;
+				}
+
+				if (*arg != 0)
+				{
+					while (*arg != 0)
+					{
+						auto opt = m_impl->get_option(*arg++);
+						if (opt)
+						{
+							++opt->m_seen;
+							continue;
+						}
+
+						if (m_ignore_unknown_options)
+							continue;
+
+						throw unknown_option_error("Unkown option "s + *arg);
+					}
+
+					continue;
 				}
 			}
-			
-
-
-			if (std::strcmp(arg, "--") == 0)
-				break;
-
 		}
-
-
 	}
 
 	static config &instance()
@@ -159,6 +255,28 @@ class config
 		return opt != nullptr and opt->m_seen > 0;
 	}
 
+	int count(std::string_view name) const
+	{
+		auto opt = m_impl->get_option(name);
+		return opt ? opt->m_seen : 0;
+	}
+
+	template <typename T>
+	auto get(const std::string &name) const
+	{
+		auto opt = m_impl->get_option(name);
+		if (opt == nullptr)
+			throw no_param_error("The option " + name + " has no paramter");
+
+		auto v_opt = dynamic_cast<option<T> *>(opt);
+		if (v_opt == nullptr)
+			throw invalid_param_type_error("The option " + name + " has a different type than requested");
+
+		if (not v_opt->m_value)
+			throw no_param_error("The option " + name + " has no paramter");
+
+		return *v_opt->m_value;
+	}
 
   private:
 	config() = default;
@@ -191,9 +309,18 @@ class config
 			return nullptr;
 		}
 
-		std::vector<option_base*> m_options;
-	};
+		option_base *get_option(char short_name) const
+		{
+			for (auto &o : m_options)
+			{
+				if (o->m_short_name == short_name)
+					return &*o;
+			}
+			return nullptr;
+		}
 
+		std::vector<option_base *> m_options;
+	};
 
 	std::unique_ptr<config_impl> m_impl;
 	bool m_ignore_unknown_options = false;
@@ -217,13 +344,29 @@ struct config::option<void> : public config::option_base
 	bool is_flag() const override { return true; }
 };
 
-template<typename T = void>
+template <>
+void config::option<int>::set_value(std::string_view argument)
+{
+	int value;
+	auto r = std::from_chars(argument.begin(), argument.end(), value);
+	if (r.ec != std::errc())
+		throw invalid_argument_error("Invalid argument for option " + m_name);
+	m_value = value;
+}
+
+template <>
+void config::option<std::filesystem::path>::set_value(std::string_view argument)
+{
+	m_value = std::filesystem::path{ argument };
+}
+
+template <typename T = void>
 auto make_option(std::string_view name)
 {
 	return config::option<T>(name);
 }
 
-template<typename T>
+template <typename T>
 auto make_option(std::string_view name, const T &v)
 {
 	return config::option<T>(name, v);

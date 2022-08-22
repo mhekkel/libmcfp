@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(t_1)
 {
 	int argc = 3;
 	const char *const argv[] = {
-		"test", "--flag", "--param_int"
+		"test", "--flag", nullptr
 	};
 
 	auto &config = cfg::config::instance();
@@ -61,12 +61,68 @@ BOOST_AUTO_TEST_CASE(t_1)
 	config.init(
 		cfg::make_option("flag"),
 		cfg::make_option<int>("param_int"),
-		cfg::make_option<int>("param_int_2", 1),
-		cfg::make_option<std::filesystem::path>("input,i"));
+		cfg::make_option<int>("param_int_2", 1));
 	
 	config.parse(argc, argv);
 
 	BOOST_CHECK(config.has("flag"));
 	BOOST_CHECK(not config.has("flag2"));
 
+	BOOST_CHECK_EQUAL(config.get<int>("param_int_2"), 1);
+	BOOST_CHECK_THROW(config.get<float>("param_int_2"), cfg::invalid_param_type_error);
+	BOOST_CHECK_THROW(config.get<int>("param_int"), cfg::no_param_error);
+}
+
+
+BOOST_AUTO_TEST_CASE(t_2)
+{
+	int argc = 3;
+	const char *const argv[] = {
+		"test", "-vvvv", "--verbose", nullptr
+	};
+
+	auto &config = cfg::config::instance();
+
+	config.init(
+		cfg::make_option("verbose,v"));
+	
+	config.parse(argc, argv);
+
+	BOOST_CHECK_EQUAL(config.count("verbose"), 5);
+}
+
+BOOST_AUTO_TEST_CASE(t_3)
+{
+	int argc = 2;
+	const char *const argv[] = {
+		"test", "--param_int=42", nullptr
+	};
+
+	auto &config = cfg::config::instance();
+
+	config.init(
+		cfg::make_option<int>("param_int"));
+	
+	config.parse(argc, argv);
+
+	BOOST_CHECK(config.has("param_int"));
+	BOOST_CHECK_EQUAL(config.get<int>("param_int"), 42);
+}
+
+BOOST_AUTO_TEST_CASE(t_4)
+{
+	int argc = 3;
+	const char *const argv[] = {
+		"test", "--param_int", "42", nullptr
+	};
+
+	auto &config = cfg::config::instance();
+
+	config.init(
+		cfg::make_option<int>("param_int"));
+	
+	config.parse(argc, argv);
+
+	BOOST_CHECK(config.has("param_int"));
+	BOOST_CHECK_EQUAL(config.get<int>("param_int"), 42);
 }
