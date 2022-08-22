@@ -34,6 +34,13 @@
 namespace cfg
 {
 
+class unknown_option_error : public std::runtime_error
+{
+  public:
+	unknown_option_error(const std::string &err)
+		: runtime_error(err) {}
+};
+
 class config
 {
   public:
@@ -41,6 +48,7 @@ class config
 	{
 		std::string m_name;
 		char m_short_name;
+		int m_seen = 0;
 
 		option_base(const option_base &rhs) = default;
 
@@ -57,6 +65,7 @@ class config
 
 		virtual ~option_base() = default;
 		virtual option_base *clone() = 0;
+		virtual bool is_flag() const = 0;
 	};
 
 	template <typename T>
@@ -81,6 +90,8 @@ class config
 		{
 			return new option(*this);
 		}
+
+		bool is_flag() const override { return false; }
 	};
 
 	template <typename... Options>
@@ -91,9 +102,11 @@ class config
 
 	void parse(int argc, const char *const argv[])
 	{
-		for (const char * const *argp = argv; *argp != nullptr; ++argp)
+		using namespace std::literals;
+
+		for (int i = 1; i < argc; ++i)
 		{
-			const char *arg = *argp;
+			const char *arg = argv[i];
 
 			if (*arg == '-')
 			{
@@ -106,7 +119,19 @@ class config
 					if (*arg == 0)
 						break;
 					
-					
+					auto option = m_impl->get_option(arg);
+					if (option == nullptr)
+					{
+						if (m_ignore_unknown_options)
+							continue;
+						
+						throw unknown_option_error("Unkown option "s + arg);
+					}
+						
+					++option->m_seen;
+
+					if (option->is_flag())
+						continue;
 				}
 			}
 			
@@ -130,7 +155,8 @@ class config
 
 	bool has(std::string_view name) const
 	{
-		return false;
+		auto opt = m_impl->get_option(name);
+		return opt != nullptr and opt->m_seen > 0;
 	}
 
 
@@ -155,12 +181,22 @@ class config
 				delete opt;
 		}
 
+		option_base *get_option(std::string_view name) const
+		{
+			for (auto &o : m_options)
+			{
+				if (o->m_name == name)
+					return &*o;
+			}
+			return nullptr;
+		}
+
 		std::vector<option_base*> m_options;
 	};
 
 
 	std::unique_ptr<config_impl> m_impl;
-
+	bool m_ignore_unknown_options = false;
 };
 
 template <>
@@ -177,6 +213,8 @@ struct config::option<void> : public config::option_base
 	{
 		return new option(*this);
 	}
+
+	bool is_flag() const override { return true; }
 };
 
 template<typename T = void>
