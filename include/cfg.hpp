@@ -28,6 +28,7 @@
 
 #include <cstring>
 
+#include <any>
 #include <charconv>
 #include <deque>
 #include <memory>
@@ -106,10 +107,14 @@ inline std::error_condition make_error_condition(config_error e)
 class config
 {
   public:
+	template <typename T, typename = void>
+	struct option_traits;
+
 	struct option_base
 	{
 		std::string m_name;
 		char m_short_name;
+		bool m_is_flag = true, m_has_default = false;
 		int m_seen = 0;
 
 		option_base(const option_base &rhs) = default;
@@ -119,10 +124,7 @@ class config
 			, m_short_name(0)
 		{
 			if (m_name.length() == 1)
-			{
 				m_short_name = m_name.front();
-				m_name.clear();
-			}
 			else if (m_name.length() > 2 and m_name[m_name.length() - 2] == ',')
 			{
 				m_short_name = m_name.back();
@@ -131,41 +133,69 @@ class config
 		}
 
 		virtual ~option_base() = default;
-		virtual option_base *clone() = 0;
-		virtual bool is_flag() const = 0;
 
-		virtual void set_value(std::string_view argument, std::error_code &ec)
+		virtual void set_value(std::string_view value, std::error_code &ec)
 		{
 			assert(false);
 		}
+
+		virtual std::any get_value() const
+		{
+			return {};
+		}
+
+		virtual option_base *clone() const
+		{
+			return new option_base(*this);
+		}
 	};
 
-	template <typename T, typename = void>
+	template <typename T>
 	struct option : public option_base
 	{
-		std::optional<T> m_value;
+		using traits_type = option_traits<T>;
+		using value_type = typename option_traits<T>::value_type;
+
+		std::optional<value_type> m_value;
 
 		option(const option &rhs) = default;
 
 		option(std::string_view name)
 			: option_base(name)
 		{
+			m_is_flag = false;
 		}
 
-		option(std::string_view name, const T &v)
-			: option_base(name)
-			, m_value(v)
+		option(std::string_view name, const value_type &default_value)
+			: option(name)
 		{
+			m_has_default = true;
+			m_value = default_value;
 		}
 
-		option_base *clone() override
+		void set_value(std::string_view argument, std::error_code &ec)
+		{
+			m_value = traits_type::set_value(argument, ec);
+		}
+
+		template<typename U>
+		U get_value(std::error_code &ec)
+		{
+			return traits_type::get_value(m_value, ec);
+		}
+
+		virtual std::any get_value() const
+		{
+			std::any result;
+			if (m_value)
+				result = *m_value;
+			return result;
+		}
+
+		virtual option_base *clone() const
 		{
 			return new option(*this);
 		}
-
-		bool is_flag() const override { return false; }
-
-		void set_value(std::string_view argument, std::error_code &ec) override;
 	};
 
 	template <typename... Options>
@@ -186,18 +216,22 @@ class config
 	{
 		using namespace std::literals;
 
-		enum class State { options, operands } state = State::options;
+		enum class State
+		{
+			options,
+			operands
+		} state = State::options;
 
 		for (int i = 1; i < argc and not ec; ++i)
 		{
 			const char *arg = argv[i];
 
-			if (arg == nullptr)	// should not happen
+			if (arg == nullptr) // should not happen
 				break;
 
 			if (state == State::options)
 			{
-				if (*arg != '-')	// end of options, start operands
+				if (*arg != '-') // end of options, start operands
 					state = State::operands;
 				else if (arg[1] == '-' and arg[2] == 0)
 				{
@@ -222,7 +256,7 @@ class config
 			{
 				++arg;
 
-				assert(*arg != 0);	 // this should not happen, as it was checked for before
+				assert(*arg != 0); // this should not happen, as it was checked for before
 
 				std::string_view s_arg(arg);
 				std::string_view::size_type p = s_arg.find('=');
@@ -241,7 +275,7 @@ class config
 					continue;
 				}
 
-				if (opt->is_flag())
+				if (opt->m_is_flag)
 				{
 					if (not opt_arg.empty())
 						ec = make_error_code(config_error::option_does_not_accept_argument);
@@ -252,7 +286,7 @@ class config
 
 				++opt->m_seen;
 			}
-			else	// single character options
+			else // single character options
 			{
 				bool expect_option_argument = false;
 
@@ -268,7 +302,7 @@ class config
 					}
 
 					++opt->m_seen;
-					if (opt->is_flag())
+					if (opt->m_is_flag)
 						continue;
 
 					opt_arg = arg;
@@ -280,7 +314,7 @@ class config
 					continue;
 			}
 
-			if (opt_arg.empty() and i + 1 < argc)	// So, the = character was not present, the next arg must be the option argument
+			if (opt_arg.empty() and i + 1 < argc) // So, the = character was not present, the next arg must be the option argument
 			{
 				++i;
 				opt_arg = argv[i];
@@ -304,7 +338,7 @@ class config
 	bool has(std::string_view name) const
 	{
 		auto opt = m_impl->get_option(name);
-		return opt != nullptr and opt->m_seen > 0;
+		return opt != nullptr and (opt->m_seen > 0 or opt->m_has_default);
 	}
 
 	int count(std::string_view name) const
@@ -320,14 +354,12 @@ class config
 		if (opt == nullptr)
 			throw std::system_error(make_error_code(config_error::unknown_option), name);
 
-		auto v_opt = dynamic_cast<option<T> *>(opt);
-		if (v_opt == nullptr)
-			throw std::system_error(make_error_code(config_error::invalid_parameter_type), name);
+		std::any value = opt->get_value();
 
-		if (not v_opt->m_value)
+		if (not value.has_value())	
 			throw std::system_error(make_error_code(config_error::option_not_specified), name);
-
-		return *v_opt->m_value;
+		
+		return std::any_cast<T>(value);
 	}
 
 	const std::vector<std::string> &operands() const
@@ -342,8 +374,6 @@ class config
 
 	struct config_impl
 	{
-		// virtual ~config_impl_base() = default;
-
 		template <typename... Options>
 		config_impl(Options... options)
 		{
@@ -385,7 +415,7 @@ class config
 };
 
 template <>
-struct config::option<void> : public config::option_base
+struct config::option<void> : public option_base
 {
 	option(const option &rhs) = default;
 
@@ -394,29 +424,48 @@ struct config::option<void> : public config::option_base
 	{
 	}
 
-	option_base *clone() override
+	virtual option_base *clone() const
 	{
 		return new option(*this);
 	}
+};
 
-	bool is_flag() const override { return true; }
+template <typename T>
+struct config::option_traits<T, typename std::enable_if_t<std::is_arithmetic_v<T>>>
+{
+	using value_type = T;
+
+	static value_type set_value(std::string_view argument, std::error_code &ec)
+	{
+		value_type value;
+		auto r = std::from_chars(argument.begin(), argument.end(), value);
+		if (r.ec != std::errc())
+			ec = std::make_error_code(r.ec);
+		return value;
+	}
 };
 
 template <>
-void config::option<int>::set_value(std::string_view argument, std::error_code &ec)
+struct config::option_traits<std::filesystem::path>
 {
-	int value;
-	auto r = std::from_chars(argument.begin(), argument.end(), value);
-	if (r.ec != std::errc())
-		ec = std::make_error_code(r.ec);
-	m_value = value;
-}
+	using value_type = std::filesystem::path;
 
-template <>
-void config::option<std::filesystem::path>::set_value(std::string_view argument, std::error_code &ec)
+	static value_type set_value(std::string_view argument, std::error_code &ec)
+	{
+		return value_type{ argument };
+	}
+};
+
+template <typename T>
+struct config::option_traits<T, typename std::enable_if_t<not std::is_arithmetic_v<T> and std::is_assignable_v<std::string, T>>>
 {
-	m_value = std::filesystem::path{ argument };
-}
+	using value_type = std::string;
+
+	static value_type set_value(std::string_view argument, std::error_code &ec)
+	{
+		return value_type{ argument };
+	}
+};
 
 template <typename T = void>
 auto make_option(std::string_view name)

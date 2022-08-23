@@ -32,6 +32,7 @@
 #include <cfg.hpp>
 
 namespace tt = boost::test_tools;
+namespace utf = boost::unit_test;
 namespace fs = std::filesystem;
 
 fs::path gTestDir = fs::current_path();
@@ -49,7 +50,7 @@ bool init_unit_test()
 
 // --------------------------------------------------------------------
 
-BOOST_AUTO_TEST_CASE(t_1)
+BOOST_AUTO_TEST_CASE(t_1, * utf::tolerance(0.001))
 {
 	int argc = 3;
 	const char *const argv[] = {
@@ -61,7 +62,9 @@ BOOST_AUTO_TEST_CASE(t_1)
 	config.init(
 		cfg::make_option("flag"),
 		cfg::make_option<int>("param_int"),
-		cfg::make_option<int>("param_int_2", 1));
+		cfg::make_option("param_int_2", 1),
+		cfg::make_option<float>("param_float"),
+		cfg::make_option("param_float_2", 3.14f));
 	
 	config.parse(argc, argv);
 
@@ -69,8 +72,12 @@ BOOST_AUTO_TEST_CASE(t_1)
 	BOOST_CHECK(not config.has("flag2"));
 
 	BOOST_CHECK_EQUAL(config.get<int>("param_int_2"), 1);
-	BOOST_CHECK_THROW(config.get<float>("param_int_2"), std::system_error);
+	BOOST_CHECK_THROW(config.get<float>("param_int_2"), std::bad_any_cast);
 	BOOST_CHECK_THROW(config.get<int>("param_int"), std::system_error);
+
+	BOOST_TEST(config.get<float>("param_float_2") == 3.14);
+	BOOST_CHECK_THROW(config.get<int>("param_float_2"), std::bad_any_cast);
+	BOOST_CHECK_THROW(config.get<float>("param_float"), std::system_error);
 }
 
 
@@ -197,5 +204,33 @@ BOOST_AUTO_TEST_CASE(t_7)
 
 	auto compare = std::vector<std::string>{ argv[2], argv[3], argv[4], argv[5], argv[6] };
 	BOOST_CHECK(config.operands() == compare);
+}
+
+BOOST_AUTO_TEST_CASE(t_8)
+{
+	const char *const argv[] = {
+		"test", "-i", "foo", "-jbar", nullptr
+	};
+	int argc = sizeof(argv) / sizeof(char*) - 1;
+	
+	auto &config = cfg::config::instance();
+
+	config.init(
+		cfg::make_option<const char*>("i"),
+		cfg::make_option<std::string_view>("j"),
+		cfg::make_option("k", "baz"));
+	
+	config.parse(argc, argv);
+
+	BOOST_CHECK(config.has("i"));
+	BOOST_CHECK_EQUAL(config.get<std::string>("i"), "foo");
+	BOOST_CHECK(config.has("j"));
+	BOOST_CHECK_EQUAL(config.get<std::string>("j"), "bar");
+
+	BOOST_CHECK(config.has("k"));
+	BOOST_CHECK_EQUAL(config.get<std::string>("k"), "baz");
+
+
+
 }
 
