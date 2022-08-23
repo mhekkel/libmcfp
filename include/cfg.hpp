@@ -36,50 +36,72 @@
 namespace cfg
 {
 
-class config_option_error : public std::runtime_error
+enum class config_error
+{
+	unknown_option = 1,
+	no_parameter,
+	invalid_parameter_type,
+	invalid_argument,
+	option_does_not_accept_argument,
+	missing_argument_for_option,
+	option_not_specified,
+};
+
+class config_category_impl : public std::error_category
 {
   public:
-	config_option_error(const std::string &err)
-		: runtime_error(err)
+	const char *name() const noexcept override
 	{
+		return "configuration";
+	}
+
+	std::string message(int ev) const override
+	{
+		switch (static_cast<config_error>(ev))
+		{
+			case config_error::unknown_option:
+				return "unknown option";
+			case config_error::no_parameter:
+				return "no parameter";
+			case config_error::invalid_parameter_type:
+				return "invalid parameter type";
+			case config_error::invalid_argument:
+				return "invalid argument";
+			case config_error::option_does_not_accept_argument:
+				return "option does not accept argument";
+			case config_error::missing_argument_for_option:
+				return "missing argument for option";
+			case config_error::option_not_specified:
+				return "option was not specified";
+			default:
+				assert(false);
+				return "unknown error code";
+		}
+	}
+
+	bool equivalent(const std::error_code &code, int condition) const noexcept override
+	{
+		return false;
 	}
 };
 
-class unknown_option_error : public std::runtime_error
+inline std::error_category &config_category()
 {
-  public:
-	unknown_option_error(const std::string &err)
-		: runtime_error(err)
-	{
-	}
-};
+	static config_category_impl instance;
+	return instance;
+}
 
-class no_param_error : public std::runtime_error
+inline std::error_code make_error_code(config_error e)
 {
-  public:
-	no_param_error(const std::string &err)
-		: runtime_error(err)
-	{
-	}
-};
+	return std::error_code(static_cast<int>(e), config_category());
+}
 
-class invalid_param_type_error : public std::runtime_error
+inline std::error_condition make_error_condition(config_error e)
 {
-  public:
-	invalid_param_type_error(const std::string &err)
-		: runtime_error(err)
-	{
-	}
-};
+	return std::error_condition(static_cast<int>(e), config_category());
+}
 
-class invalid_argument_error : public std::runtime_error
-{
-  public:
-	invalid_argument_error(const std::string &err)
-		: runtime_error(err)
-	{
-	}
-};
+// --------------------------------------------------------------------
 
 class config
 {
@@ -112,13 +134,13 @@ class config
 		virtual option_base *clone() = 0;
 		virtual bool is_flag() const = 0;
 
-		virtual void set_value(std::string_view argument)
+		virtual void set_value(std::string_view argument, std::error_code &ec)
 		{
 			assert(false);
 		}
 	};
 
-	template <typename T>
+	template <typename T, typename = void>
 	struct option : public option_base
 	{
 		std::optional<T> m_value;
@@ -143,7 +165,7 @@ class config
 
 		bool is_flag() const override { return false; }
 
-		void set_value(std::string_view argument) override;
+		void set_value(std::string_view argument, std::error_code &ec) override;
 	};
 
 	template <typename... Options>
@@ -154,90 +176,120 @@ class config
 
 	void parse(int argc, const char *const argv[])
 	{
+		std::error_code ec;
+		parse(argc, argv, ec);
+		if (ec)
+			throw std::system_error(ec);
+	}
+
+	void parse(int argc, const char *const argv[], std::error_code &ec)
+	{
 		using namespace std::literals;
 
-		for (int i = 1; i < argc; ++i)
+		enum class State { options, operands } state = State::options;
+
+		for (int i = 1; i < argc and not ec; ++i)
 		{
 			const char *arg = argv[i];
 
-			if (arg == nullptr)
+			if (arg == nullptr)	// should not happen
 				break;
 
-			std::deque<option_base *> need_param;
-
-			if (*arg == '-')
+			if (state == State::options)
 			{
-				++arg;
-
-				if (*arg == '-') // double --, start of new argument
+				if (*arg != '-')	// end of options, start operands
+					state = State::operands;
+				else if (arg[1] == '-' and arg[2] == 0)
 				{
-					++arg;
-
-					if (*arg == 0)
-						break;
-
-					std::string_view s_arg(arg);
-					std::string_view::size_type p = s_arg.find('=');
-					std::string_view p_arg;
-
-					if (p != std::string_view::npos)
-					{
-						p_arg = s_arg.substr(p + 1);
-						s_arg = s_arg.substr(0, p);
-					}
-
-					auto option = m_impl->get_option(s_arg);
-					if (option == nullptr)
-					{
-						if (m_ignore_unknown_options)
-							continue;
-
-						throw unknown_option_error("Unkown option "s + std::string{ s_arg });
-					}
-
-					if (option->is_flag())
-					{
-						if (not p_arg.empty())
-							throw config_option_error("Option " + option->m_name + " does not accept an argument");
-
-						++option->m_seen;
-						continue;
-					}
-
-					if (p_arg.empty())
-					{
-						if (i + 1 == argc)
-							throw config_option_error("Missing argument for option " + option->m_name);
-						
-						++i;
-						p_arg = argv[i];
-					}
-
-					++option->m_seen;
-					option->set_value(p_arg);
-					continue;
-				}
-
-				if (*arg != 0)
-				{
-					while (*arg != 0)
-					{
-						auto opt = m_impl->get_option(*arg++);
-						if (opt)
-						{
-							++opt->m_seen;
-							continue;
-						}
-
-						if (m_ignore_unknown_options)
-							continue;
-
-						throw unknown_option_error("Unkown option "s + *arg);
-					}
-
+					state = State::operands;
 					continue;
 				}
 			}
+
+			if (state == State::operands)
+			{
+				m_impl->m_operands.emplace_back(arg);
+				continue;
+			}
+
+			option_base *opt = nullptr;
+			std::string_view opt_arg;
+
+			assert(*arg == '-');
+			++arg;
+
+			if (*arg == '-') // double --, start of new argument
+			{
+				++arg;
+
+				assert(*arg != 0);	 // this should not happen, as it was checked for before
+
+				std::string_view s_arg(arg);
+				std::string_view::size_type p = s_arg.find('=');
+
+				if (p != std::string_view::npos)
+				{
+					opt_arg = s_arg.substr(p + 1);
+					s_arg = s_arg.substr(0, p);
+				}
+
+				opt = m_impl->get_option(s_arg);
+				if (opt == nullptr)
+				{
+					if (not m_ignore_unknown_options)
+						ec = make_error_code(config_error::unknown_option);
+					continue;
+				}
+
+				if (opt->is_flag())
+				{
+					if (not opt_arg.empty())
+						ec = make_error_code(config_error::option_does_not_accept_argument);
+
+					++opt->m_seen;
+					continue;
+				}
+
+				++opt->m_seen;
+			}
+			else	// single character options
+			{
+				bool expect_option_argument = false;
+
+				while (*arg != 0 and not ec)
+				{
+					opt = m_impl->get_option(*arg++);
+
+					if (opt == nullptr)
+					{
+						if (not m_ignore_unknown_options)
+							ec = make_error_code(config_error::unknown_option);
+						continue;
+					}
+
+					++opt->m_seen;
+					if (opt->is_flag())
+						continue;
+
+					opt_arg = arg;
+					expect_option_argument = true;
+					break;
+				}
+
+				if (not expect_option_argument)
+					continue;
+			}
+
+			if (opt_arg.empty() and i + 1 < argc)	// So, the = character was not present, the next arg must be the option argument
+			{
+				++i;
+				opt_arg = argv[i];
+			}
+
+			if (opt_arg.empty())
+				ec = make_error_code(config_error::missing_argument_for_option);
+			else
+				opt->set_value(opt_arg, ec);
 		}
 	}
 
@@ -266,16 +318,21 @@ class config
 	{
 		auto opt = m_impl->get_option(name);
 		if (opt == nullptr)
-			throw no_param_error("The option " + name + " has no paramter");
+			throw std::system_error(make_error_code(config_error::unknown_option), name);
 
 		auto v_opt = dynamic_cast<option<T> *>(opt);
 		if (v_opt == nullptr)
-			throw invalid_param_type_error("The option " + name + " has a different type than requested");
+			throw std::system_error(make_error_code(config_error::invalid_parameter_type), name);
 
 		if (not v_opt->m_value)
-			throw no_param_error("The option " + name + " has no paramter");
+			throw std::system_error(make_error_code(config_error::option_not_specified), name);
 
 		return *v_opt->m_value;
+	}
+
+	const std::vector<std::string> &operands() const
+	{
+		return m_impl->m_operands;
 	}
 
   private:
@@ -320,6 +377,7 @@ class config
 		}
 
 		std::vector<option_base *> m_options;
+		std::vector<std::string> m_operands;
 	};
 
 	std::unique_ptr<config_impl> m_impl;
@@ -345,17 +403,17 @@ struct config::option<void> : public config::option_base
 };
 
 template <>
-void config::option<int>::set_value(std::string_view argument)
+void config::option<int>::set_value(std::string_view argument, std::error_code &ec)
 {
 	int value;
 	auto r = std::from_chars(argument.begin(), argument.end(), value);
 	if (r.ec != std::errc())
-		throw invalid_argument_error("Invalid argument for option " + m_name);
+		ec = std::make_error_code(r.ec);
 	m_value = value;
 }
 
 template <>
-void config::option<std::filesystem::path>::set_value(std::string_view argument)
+void config::option<std::filesystem::path>::set_value(std::string_view argument, std::error_code &ec)
 {
 	m_value = std::filesystem::path{ argument };
 }
@@ -373,3 +431,14 @@ auto make_option(std::string_view name, const T &v)
 }
 
 } // namespace cfg
+
+namespace std
+{
+
+template <>
+struct is_error_condition_enum<cfg::config_error>
+	: public true_type
+{
+};
+
+} // namespace std

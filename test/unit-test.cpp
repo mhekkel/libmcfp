@@ -69,8 +69,8 @@ BOOST_AUTO_TEST_CASE(t_1)
 	BOOST_CHECK(not config.has("flag2"));
 
 	BOOST_CHECK_EQUAL(config.get<int>("param_int_2"), 1);
-	BOOST_CHECK_THROW(config.get<float>("param_int_2"), cfg::invalid_param_type_error);
-	BOOST_CHECK_THROW(config.get<int>("param_int"), cfg::no_param_error);
+	BOOST_CHECK_THROW(config.get<float>("param_int_2"), std::system_error);
+	BOOST_CHECK_THROW(config.get<int>("param_int"), std::system_error);
 }
 
 
@@ -126,3 +126,76 @@ BOOST_AUTO_TEST_CASE(t_4)
 	BOOST_CHECK(config.has("param_int"));
 	BOOST_CHECK_EQUAL(config.get<int>("param_int"), 42);
 }
+
+BOOST_AUTO_TEST_CASE(t_5)
+{
+	const char *const argv[] = {
+		"test", "-i", "42", "-j43", nullptr
+	};
+	int argc = sizeof(argv) / sizeof(char*);
+	
+	auto &config = cfg::config::instance();
+
+	config.init(
+		cfg::make_option<int>("nr1,i"),
+		cfg::make_option<int>("nr2,j"));
+	
+	config.parse(argc, argv);
+
+	BOOST_CHECK(config.has("nr1"));
+	BOOST_CHECK(config.has("nr2"));
+
+	BOOST_CHECK_EQUAL(config.get<int>("nr1"), 42);
+	BOOST_CHECK_EQUAL(config.get<int>("nr2"), 43);
+}
+
+BOOST_AUTO_TEST_CASE(t_6)
+{
+	const char *const argv[] = {
+		"test", "-i", "42", "-j43", "foo", "bar", nullptr
+	};
+	int argc = sizeof(argv) / sizeof(char*);
+	
+	auto &config = cfg::config::instance();
+
+	config.init(
+		cfg::make_option<int>("nr1,i"),
+		cfg::make_option<int>("nr2,j"));
+	
+	config.parse(argc, argv);
+
+	BOOST_CHECK(config.has("nr1"));
+	BOOST_CHECK(config.has("nr2"));
+
+	BOOST_CHECK_EQUAL(config.get<int>("nr1"), 42);
+	BOOST_CHECK_EQUAL(config.get<int>("nr2"), 43);
+
+	BOOST_CHECK_EQUAL(config.operands().size(), 2);
+	BOOST_CHECK_EQUAL(config.operands().front(), "foo");
+	BOOST_CHECK_EQUAL(config.operands().back(), "bar");
+}
+
+BOOST_AUTO_TEST_CASE(t_7)
+{
+	const char *const argv[] = {
+		"test", "--", "-i", "42", "-j43", "foo", "bar", nullptr
+	};
+	int argc = sizeof(argv) / sizeof(char*) - 1;
+	
+	auto &config = cfg::config::instance();
+
+	config.init(
+		cfg::make_option<int>("nr1,i"),
+		cfg::make_option<int>("nr2,j"));
+	
+	config.parse(argc, argv);
+
+	BOOST_CHECK(not config.has("nr1"));
+	BOOST_CHECK(not config.has("nr2"));
+
+	BOOST_CHECK_EQUAL(config.operands().size(), 5);
+
+	auto compare = std::vector<std::string>{ argv[2], argv[3], argv[4], argv[5], argv[6] };
+	BOOST_CHECK(config.operands() == compare);
+}
+
