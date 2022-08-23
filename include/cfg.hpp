@@ -26,6 +26,7 @@
 
 #pragma once
 
+#include <cassert>
 #include <cstring>
 
 #include <any>
@@ -33,6 +34,9 @@
 #include <deque>
 #include <memory>
 #include <optional>
+#include <vector>
+
+#include <cfg/text.hpp>
 
 namespace cfg
 {
@@ -40,9 +44,6 @@ namespace cfg
 enum class config_error
 {
 	unknown_option = 1,
-	no_parameter,
-	invalid_parameter_type,
-	invalid_argument,
 	option_does_not_accept_argument,
 	missing_argument_for_option,
 	option_not_specified,
@@ -62,12 +63,6 @@ class config_category_impl : public std::error_category
 		{
 			case config_error::unknown_option:
 				return "unknown option";
-			case config_error::no_parameter:
-				return "no parameter";
-			case config_error::invalid_parameter_type:
-				return "invalid parameter type";
-			case config_error::invalid_argument:
-				return "invalid argument";
 			case config_error::option_does_not_accept_argument:
 				return "option does not accept argument";
 			case config_error::missing_argument_for_option:
@@ -204,15 +199,15 @@ class config
 		m_impl.reset(new config_impl(std::forward<Options>(options)...));
 	}
 
-	void parse(int argc, const char *const argv[])
+	void parse(int argc, const char *const argv[], bool ignore_unknown = false)
 	{
 		std::error_code ec;
-		parse(argc, argv, ec);
+		parse(argc, argv, ignore_unknown, ec);
 		if (ec)
 			throw std::system_error(ec);
 	}
 
-	void parse(int argc, const char *const argv[], std::error_code &ec)
+	void parse(int argc, const char *const argv[], bool ignore_unknown, std::error_code &ec)
 	{
 		using namespace std::literals;
 
@@ -231,8 +226,12 @@ class config
 
 			if (state == State::options)
 			{
-				if (*arg != '-') // end of options, start operands
-					state = State::operands;
+				if (*arg != '-')			// according to POSIX this is the end of options, start operands
+					// state = State::operands;
+				{							// however, people nowadays expect to be able to mix operands and options
+					m_impl->m_operands.emplace_back(arg);
+					continue;
+				}
 				else if (arg[1] == '-' and arg[2] == 0)
 				{
 					state = State::operands;
@@ -438,7 +437,7 @@ struct config::option_traits<T, typename std::enable_if_t<std::is_arithmetic_v<T
 	static value_type set_value(std::string_view argument, std::error_code &ec)
 	{
 		value_type value;
-		auto r = std::from_chars(argument.begin(), argument.end(), value);
+		auto r = charconv<value_type>::from_chars(argument.begin(), argument.end(), value);
 		if (r.ec != std::errc())
 			ec = std::make_error_code(r.ec);
 		return value;
@@ -468,13 +467,25 @@ struct config::option_traits<T, typename std::enable_if_t<not std::is_arithmetic
 };
 
 template <typename T = void>
-auto make_option(std::string_view name)
+auto make_option(std::string_view name, std::string_view description)
+{
+	return config::option<T>(name);
+}
+
+template <typename T = void>
+auto make_hidden_option(std::string_view name, std::string_view description)
 {
 	return config::option<T>(name);
 }
 
 template <typename T>
-auto make_option(std::string_view name, const T &v)
+auto make_option(std::string_view name, const T &v, std::string_view description)
+{
+	return config::option<T>(name, v);
+}
+
+template <typename T>
+auto make_hidden_option(std::string_view name, const T &v, std::string_view description)
 {
 	return config::option<T>(name, v);
 }

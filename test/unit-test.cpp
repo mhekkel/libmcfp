@@ -60,11 +60,11 @@ BOOST_AUTO_TEST_CASE(t_1, * utf::tolerance(0.001))
 	auto &config = cfg::config::instance();
 
 	config.init(
-		cfg::make_option("flag"),
-		cfg::make_option<int>("param_int"),
-		cfg::make_option("param_int_2", 1),
-		cfg::make_option<float>("param_float"),
-		cfg::make_option("param_float_2", 3.14f));
+		cfg::make_option("flag", ""),
+		cfg::make_option<int>("param_int", ""),
+		cfg::make_option("param_int_2", 1, ""),
+		cfg::make_option<float>("param_float", ""),
+		cfg::make_option("param_float_2", 3.14f, ""));
 	
 	config.parse(argc, argv);
 
@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE(t_2)
 	auto &config = cfg::config::instance();
 
 	config.init(
-		cfg::make_option("verbose,v"));
+		cfg::make_option("verbose,v", ""));
 	
 	config.parse(argc, argv);
 
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE(t_3)
 	auto &config = cfg::config::instance();
 
 	config.init(
-		cfg::make_option<int>("param_int"));
+		cfg::make_option<int>("param_int", ""));
 	
 	config.parse(argc, argv);
 
@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE(t_4)
 	auto &config = cfg::config::instance();
 
 	config.init(
-		cfg::make_option<int>("param_int"));
+		cfg::make_option<int>("param_int", ""));
 	
 	config.parse(argc, argv);
 
@@ -144,8 +144,8 @@ BOOST_AUTO_TEST_CASE(t_5)
 	auto &config = cfg::config::instance();
 
 	config.init(
-		cfg::make_option<int>("nr1,i"),
-		cfg::make_option<int>("nr2,j"));
+		cfg::make_option<int>("nr1,i", ""),
+		cfg::make_option<int>("nr2,j", ""));
 	
 	config.parse(argc, argv);
 
@@ -166,8 +166,8 @@ BOOST_AUTO_TEST_CASE(t_6)
 	auto &config = cfg::config::instance();
 
 	config.init(
-		cfg::make_option<int>("nr1,i"),
-		cfg::make_option<int>("nr2,j"));
+		cfg::make_option<int>("nr1,i", ""),
+		cfg::make_option<int>("nr2,j", ""));
 	
 	config.parse(argc, argv);
 
@@ -192,8 +192,8 @@ BOOST_AUTO_TEST_CASE(t_7)
 	auto &config = cfg::config::instance();
 
 	config.init(
-		cfg::make_option<int>("nr1,i"),
-		cfg::make_option<int>("nr2,j"));
+		cfg::make_option<int>("nr1,i", ""),
+		cfg::make_option<int>("nr2,j", ""));
 	
 	config.parse(argc, argv);
 
@@ -216,9 +216,9 @@ BOOST_AUTO_TEST_CASE(t_8)
 	auto &config = cfg::config::instance();
 
 	config.init(
-		cfg::make_option<const char*>("i"),
-		cfg::make_option<std::string_view>("j"),
-		cfg::make_option("k", "baz"));
+		cfg::make_option<const char*>("i", ""),
+		cfg::make_option<std::string_view>("j", ""),
+		cfg::make_option("k", "baz", ""));
 	
 	config.parse(argc, argv);
 

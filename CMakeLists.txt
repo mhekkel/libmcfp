@@ -72,6 +72,12 @@ install(TARGETS libconfig
 	EXPORT libconfigConfig
 	PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
+install(
+	DIRECTORY include/cfg
+	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+	COMPONENT Devel
+)
+
 export(TARGETS libconfig NAMESPACE libconfig:: FILE libconfigTargets.cmake)
 
 if(WIN32 AND NOT CYGWIN)
@@ -91,6 +97,7 @@ install(EXPORT libconfigConfig
 	FILE libconfigTargets.cmake
 	NAMESPACE libconfig::
 	DESTINATION ${CONFIG_LOC})
+
 install(
 	FILES cmake/libconfigConfig.cmake "${version_config}"
 	DESTINATION ${CONFIG_LOC})
