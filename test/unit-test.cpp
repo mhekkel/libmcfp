@@ -229,8 +229,18 @@ BOOST_AUTO_TEST_CASE(t_8)
 
 	BOOST_CHECK(config.has("k"));
 	BOOST_CHECK_EQUAL(config.get<std::string>("k"), "baz");
-
-
-
 }
+
+BOOST_AUTO_TEST_CASE(t_9)
+{
+	auto &config = cfg::config::instance();
+
+	config.init(
+		cfg::make_option<const char*>("i", "First option"),
+		cfg::make_option<std::string_view>("j", "This is the second option"),
+		cfg::make_option("a-very-long-option-name,k", "baz", "And, you guessed it, this must be option three."));
+	
+	std::cerr << config << std::endl;
+}
+
 

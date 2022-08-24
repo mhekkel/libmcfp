@@ -1,17 +1,17 @@
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
- * 
+ *
  * Copyright (c) 2022 Maarten L. Hekkelman
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -26,19 +26,51 @@
 
 #pragma once
 
-#if __has_include(<windows.h>)
+#include <climits>
+#include <cstdint>
+
+#if __has_include(<sys/ioctl.h>)
+#include <sys/ioctl.h>
+#include <fcntl.h>
+#include <unistd.h>
+#elif defined(_MSC_VER)
 #include <windows.h>
+#endif
 
-int main(int argc, char *argv[]) {
+namespace cfg
+{
+
+#if defined(_MSC_VER)
+/// @brief Get the width in columns of the current terminal
+/// @return number of columns of the terminal
+uint32_t get_terminal_width()
+{
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    int columns, rows;
+    ::GetConsoleScreenBufferInfo(::GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    return csbi.srWindow.Right - csbi.srWindow.Left + 1;
+}
 
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
-    columns = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-    rows = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+#elif __has_include(<sys/ioctl.h>)
+/// @brief Get the width in columns of the current terminal
+/// @return number of columns of the terminal
+uint32_t get_terminal_width()
+{
+	uint32_t result = 80;
 
-    printf("columns: %d\n", columns);
-    printf("rows: %d\n", rows);
-    return 0;
+	if (::isatty(STDOUT_FILENO))
+	{
+		struct winsize w;
+		::ioctl(0, TIOCGWINSZ, &w);
+		result = w.ws_col;
+	}
+	return result;
+}
+#else
+#warning "Could not find the terminal width, falling back to default"
+uint32_t get_terminal_width()
+{
+	return 80;
 }
 #endif
+
+} // namespace cfg

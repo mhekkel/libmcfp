@@ -37,6 +37,7 @@
 #include <vector>
 
 #include <cfg/text.hpp>
+#include <cfg/utilities.hpp>
 
 namespace cfg
 {
@@ -108,14 +109,16 @@ class config
 	struct option_base
 	{
 		std::string m_name;
+		std::string m_desc;
 		char m_short_name;
 		bool m_is_flag = true, m_has_default = false;
 		int m_seen = 0;
 
 		option_base(const option_base &rhs) = default;
 
-		option_base(std::string_view name)
+		option_base(std::string_view name, std::string_view desc)
 			: m_name(name)
+			, m_desc(desc)
 			, m_short_name(0)
 		{
 			if (m_name.length() == 1)
@@ -143,6 +146,37 @@ class config
 		{
 			return new option_base(*this);
 		}
+
+		uint32_t width() const
+		{
+			uint32_t result = m_name.length();
+			if (result <= 1)
+				result = 2;
+			else if (m_short_name != 0)
+				result += 7;
+			return result + 6;
+		}
+
+		void write(std::ostream &os, uint32_t width) const
+		{
+			uint32_t w2 = 2;
+			os << "  ";
+			if (m_short_name)
+			{
+				os << '-' << m_short_name;
+				w2 += 2;
+				if (m_name.length() > 1)
+				{
+					os << " [ --" << m_name << " ]";
+					w2 += 7 + m_name.length();
+				}
+				if (w2 + 2 > width)
+					os << std::endl
+					   << std::string(width, ' ') << m_desc << std::endl;
+				else
+					os << std::string(width - w2, ' ') << m_desc << std::endl;
+			}
+		}
 	};
 
 	template <typename T>
@@ -155,14 +189,14 @@ class config
 
 		option(const option &rhs) = default;
 
-		option(std::string_view name)
-			: option_base(name)
+		option(std::string_view name, std::string_view desc)
+			: option_base(name, desc)
 		{
 			m_is_flag = false;
 		}
 
-		option(std::string_view name, const value_type &default_value)
-			: option(name)
+		option(std::string_view name, const value_type &default_value, std::string_view desc)
+			: option(name, desc)
 		{
 			m_has_default = true;
 			m_value = default_value;
@@ -269,7 +303,7 @@ class config
 				opt = m_impl->get_option(s_arg);
 				if (opt == nullptr)
 				{
-					if (not m_ignore_unknown_options)
+					if (not ignore_unknown)
 						ec = make_error_code(config_error::unknown_option);
 					continue;
 				}
@@ -295,7 +329,7 @@ class config
 
 					if (opt == nullptr)
 					{
-						if (not m_ignore_unknown_options)
+						if (not ignore_unknown)
 							ec = make_error_code(config_error::unknown_option);
 						continue;
 					}
@@ -366,6 +400,28 @@ class config
 		return m_impl->m_operands;
 	}
 
+	friend std::ostream &operator<<(std::ostream &os, const config &conf)
+	{
+		uint32_t terminal_width = get_terminal_width();
+		uint32_t options_width = 0;
+
+		for (auto &opt : conf.m_impl->m_options)
+		{
+			if (options_width < opt->width())
+				options_width = opt->width();
+		}
+
+		if (options_width > terminal_width / 2)
+			options_width = terminal_width / 2;
+		
+		for (auto &opt : conf.m_impl->m_options)
+		{
+			opt->write(os, options_width);
+		}
+
+		return os;
+	}
+
   private:
 	config() = default;
 	config(const config &) = delete;
@@ -410,7 +466,6 @@ class config
 	};
 
 	std::unique_ptr<config_impl> m_impl;
-	bool m_ignore_unknown_options = false;
 };
 
 template <>
@@ -418,8 +473,8 @@ struct config::option<void> : public option_base
 {
 	option(const option &rhs) = default;
 
-	option(std::string_view name)
-		: option_base(name)
+	option(std::string_view name, std::string_view desc)
+		: option_base(name, desc)
 	{
 	}
 
@@ -469,25 +524,25 @@ struct config::option_traits<T, typename std::enable_if_t<not std::is_arithmetic
 template <typename T = void>
 auto make_option(std::string_view name, std::string_view description)
 {
-	return config::option<T>(name);
+	return config::option<T>(name, description);
 }
 
 template <typename T = void>
 auto make_hidden_option(std::string_view name, std::string_view description)
 {
-	return config::option<T>(name);
+	return config::option<T>(name, description);
 }
 
 template <typename T>
 auto make_option(std::string_view name, const T &v, std::string_view description)
 {
-	return config::option<T>(name, v);
+	return config::option<T>(name, v, description);
 }
 
 template <typename T>
 auto make_hidden_option(std::string_view name, const T &v, std::string_view description)
 {
-	return config::option<T>(name, v);
+	return config::option<T>(name, v, description);
 }
 
 } // namespace cfg
