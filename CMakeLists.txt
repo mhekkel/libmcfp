@@ -103,21 +103,15 @@ install(
 if(ENABLE_TESTING)
 	enable_testing()
 
-	list(APPEND tests unit-test)
+	add_executable(libconfig-unit-test ${PROJECT_SOURCE_DIR}/test/unit-test.cpp)
 
-	foreach(TEST IN LISTS tests)
-		set(TEST_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/test/${TEST}.cpp")
+	target_link_libraries(libconfig-unit-test libconfig::libconfig)
 
-		add_executable(${TEST} ${TEST_SOURCE})
+	if(MSVC)
+		# Specify unwind semantics so that MSVC knowns how to handle exceptions
+		target_compile_options(libconfig-unit-test PRIVATE /EHsc)
+	endif()
 
-		target_link_libraries(${TEST} libconfig::libconfig)
-
-		if(MSVC)
-			# Specify unwind semantics so that MSVC knowns how to handle exceptions
-			target_compile_options(${TEST} PRIVATE /EHsc)
-		endif()
-
-		add_test(NAME ${TEST}
-			COMMAND $<TARGET_FILE:${TEST}> -- ${CMAKE_SOURCE_DIR}/test)
-	endforeach()
-endif(ENABLE_TESTING)
+	add_test(NAME libconfig-unit-test
+		COMMAND $<TARGET_FILE:libconfig-unit-test> -- ${PROJECT_SOURCE_DIR}/test)
+endif()
