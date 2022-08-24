@@ -85,8 +85,8 @@ else()
 endif()
 
 configure_package_config_file(
-	${CMAKE_SOURCE_DIR}/cmake/libconfigConfig.cmake.in
-	${CMAKE_SOURCE_DIR}/cmake/libconfigConfig.cmake
+	${PROJECT_SOURCE_DIR}/cmake/libconfigConfig.cmake.in
+	${PROJECT_SOURCE_DIR}/cmake/libconfigConfig.cmake
 	INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libconfig
 	PATH_VARS INCLUDE_INSTALL_DIR
 )
