@@ -170,11 +170,25 @@ class config
 					os << " [ --" << m_name << " ]";
 					w2 += 7 + m_name.length();
 				}
-				if (w2 + 2 > width)
-					os << std::endl
-					   << std::string(width, ' ') << m_desc << std::endl;
-				else
-					os << std::string(width - w2, ' ') << m_desc << std::endl;
+
+			}
+			else
+			{
+				os << "--" << m_name;
+				w2 += 2 + m_name.length();
+			}
+
+			auto leading_spaces = width;
+			if (w2 + 2 > width)
+				os << std::endl;
+			else
+				leading_spaces = width - w2;
+
+			word_wrapper ww(m_desc, get_terminal_width() - width);
+			for (auto line : ww)
+			{
+				os << std::string(leading_spaces, ' ') << line << std::endl;
+				leading_spaces = width;
 			}
 		}
 	};
