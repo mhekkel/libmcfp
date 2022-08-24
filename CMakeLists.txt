@@ -10,7 +10,6 @@ project(libconfig VERSION 1.0.0 LANGUAGES CXX)
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
-include(FindPkgConfig)
 include(Dart)
 
 set(CXX_EXTENSIONS OFF)
@@ -63,7 +62,6 @@ set(version_config "${CMAKE_CURRENT_BINARY_DIR}/libconfigConfigVersion.cmake")
 
 set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR})
 
-include(CMakePackageConfigHelpers)
 write_basic_package_version_file("${version_config}"
 	VERSION ${PROJECT_VERSION}
 	COMPATIBILITY SameMajorVersion)

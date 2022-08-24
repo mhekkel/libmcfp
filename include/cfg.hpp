@@ -111,15 +111,16 @@ class config
 		std::string m_name;
 		std::string m_desc;
 		char m_short_name;
-		bool m_is_flag = true, m_has_default = false;
+		bool m_is_flag = true, m_has_default = false, m_hidden;
 		int m_seen = 0;
 
 		option_base(const option_base &rhs) = default;
 
-		option_base(std::string_view name, std::string_view desc)
+		option_base(std::string_view name, std::string_view desc, bool hidden)
 			: m_name(name)
 			, m_desc(desc)
 			, m_short_name(0)
+			, m_hidden(hidden)
 		{
 			if (m_name.length() == 1)
 				m_short_name = m_name.front();
@@ -142,6 +143,11 @@ class config
 			return {};
 		}
 
+		virtual std::string get_default_value() const
+		{
+			return {};
+		}
+
 		virtual option_base *clone() const
 		{
 			return new option_base(*this);
@@ -154,6 +160,12 @@ class config
 				result = 2;
 			else if (m_short_name != 0)
 				result += 7;
+			if (not m_is_flag)
+			{
+				result += 4;
+				if (m_has_default)
+					result += 4 + get_default_value().length();
+			}
 			return result + 6;
 		}
 
@@ -170,12 +182,24 @@ class config
 					os << " [ --" << m_name << " ]";
 					w2 += 7 + m_name.length();
 				}
-
 			}
 			else
 			{
 				os << "--" << m_name;
 				w2 += 2 + m_name.length();
+			}
+
+			if (not m_is_flag)
+			{
+				os << " arg";
+				w2 += 4;
+
+				if (m_has_default)
+				{
+					auto default_value = get_default_value();
+					os << " (=" << default_value << ')';
+					w2 += 4 + default_value.length();
+				}
 			}
 
 			auto leading_spaces = width;
@@ -203,31 +227,25 @@ class config
 
 		option(const option &rhs) = default;
 
-		option(std::string_view name, std::string_view desc)
-			: option_base(name, desc)
+		option(std::string_view name, std::string_view desc, bool hidden)
+			: option_base(name, desc, hidden)
 		{
 			m_is_flag = false;
 		}
 
-		option(std::string_view name, const value_type &default_value, std::string_view desc)
-			: option(name, desc)
+		option(std::string_view name, const value_type &default_value, std::string_view desc, bool hidden)
+			: option(name, desc, hidden)
 		{
 			m_has_default = true;
 			m_value = default_value;
 		}
 
-		void set_value(std::string_view argument, std::error_code &ec)
+		void set_value(std::string_view argument, std::error_code &ec) override
 		{
 			m_value = traits_type::set_value(argument, ec);
 		}
 
-		template<typename U>
-		U get_value(std::error_code &ec)
-		{
-			return traits_type::get_value(m_value, ec);
-		}
-
-		virtual std::any get_value() const
+		std::any get_value() const override
 		{
 			std::any result;
 			if (m_value)
@@ -235,7 +253,15 @@ class config
 			return result;
 		}
 
-		virtual option_base *clone() const
+		std::string get_default_value() const override
+		{
+			if constexpr (std::is_same_v<value_type, std::string>)
+				return *m_value;
+			else
+				return traits_type::to_string(*m_value);
+		}
+
+		option_base *clone() const override
 		{
 			return new option(*this);
 		}
@@ -274,9 +300,9 @@ class config
 
 			if (state == State::options)
 			{
-				if (*arg != '-')			// according to POSIX this is the end of options, start operands
-					// state = State::operands;
-				{							// however, people nowadays expect to be able to mix operands and options
+				if (*arg != '-') // according to POSIX this is the end of options, start operands
+				                 // state = State::operands;
+				{                // however, people nowadays expect to be able to mix operands and options
 					m_impl->m_operands.emplace_back(arg);
 					continue;
 				}
@@ -403,9 +429,9 @@ class config
 
 		std::any value = opt->get_value();
 
-		if (not value.has_value())	
+		if (not value.has_value())
 			throw std::system_error(make_error_code(config_error::option_not_specified), name);
-		
+
 		return std::any_cast<T>(value);
 	}
 
@@ -427,7 +453,7 @@ class config
 
 		if (options_width > terminal_width / 2)
 			options_width = terminal_width / 2;
-		
+
 		for (auto &opt : conf.m_impl->m_options)
 		{
 			opt->write(os, options_width);
@@ -487,8 +513,8 @@ struct config::option<void> : public option_base
 {
 	option(const option &rhs) = default;
 
-	option(std::string_view name, std::string_view desc)
-		: option_base(name, desc)
+	option(std::string_view name, std::string_view desc, bool hidden)
+		: option_base(name, desc, hidden)
 	{
 	}
 
@@ -511,6 +537,15 @@ struct config::option_traits<T, typename std::enable_if_t<std::is_arithmetic_v<T
 			ec = std::make_error_code(r.ec);
 		return value;
 	}
+
+	static std::string to_string(const T& value)
+	{
+		char b[32];
+		auto r = charconv<value_type>::to_chars(b, b + sizeof(b), value);
+		if (r.ec != std::errc())
+			throw std::system_error(std::make_error_code(r.ec));
+		return { b, r.ptr };
+	}
 };
 
 template <>
@@ -521,6 +556,11 @@ struct config::option_traits<std::filesystem::path>
 	static value_type set_value(std::string_view argument, std::error_code &ec)
 	{
 		return value_type{ argument };
+	}
+
+	static std::string to_string(const std::filesystem::path& value)
+	{
+		return value.string();
 	}
 };
 
@@ -533,30 +573,35 @@ struct config::option_traits<T, typename std::enable_if_t<not std::is_arithmetic
 	{
 		return value_type{ argument };
 	}
+
+	static std::string to_string(const T& value)
+	{
+		return { value };
+	}
 };
 
 template <typename T = void>
 auto make_option(std::string_view name, std::string_view description)
 {
-	return config::option<T>(name, description);
+	return config::option<T>(name, description, false);
 }
 
 template <typename T = void>
 auto make_hidden_option(std::string_view name, std::string_view description)
 {
-	return config::option<T>(name, description);
+	return config::option<T>(name, description, true);
 }
 
 template <typename T>
 auto make_option(std::string_view name, const T &v, std::string_view description)
 {
-	return config::option<T>(name, v, description);
+	return config::option<T>(name, v, description, false);
 }
 
 template <typename T>
 auto make_hidden_option(std::string_view name, const T &v, std::string_view description)
 {
-	return config::option<T>(name, v, description);
+	return config::option<T>(name, v, description, true);
 }
 
 } // namespace cfg

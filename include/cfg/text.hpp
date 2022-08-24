@@ -158,6 +158,12 @@ struct my_charconv
 
 		return result;
 	}
+
+	template<typename Iterator>
+	static std::to_chars_result to_chars(Iterator a, Iterator b, const T &value)
+	{
+		assert(false);
+	}
 };
 
 template <typename T>
@@ -166,6 +172,12 @@ struct std_charconv
 	static std::from_chars_result from_chars(const char *a, const char *b, T &d)
 	{
 		return std::from_chars(a, b, d);
+	}
+
+	template<typename Iterator>
+	static std::to_chars_result to_chars(Iterator a, Iterator b, const T &value)
+	{
+		return std::to_chars(a, b, value);
 	}
 };
 
