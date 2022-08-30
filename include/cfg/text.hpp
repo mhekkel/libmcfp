@@ -163,6 +163,7 @@ struct my_charconv
 	static std::to_chars_result to_chars(Iterator a, Iterator b, const T &value)
 	{
 		assert(false);
+		return { nullptr, std::errc::not_supported };
 	}
 };
 

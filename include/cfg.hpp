@@ -155,7 +155,7 @@ namespace detail
 
 		static value_type set_value(std::string_view argument, std::error_code &ec)
 		{
-			value_type value;
+			value_type value{};
 			auto r = charconv<value_type>::from_chars(argument.begin(), argument.end(), value);
 			if (r.ec != std::errc())
 				ec = std::make_error_code(r.ec);
