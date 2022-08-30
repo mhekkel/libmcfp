@@ -80,7 +80,6 @@ BOOST_AUTO_TEST_CASE(t_1, * utf::tolerance(0.001))
 	BOOST_CHECK_THROW(config.get<float>("param_float"), std::system_error);
 }
 
-
 BOOST_AUTO_TEST_CASE(t_2)
 {
 	int argc = 3;
@@ -290,6 +289,28 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 )");
-
-
 }
+
+BOOST_AUTO_TEST_CASE(t_11)
+{
+	const char *const argv[] = {
+		"test", "-faap", "-fnoot", "-fmies", nullptr
+	};
+	int argc = sizeof(argv) / sizeof(char*) - 1;
+
+	auto &config = cfg::config::instance();
+
+	config.init(
+		cfg::make_option<std::vector<std::string>>("file,f", ""));
+	
+	config.parse(argc, argv);
+
+	BOOST_CHECK_EQUAL(config.count("file"), 3);
+	
+	std::vector<std::string> files = config.get<std::vector<std::string>>("file");
+	BOOST_CHECK_EQUAL(files.size(), 3);
+	BOOST_CHECK_EQUAL(files[0], "aap");
+	BOOST_CHECK_EQUAL(files[1], "noot");
+	BOOST_CHECK_EQUAL(files[2], "mies");
+}
+

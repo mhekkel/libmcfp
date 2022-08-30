@@ -26,6 +26,10 @@
 
 #pragma once
 
+/// \file cfg.hpp
+/// This header-only library contains code to parse argc/argv and store the
+/// values contained therein into a singleton object.
+
 #include <cassert>
 #include <cstring>
 
@@ -35,6 +39,7 @@
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <type_traits>
 #include <vector>
 
 #include <cfg/text.hpp>
@@ -42,6 +47,8 @@
 
 namespace cfg
 {
+
+// we use the new system_error stuff.
 
 enum class config_error
 {
@@ -100,20 +107,117 @@ inline std::error_condition make_error_condition(config_error e)
 }
 
 // --------------------------------------------------------------------
+// Some template wizardry to detect containers, needed to have special
+// handling of options that can be repeated.
 
-class config
+template <typename T>
+using iterator_t = typename T::iterator;
+
+template <typename T>
+using value_type_t = typename T::value_type;
+
+template <typename T>
+using std_string_npos_t = decltype(T::npos);
+
+template <typename T, typename = void>
+struct is_container_type : std::false_type
 {
-  public:
+};
+
+template <typename T>
+struct is_container_type<T,
+	std::enable_if_t<
+		std::experimental::is_detected_v<value_type_t, T> and
+		std::experimental::is_detected_v<iterator_t, T> and
+		not std::experimental::is_detected_v<std_string_npos_t, T>>> : std::true_type
+{
+};
+
+template <typename T>
+inline constexpr bool is_container_type_v = is_container_type<T>::value;
+
+// --------------------------------------------------------------------
+// The options classes
+
+namespace detail
+{
+	// The option traits classes are used to convert from the string-based
+	// command line argument to the type that should be stored.
+	// In fact, here is where the command line arguments are checked for
+	// proper formatting.
 	template <typename T, typename = void>
 	struct option_traits;
 
+	template <typename T>
+	struct option_traits<T, typename std::enable_if_t<std::is_arithmetic_v<T>>>
+	{
+		using value_type = T;
+
+		static value_type set_value(std::string_view argument, std::error_code &ec)
+		{
+			value_type value;
+			auto r = charconv<value_type>::from_chars(argument.begin(), argument.end(), value);
+			if (r.ec != std::errc())
+				ec = std::make_error_code(r.ec);
+			return value;
+		}
+
+		static std::string to_string(const T &value)
+		{
+			char b[32];
+			auto r = charconv<value_type>::to_chars(b, b + sizeof(b), value);
+			if (r.ec != std::errc())
+				throw std::system_error(std::make_error_code(r.ec));
+			return { b, r.ptr };
+		}
+	};
+
+	template <>
+	struct option_traits<std::filesystem::path>
+	{
+		using value_type = std::filesystem::path;
+
+		static value_type set_value(std::string_view argument, std::error_code &ec)
+		{
+			return value_type{ argument };
+		}
+
+		static std::string to_string(const std::filesystem::path &value)
+		{
+			return value.string();
+		}
+	};
+
+	template <typename T>
+	struct option_traits<T, typename std::enable_if_t<not std::is_arithmetic_v<T> and std::is_assignable_v<std::string, T>>>
+	{
+		using value_type = std::string;
+
+		static value_type set_value(std::string_view argument, std::error_code &ec)
+		{
+			return value_type{ argument };
+		}
+
+		static std::string to_string(const T &value)
+		{
+			return { value };
+		}
+	};
+
+	// The Options. The reason to have this weird constructing of
+	// polymorphic options based on templates is to have a very
+	// simple interface. The disadvantage is that the options have
+	// to be copied during the construction of the config object.
+
 	struct option_base
 	{
-		std::string m_name;
-		std::string m_desc;
-		char m_short_name;
-		bool m_is_flag = true, m_has_default = false, m_hidden;
-		int m_seen = 0;
+		std::string m_name;        ///< The long argument name
+		std::string m_desc;        ///< The description of the argument
+		char m_short_name;         ///< The single character name of the argument, can be zero
+		bool m_is_flag = true,     ///< When true, this option does not allow arguments
+			m_has_default = false, ///< When true, this option has a default value.
+			m_hidden;              ///< When true, this option is hidden from the help text
+		int m_seen = 0;            ///< How often the option was seen on the command line
 
 		option_base(const option_base &rhs) = default;
 
@@ -149,10 +253,7 @@ class config
 			return {};
 		}
 
-		virtual option_base *clone() const
-		{
-			return new option_base(*this);
-		}
+		virtual option_base *clone() const = 0;
 
 		uint32_t width() const
 		{
@@ -267,6 +368,64 @@ class config
 			return new option(*this);
 		}
 	};
+
+	template <typename T>
+	struct multiple_option : public option_base
+	{
+		using value_type = typename T::value_type;
+		using traits_type = option_traits<value_type>;
+
+		std::vector<value_type> m_values;
+
+		multiple_option(const multiple_option &rhs) = default;
+
+		multiple_option(std::string_view name, std::string_view desc, bool hidden)
+			: option_base(name, desc, hidden)
+		{
+			m_is_flag = false;
+		}
+
+		void set_value(std::string_view argument, std::error_code &ec) override
+		{
+			m_values.emplace_back(traits_type::set_value(argument, ec));
+		}
+
+		std::any get_value() const override
+		{
+			return { m_values };
+		}
+
+		option_base *clone() const override
+		{
+			return new multiple_option(*this);
+		}
+	};
+
+	template <>
+	struct option<void> : public option_base
+	{
+		option(const option &rhs) = default;
+
+		option(std::string_view name, std::string_view desc, bool hidden)
+			: option_base(name, desc, hidden)
+		{
+		}
+
+		virtual option_base *clone() const
+		{
+			return new option(*this);
+		}
+	};
+
+} // namespace detail
+
+// --------------------------------------------------------------------
+/// \brief A singleton class. Use config::instance to create an instance
+
+class config
+{
+  public:
+	using option_base = detail::option_base;
 
 	template <typename... Options>
 	void init(Options... options)
@@ -509,100 +668,42 @@ class config
 	std::unique_ptr<config_impl> m_impl;
 };
 
-template <>
-struct config::option<void> : public option_base
-{
-	option(const option &rhs) = default;
+// --------------------------------------------------------------------
 
-	option(std::string_view name, std::string_view desc, bool hidden)
-		: option_base(name, desc, hidden)
-	{
-	}
-
-	virtual option_base *clone() const
-	{
-		return new option(*this);
-	}
-};
-
-template <typename T>
-struct config::option_traits<T, typename std::enable_if_t<std::is_arithmetic_v<T>>>
-{
-	using value_type = T;
-
-	static value_type set_value(std::string_view argument, std::error_code &ec)
-	{
-		value_type value;
-		auto r = charconv<value_type>::from_chars(argument.begin(), argument.end(), value);
-		if (r.ec != std::errc())
-			ec = std::make_error_code(r.ec);
-		return value;
-	}
-
-	static std::string to_string(const T& value)
-	{
-		char b[32];
-		auto r = charconv<value_type>::to_chars(b, b + sizeof(b), value);
-		if (r.ec != std::errc())
-			throw std::system_error(std::make_error_code(r.ec));
-		return { b, r.ptr };
-	}
-};
-
-template <>
-struct config::option_traits<std::filesystem::path>
-{
-	using value_type = std::filesystem::path;
-
-	static value_type set_value(std::string_view argument, std::error_code &ec)
-	{
-		return value_type{ argument };
-	}
-
-	static std::string to_string(const std::filesystem::path& value)
-	{
-		return value.string();
-	}
-};
-
-template <typename T>
-struct config::option_traits<T, typename std::enable_if_t<not std::is_arithmetic_v<T> and std::is_assignable_v<std::string, T>>>
-{
-	using value_type = std::string;
-
-	static value_type set_value(std::string_view argument, std::error_code &ec)
-	{
-		return value_type{ argument };
-	}
-
-	static std::string to_string(const T& value)
-	{
-		return { value };
-	}
-};
-
-template <typename T = void>
+template <typename T = void, std::enable_if_t<not is_container_type_v<T>, int> = 0>
 auto make_option(std::string_view name, std::string_view description)
 {
-	return config::option<T>(name, description, false);
+	return detail::option<T>(name, description, false);
 }
 
-template <typename T = void>
+template <typename T = void, std::enable_if_t<not is_container_type_v<T>, int> = 0>
 auto make_hidden_option(std::string_view name, std::string_view description)
 {
-	return config::option<T>(name, description, true);
+	return detail::option<T>(name, description, true);
 }
 
-template <typename T>
+template <typename T, std::enable_if_t<not is_container_type_v<T>, int> = 0>
 auto make_option(std::string_view name, const T &v, std::string_view description)
 {
-	return config::option<T>(name, v, description, false);
+	return detail::option<T>(name, v, description, false);
 }
 
-template <typename T>
+template <typename T, std::enable_if_t<not is_container_type_v<T>, int> = 0>
 auto make_hidden_option(std::string_view name, const T &v, std::string_view description)
 {
-	return config::option<T>(name, v, description, true);
+	return detail::option<T>(name, v, description, true);
+}
+
+template <typename T, std::enable_if_t<is_container_type_v<T>, int> = 0>
+auto make_option(std::string_view name, std::string_view description)
+{
+	return detail::multiple_option<T>(name, description, false);
+}
+
+template <typename T, std::enable_if_t<is_container_type_v<T>, int> = 0>
+auto make_hidden_option(std::string_view name, std::string_view description)
+{
+	return detail::option<T>(name, description, true);
 }
 
 } // namespace cfg
