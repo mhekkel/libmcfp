@@ -1,0 +1,8 @@
+Version 1.0.2
+- Fix get_terminal_width. Should be inline of course.
+
+Version 1.0.1
+- printing options, word-wrapped
+
+Version 1.0.0
+- initial release
