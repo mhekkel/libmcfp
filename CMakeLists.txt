@@ -6,7 +6,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 # set the project name
-project(libconfig VERSION 1.0.2 LANGUAGES CXX)
+project(libconfig VERSION 1.1.0 LANGUAGES CXX)
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)

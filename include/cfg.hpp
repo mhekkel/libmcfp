@@ -56,6 +56,7 @@ enum class config_error
 	option_does_not_accept_argument,
 	missing_argument_for_option,
 	option_not_specified,
+	invalid_config_file
 };
 
 class config_category_impl : public std::error_category
@@ -78,6 +79,8 @@ class config_category_impl : public std::error_category
 				return "missing argument for option";
 			case config_error::option_not_specified:
 				return "option was not specified";
+			case config_error::invalid_config_file:
+				return "config file contains a syntax error";
 			default:
 				assert(false);
 				return "unknown error code";
@@ -216,6 +219,7 @@ namespace detail
 		char m_short_name;         ///< The single character name of the argument, can be zero
 		bool m_is_flag = true,     ///< When true, this option does not allow arguments
 			m_has_default = false, ///< When true, this option has a default value.
+			m_multi = false,       ///< When true, this option allows mulitple values.
 			m_hidden;              ///< When true, this option is hidden from the help text
 		int m_seen = 0;            ///< How often the option was seen on the command line
 
@@ -383,6 +387,7 @@ namespace detail
 			: option_base(name, desc, hidden)
 		{
 			m_is_flag = false;
+			m_multi = true;
 		}
 
 		void set_value(std::string_view argument, std::error_code &ec) override
@@ -433,12 +438,235 @@ class config
 		m_impl.reset(new config_impl(std::forward<Options>(options)...));
 	}
 
+	static config &instance()
+	{
+		static std::unique_ptr<config> s_instance;
+		if (not s_instance)
+			s_instance.reset(new config);
+		return *s_instance;
+	}
+
+	bool has(std::string_view name) const
+	{
+		auto opt = m_impl->get_option(name);
+		return opt != nullptr and (opt->m_seen > 0 or opt->m_has_default);
+	}
+
+	int count(std::string_view name) const
+	{
+		auto opt = m_impl->get_option(name);
+		return opt ? opt->m_seen : 0;
+	}
+
+	template <typename T>
+	auto get(std::string_view name) const
+	{
+		auto opt = m_impl->get_option(name);
+		if (opt == nullptr)
+			throw std::system_error(make_error_code(config_error::unknown_option), std::string{ name });
+
+		std::any value = opt->get_value();
+
+		if (not value.has_value())
+			throw std::system_error(make_error_code(config_error::option_not_specified), std::string{ name });
+
+		return std::any_cast<T>(value);
+	}
+
+	const std::vector<std::string> &operands() const
+	{
+		return m_impl->m_operands;
+	}
+
+	friend std::ostream &operator<<(std::ostream &os, const config &conf)
+	{
+		uint32_t terminal_width = get_terminal_width();
+		uint32_t options_width = 0;
+
+		for (auto &opt : conf.m_impl->m_options)
+		{
+			if (options_width < opt->width())
+				options_width = opt->width();
+		}
+
+		if (options_width > terminal_width / 2)
+			options_width = terminal_width / 2;
+
+		for (auto &opt : conf.m_impl->m_options)
+		{
+			opt->write(os, options_width);
+		}
+
+		return os;
+	}
+
+	// --------------------------------------------------------------------
+
 	void parse(int argc, const char *const argv[], bool ignore_unknown = false)
 	{
 		std::error_code ec;
 		parse(argc, argv, ignore_unknown, ec);
 		if (ec)
 			throw std::system_error(ec);
+	}
+
+	void parse_config_file(std::string_view config_option, std::string_view config_file_name,
+		std::initializer_list<std::string_view> search_dirs)
+	{
+		std::error_code ec;
+		parse_config_file(config_option, config_file_name, search_dirs, ec);
+		if (ec)
+			throw std::system_error(ec);
+	}
+
+	void parse_config_file(std::string_view config_option, std::string_view config_file_name,
+		std::initializer_list<std::string_view> search_dirs, std::error_code &ec)
+	{
+		std::string file_name{ config_file_name };
+		if (has(config_option))
+			file_name = get<std::string>(config_option);
+
+		for (std::filesystem::path dir : search_dirs)
+		{
+			std::ifstream file(dir / file_name);
+
+			if (not file.is_open())
+				continue;
+
+			parse_config_file(file, ec);
+			break;
+		}
+	}
+
+	void parse_config_file(const std::filesystem::path &file, std::error_code &ec)
+	{
+		std::ifstream is(file);
+		if (is.is_open())
+			parse_config_file(is, ec);
+	}
+
+	static constexpr bool is_name_char(int ch)
+	{
+		return std::isalnum(ch) or ch == '_' or ch == '-';
+	}
+
+	static constexpr bool is_eoln(int ch)
+	{
+		return ch == '\n' or ch == '\r' or ch == std::char_traits<char>::eof();
+	}
+
+	void parse_config_file(std::istream &is, std::error_code &ec)
+	{
+		auto &buffer = *is.rdbuf();
+
+		enum class State
+		{
+			NAME_START,
+			COMMENT,
+			NAME,
+			ASSIGN,
+			VALUE_START,
+			VALUE
+		} state = State::NAME_START;
+
+		std::string name, value;
+
+		for (;;)
+		{
+			auto ch = buffer.sbumpc();
+
+			switch (state)
+			{
+				case State::NAME_START:
+					if (is_name_char(ch))
+					{
+						name = { static_cast<char>(ch) };
+						value.clear();
+						state = State::NAME;
+					}
+					else if (ch == '#')
+						state = State::COMMENT;
+					else if (ch != ' ' and ch != '\t' and not is_eoln(ch))
+						ec = make_error_code(config_error::invalid_config_file);
+					break;
+
+				case State::COMMENT:
+					if (is_eoln(ch))
+						state = State::NAME_START;
+					break;
+
+				case State::NAME:
+					if (is_name_char(ch))
+						name.insert(name.end(), static_cast<char>(ch));
+					else if	(is_eoln(ch))
+					{
+						auto opt = m_impl->get_option(name);
+
+						if (opt == nullptr)
+							ec = make_error_code(config_error::unknown_option);
+						else if (not opt->m_is_flag)
+							ec = make_error_code(config_error::missing_argument_for_option);
+						else
+							++opt->m_seen;
+					}
+					else
+					{
+						buffer.sungetc();
+						state = State::ASSIGN;
+					}
+					break;
+
+				case State::ASSIGN:
+					if (ch == '=')
+						state = State::VALUE_START;
+					else if (is_eoln(ch))
+					{
+						auto opt = m_impl->get_option(name);
+
+						if (opt == nullptr)
+							ec = make_error_code(config_error::unknown_option);
+						else if (not opt->m_is_flag)
+							ec = make_error_code(config_error::missing_argument_for_option);
+						else
+							++opt->m_seen;
+
+						state = State::NAME_START;
+					}
+					else if (ch != ' ' and ch != '\t')
+						ec = make_error_code(config_error::invalid_config_file);
+					break;
+
+				case State::VALUE_START:
+				case State::VALUE:
+					if (is_eoln(ch))
+					{
+						auto opt = m_impl->get_option(name);
+
+						if (opt == nullptr)
+							ec = make_error_code(config_error::unknown_option);
+						else if (opt->m_is_flag)
+							ec = make_error_code(config_error::option_does_not_accept_argument);
+						else if (not value.empty() and (opt->m_seen == 0 or opt->m_multi))
+						{
+							opt->set_value(value, ec);
+							++opt->m_seen;
+						}
+
+						state = State::NAME_START;
+					}
+					else if (state == State::VALUE)
+						value.insert(value.end(), static_cast<char>(ch));
+					else if (ch != ' ' and ch != '\t')
+					{
+						value = { static_cast<char>(ch) };
+						state = State::VALUE;
+					}
+					break;
+			}
+
+			if (ec or ch == std::char_traits<char>::eof())
+				break;
+		}
 	}
 
 	void parse(int argc, const char *const argv[], bool ignore_unknown, std::error_code &ec)
@@ -558,68 +786,6 @@ class config
 			else
 				opt->set_value(opt_arg, ec);
 		}
-	}
-
-	static config &instance()
-	{
-		static std::unique_ptr<config> s_instance;
-		if (not s_instance)
-			s_instance.reset(new config);
-		return *s_instance;
-	}
-
-	bool has(std::string_view name) const
-	{
-		auto opt = m_impl->get_option(name);
-		return opt != nullptr and (opt->m_seen > 0 or opt->m_has_default);
-	}
-
-	int count(std::string_view name) const
-	{
-		auto opt = m_impl->get_option(name);
-		return opt ? opt->m_seen : 0;
-	}
-
-	template <typename T>
-	auto get(const std::string &name) const
-	{
-		auto opt = m_impl->get_option(name);
-		if (opt == nullptr)
-			throw std::system_error(make_error_code(config_error::unknown_option), name);
-
-		std::any value = opt->get_value();
-
-		if (not value.has_value())
-			throw std::system_error(make_error_code(config_error::option_not_specified), name);
-
-		return std::any_cast<T>(value);
-	}
-
-	const std::vector<std::string> &operands() const
-	{
-		return m_impl->m_operands;
-	}
-
-	friend std::ostream &operator<<(std::ostream &os, const config &conf)
-	{
-		uint32_t terminal_width = get_terminal_width();
-		uint32_t options_width = 0;
-
-		for (auto &opt : conf.m_impl->m_options)
-		{
-			if (options_width < opt->width())
-				options_width = opt->width();
-		}
-
-		if (options_width > terminal_width / 2)
-			options_width = terminal_width / 2;
-
-		for (auto &opt : conf.m_impl->m_options)
-		{
-			opt->write(os, options_width);
-		}
-
-		return os;
 	}
 
   private:
