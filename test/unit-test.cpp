@@ -314,6 +314,29 @@ BOOST_AUTO_TEST_CASE(t_11)
 	BOOST_CHECK_EQUAL(files[2], "mies");
 }
 
+BOOST_AUTO_TEST_CASE(t_12)
+{
+	const char *const argv[] = {
+		"test", "--aap", nullptr
+	};
+	int argc = sizeof(argv) / sizeof(char*) - 1;
+
+	auto &config = cfg::config::instance();
+
+	config.init(
+		cfg::make_option<std::vector<std::string>>("file,f", ""));
+	
+	std::error_code ec;
+	config.parse(argc, argv, ec);
+	BOOST_CHECK(ec == cfg::config_error::unknown_option);
+
+	config.set_ignore_unknown(true);
+	ec = {};
+
+	config.parse(argc, argv, ec);
+	BOOST_CHECK(ec == std::errc());
+}
+
 // --------------------------------------------------------------------
 
 BOOST_AUTO_TEST_CASE(file_1, * utf::tolerance(0.001))

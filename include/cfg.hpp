@@ -438,6 +438,11 @@ class config
 		m_impl.reset(new config_impl(std::forward<Options>(options)...));
 	}
 
+	void set_ignore_unknown(bool ignore_unknown)
+	{
+		m_ignore_unknown = ignore_unknown;
+	}
+
 	static config &instance()
 	{
 		static std::unique_ptr<config> s_instance;
@@ -502,10 +507,10 @@ class config
 
 	// --------------------------------------------------------------------
 
-	void parse(int argc, const char *const argv[], bool ignore_unknown = false)
+	void parse(int argc, const char *const argv[])
 	{
 		std::error_code ec;
-		parse(argc, argv, ignore_unknown, ec);
+		parse(argc, argv, ec);
 		if (ec)
 			throw std::system_error(ec);
 	}
@@ -603,11 +608,16 @@ class config
 						auto opt = m_impl->get_option(name);
 
 						if (opt == nullptr)
-							ec = make_error_code(config_error::unknown_option);
+						{
+							if (not m_ignore_unknown)
+								ec = make_error_code(config_error::unknown_option);
+						}
 						else if (not opt->m_is_flag)
 							ec = make_error_code(config_error::missing_argument_for_option);
 						else
 							++opt->m_seen;
+
+						state = State::NAME_START;
 					}
 					else
 					{
@@ -624,7 +634,10 @@ class config
 						auto opt = m_impl->get_option(name);
 
 						if (opt == nullptr)
-							ec = make_error_code(config_error::unknown_option);
+						{
+							if (not m_ignore_unknown)
+								ec = make_error_code(config_error::unknown_option);
+						}
 						else if (not opt->m_is_flag)
 							ec = make_error_code(config_error::missing_argument_for_option);
 						else
@@ -643,7 +656,10 @@ class config
 						auto opt = m_impl->get_option(name);
 
 						if (opt == nullptr)
-							ec = make_error_code(config_error::unknown_option);
+						{
+							if (not m_ignore_unknown)
+								ec = make_error_code(config_error::unknown_option);
+						}
 						else if (opt->m_is_flag)
 							ec = make_error_code(config_error::option_does_not_accept_argument);
 						else if (not value.empty() and (opt->m_seen == 0 or opt->m_multi))
@@ -669,7 +685,7 @@ class config
 		}
 	}
 
-	void parse(int argc, const char *const argv[], bool ignore_unknown, std::error_code &ec)
+	void parse(int argc, const char *const argv[], std::error_code &ec)
 	{
 		using namespace std::literals;
 
@@ -731,7 +747,7 @@ class config
 				opt = m_impl->get_option(s_arg);
 				if (opt == nullptr)
 				{
-					if (not ignore_unknown)
+					if (not m_ignore_unknown)
 						ec = make_error_code(config_error::unknown_option);
 					continue;
 				}
@@ -757,7 +773,7 @@ class config
 
 					if (opt == nullptr)
 					{
-						if (not ignore_unknown)
+						if (not m_ignore_unknown)
 							ec = make_error_code(config_error::unknown_option);
 						continue;
 					}
@@ -832,6 +848,7 @@ class config
 	};
 
 	std::unique_ptr<config_impl> m_impl;
+	bool m_ignore_unknown = false;
 };
 
 // --------------------------------------------------------------------
