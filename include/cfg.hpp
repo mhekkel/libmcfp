@@ -37,6 +37,7 @@
 #include <charconv>
 #include <deque>
 #include <filesystem>
+#include <fstream>
 #include <memory>
 #include <optional>
 #include <type_traits>
