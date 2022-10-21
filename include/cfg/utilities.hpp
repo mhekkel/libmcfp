@@ -43,7 +43,7 @@ namespace cfg
 #if defined(_MSC_VER)
 /// @brief Get the width in columns of the current terminal
 /// @return number of columns of the terminal
-uint32_t get_terminal_width()
+inline uint32_t get_terminal_width()
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     ::GetConsoleScreenBufferInfo(::GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
@@ -53,7 +53,7 @@ uint32_t get_terminal_width()
 #elif __has_include(<sys/ioctl.h>)
 /// @brief Get the width in columns of the current terminal
 /// @return number of columns of the terminal
-uint32_t get_terminal_width()
+inline uint32_t get_terminal_width()
 {
 	uint32_t result = 80;
 
@@ -67,7 +67,7 @@ uint32_t get_terminal_width()
 }
 #else
 #warning "Could not find the terminal width, falling back to default"
-uint32_t get_terminal_width()
+inline uint32_t get_terminal_width()
 {
 	return 80;
 }

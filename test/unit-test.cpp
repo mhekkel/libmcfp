@@ -80,7 +80,6 @@ BOOST_AUTO_TEST_CASE(t_1, * utf::tolerance(0.001))
 	BOOST_CHECK_THROW(config.get<float>("param_float"), std::system_error);
 }
 
-
 BOOST_AUTO_TEST_CASE(t_2)
 {
 	int argc = 3;
@@ -290,6 +289,204 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 )");
+}
 
+BOOST_AUTO_TEST_CASE(t_11)
+{
+	const char *const argv[] = {
+		"test", "-faap", "-fnoot", "-fmies", nullptr
+	};
+	int argc = sizeof(argv) / sizeof(char*) - 1;
 
+	auto &config = cfg::config::instance();
+
+	config.init(
+		cfg::make_option<std::vector<std::string>>("file,f", ""));
+	
+	config.parse(argc, argv);
+
+	BOOST_CHECK_EQUAL(config.count("file"), 3);
+	
+	std::vector<std::string> files = config.get<std::vector<std::string>>("file");
+	BOOST_CHECK_EQUAL(files.size(), 3);
+	BOOST_CHECK_EQUAL(files[0], "aap");
+	BOOST_CHECK_EQUAL(files[1], "noot");
+	BOOST_CHECK_EQUAL(files[2], "mies");
+}
+
+BOOST_AUTO_TEST_CASE(t_12)
+{
+	const char *const argv[] = {
+		"test", "--aap", nullptr
+	};
+	int argc = sizeof(argv) / sizeof(char*) - 1;
+
+	auto &config = cfg::config::instance();
+
+	config.init(
+		cfg::make_option<std::vector<std::string>>("file,f", ""));
+	
+	std::error_code ec;
+	config.parse(argc, argv, ec);
+	BOOST_CHECK(ec == cfg::config_error::unknown_option);
+
+	config.set_ignore_unknown(true);
+	ec = {};
+
+	config.parse(argc, argv, ec);
+	BOOST_CHECK(ec == std::errc());
+}
+
+// --------------------------------------------------------------------
+
+BOOST_AUTO_TEST_CASE(file_1, * utf::tolerance(0.001))
+{
+	const std::string_view config_file{ R"(
+# This is a test configuration
+aap=1
+noot = 2
+mies = 	
+pi = 3.14
+s = hello, world!
+verbose
+	)" };
+
+	struct membuf : public std::streambuf
+	{
+		membuf(char * text, size_t length)
+		{
+			this->setg(text, text, text + length);
+		}
+	} buffer(const_cast<char *>(config_file.data()), config_file.length());
+
+	std::istream is(&buffer);
+
+	auto &config = cfg::config::instance();
+
+	config.init(
+		cfg::make_option<const char*>("aap", ""),
+		cfg::make_option<int>("noot", ""),
+		cfg::make_option<std::string>("mies", ""),
+		cfg::make_option<float>("pi", ""),
+		cfg::make_option<std::string>("s", ""),
+		cfg::make_option("verbose,v", ""));
+	
+	std::error_code ec;
+
+	config.parse_config_file(is, ec);
+
+	BOOST_CHECK(ec == std::errc());
+
+	BOOST_CHECK(config.has("aap"));
+	BOOST_CHECK_EQUAL(config.get<std::string>("aap"), "1");
+
+	BOOST_CHECK(config.has("noot"));
+	BOOST_CHECK_EQUAL(config.get<int>("noot"), 2);
+
+	BOOST_CHECK(config.has("pi"));
+	BOOST_TEST(config.get<float>("pi") == 3.14);
+
+	BOOST_CHECK(config.has("s"));
+	BOOST_CHECK_EQUAL(config.get<std::string>("s"), "hello, world!");
+
+	BOOST_CHECK(config.has("verbose"));
+}
+
+BOOST_AUTO_TEST_CASE(file_2)
+{
+	auto &config = cfg::config::instance();
+
+	std::tuple<std::string_view,std::string_view,std::error_code> tests[] = {
+		{ "aap !", "aap", make_error_code(cfg::config_error::invalid_config_file) },
+		{ "aap=aap", "aap", {} },
+		{ "aap", "aap", make_error_code(cfg::config_error::missing_argument_for_option) },
+		{ "verbose=1", "verbose", make_error_code(cfg::config_error::option_does_not_accept_argument) },
+				
+	};
+
+	for (const auto &[config_file, option, err] : tests)
+	{
+		struct membuf : public std::streambuf
+		{
+			membuf(char * text, size_t length)
+			{
+				this->setg(text, text, text + length);
+			}
+		} buffer(const_cast<char *>(config_file.data()), config_file.length());
+
+		std::istream is(&buffer);
+
+		std::error_code ec;
+		config.init(
+			cfg::make_option<const char*>("aap", ""),
+			cfg::make_option<int>("noot", ""),
+			cfg::make_option<float>("pi", ""),
+			cfg::make_option<std::string>("s", ""),
+			cfg::make_option("verbose,v", ""));
+		
+		config.parse_config_file(is, ec);
+
+		BOOST_CHECK(ec == err);
+
+		if (ec == std::errc())
+			BOOST_CHECK(config.has(option));
+	}
+}
+
+BOOST_AUTO_TEST_CASE(file_3)
+{
+	auto &config = cfg::config::instance();
+
+	config.init(
+		cfg::make_option<const char*>("aap", ""),
+		cfg::make_option<int>("noot", ""),
+		cfg::make_option<std::string>("config", ""));
+	
+	std::error_code ec;
+
+	const char *const argv[] = {
+		"test", "--aap=aap", "--noot=42", "--config=unit-test.conf", nullptr
+	};
+	int argc = sizeof(argv) / sizeof(char*) - 1;
+
+	config.parse(argc, argv);
+
+	config.parse_config_file("config", "bla-bla.conf", { gTestDir.string() }, ec);
+
+	BOOST_CHECK(ec == std::errc());
+
+	BOOST_CHECK(config.has("aap"));
+	BOOST_CHECK_EQUAL(config.get<std::string>("aap"), "aap");
+
+	BOOST_CHECK(config.has("noot"));
+	BOOST_CHECK_EQUAL(config.get<int>("noot"), 42);
+}
+
+BOOST_AUTO_TEST_CASE(file_4)
+{
+	auto &config = cfg::config::instance();
+
+	config.init(
+		cfg::make_option<const char*>("aap", ""),
+		cfg::make_option<int>("noot", ""),
+		cfg::make_option<std::string>("config", ""));
+	
+	std::error_code ec;
+
+	const char *const argv[] = {
+		"test", "--aap=aap", nullptr
+	};
+	int argc = sizeof(argv) / sizeof(char*) - 1;
+
+	config.parse(argc, argv);
+
+	config.parse_config_file("config", "unit-test.conf", { gTestDir.string() }, ec);
+
+	BOOST_CHECK(ec == std::errc());
+
+	BOOST_CHECK(config.has("aap"));
+	BOOST_CHECK_EQUAL(config.get<std::string>("aap"), "aap");
+
+	BOOST_CHECK(config.has("noot"));
+	BOOST_CHECK_EQUAL(config.get<int>("noot"), 3);
 }
