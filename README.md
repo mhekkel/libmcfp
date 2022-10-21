@@ -19,7 +19,7 @@ int main(int argc, char * const argv[])
     // the current set of options.
     config.init(
             cfg::make_option("verbose,v", "Use verbose output"),
-            cfg::make_option("help,h", "Show this help")
+            cfg::make_option("help,h", "Show this help"),
             cfg::make_option<std::string>("opt1", "foo", "First option"),
             cfg::make_option<std::string>("config", "Name of a config file to use"),
             cfg::make_option<float>("float-value,f", "Another option")
@@ -41,9 +41,11 @@ int main(int argc, char * const argv[])
     }
 
     // Optionally read a config file
+    // Config file is by default called myapp.conf
+    // but can be overridden with the --config parameter
+    // Files will be located in current dictory and /etc
     if (config.has("config"))
-        config.parse_config_file("config",
-            config.get<std::string>("config"),
+        config.parse_config_file("config", "myapp.conf",
             { fs::current_path().string(), "/etc/" }
         );
 
