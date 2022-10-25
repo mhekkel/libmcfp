@@ -551,7 +551,7 @@ class config
 			parse_config_file(is, ec);
 	}
 
-	static constexpr bool is_name_char(int ch)
+	static bool is_name_char(int ch)
 	{
 		return std::isalnum(ch) or ch == '_' or ch == '-';
 	}
