@@ -17,13 +17,12 @@ int main(int argc, char * const argv[])
     // Tell config what options to accept
     // This can be done more than once, replacing
     // the current set of options.
-    config.init(
-			"usage: test [options] input output",
-            cfg::make_option("verbose,v", "Use verbose output"),
-            cfg::make_option("help,h", "Show this help"),
-            cfg::make_option<std::string>("opt1", "foo", "First option"),
-            cfg::make_option<std::string>("config", "Name of a config file to use"),
-            cfg::make_option<float>("float-value,f", "Another option")
+    config.init("usage: test [options] input output",
+        cfg::make_option("verbose,v", "Use verbose output"),
+        cfg::make_option("help,h", "Show this help"),
+        cfg::make_option<std::string>("opt1", "foo", "First option"),
+        cfg::make_option<std::string>("config", "Name of a config file to use"),
+        cfg::make_option<float>("float-value,f", "Another option")
     );
 
     // Do the parsing of argv
