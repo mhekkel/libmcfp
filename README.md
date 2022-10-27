@@ -18,6 +18,7 @@ int main(int argc, char * const argv[])
     // This can be done more than once, replacing
     // the current set of options.
     config.init(
+			"usage: test [options] input output",
             cfg::make_option("verbose,v", "Use verbose output"),
             cfg::make_option("help,h", "Show this help"),
             cfg::make_option<std::string>("opt1", "foo", "First option"),
@@ -53,8 +54,7 @@ int main(int argc, char * const argv[])
     // E.g. filenames to process
     if (config.operands().size() != 2)
     {
-        std::cerr << "Usage: myapp [options] <input> <output>" << std::endl
-                  << config << std::endl;
+        std::cerr << config << std::endl;
         exit(1);
     }
 

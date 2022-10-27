@@ -421,9 +421,11 @@ class config
 		m_usage = usage;
 	}
 
+	/// \brief Initialise a config instance with a \a usage message and a set of \a options
 	template <typename... Options>
-	void init(Options... options)
+	void init(std::string_view usage, Options... options)
 	{
+		m_usage = usage;
 		m_impl.reset(new config_impl(std::forward<Options>(options)...));
 	}
 
@@ -818,35 +820,35 @@ class config
 
 		option_base *get_option(std::string_view name) override
 		{
-			return get_option_by_index<0>(name);
+			return get_option<0>(name);
 		}
 
 		template<size_t Ix>
-		option_base *get_option_by_index(std::string_view name)
+		option_base *get_option(std::string_view name)
 		{
 			if constexpr (Ix == N)
 				return nullptr;
 			else
 			{
 				option_base &opt = std::get<Ix>(m_options);
-				return (opt.m_name == name) ? &opt : get_option_by_index<Ix + 1>(name);
+				return (opt.m_name == name) ? &opt : get_option<Ix + 1>(name);
 			}
 		}
 
 		option_base *get_option(char short_name) override
 		{
-			return get_option_by_index<0>(short_name);
+			return get_option<0>(short_name);
 		}
 
 		template<size_t Ix>
-		option_base *get_option_by_index(char short_name)
+		option_base *get_option(char short_name)
 		{
 			if constexpr (Ix == N)
 				return nullptr;
 			else
 			{
 				option_base &opt = std::get<Ix>(m_options);
-				return (opt.m_short_name == short_name) ? &opt : get_option_by_index<Ix + 1>(short_name);
+				return (opt.m_short_name == short_name) ? &opt : get_option<Ix + 1>(short_name);
 			}
 		}
 

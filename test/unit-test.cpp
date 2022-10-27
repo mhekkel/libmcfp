@@ -60,6 +60,7 @@ BOOST_AUTO_TEST_CASE(t_1, * utf::tolerance(0.001))
 	auto &config = cfg::config::instance();
 
 	config.init(
+		"test [options]",
 		cfg::make_option("flag", ""),
 		cfg::make_option<int>("param_int", ""),
 		cfg::make_option("param_int_2", 1, ""),
@@ -90,6 +91,7 @@ BOOST_AUTO_TEST_CASE(t_2)
 	auto &config = cfg::config::instance();
 
 	config.init(
+		"test [options]",
 		cfg::make_option("verbose,v", ""));
 	
 	config.parse(argc, argv);
@@ -107,6 +109,7 @@ BOOST_AUTO_TEST_CASE(t_3)
 	auto &config = cfg::config::instance();
 
 	config.init(
+		"test [options]",
 		cfg::make_option<int>("param_int", ""));
 	
 	config.parse(argc, argv);
@@ -125,6 +128,7 @@ BOOST_AUTO_TEST_CASE(t_4)
 	auto &config = cfg::config::instance();
 
 	config.init(
+		"test [options]",
 		cfg::make_option<int>("param_int", ""));
 	
 	config.parse(argc, argv);
@@ -143,6 +147,7 @@ BOOST_AUTO_TEST_CASE(t_5)
 	auto &config = cfg::config::instance();
 
 	config.init(
+		"test [options]",
 		cfg::make_option<int>("nr1,i", ""),
 		cfg::make_option<int>("nr2,j", ""));
 	
@@ -165,6 +170,7 @@ BOOST_AUTO_TEST_CASE(t_6)
 	auto &config = cfg::config::instance();
 
 	config.init(
+		"test [options]",
 		cfg::make_option<int>("nr1,i", ""),
 		cfg::make_option<int>("nr2,j", ""));
 	
@@ -191,6 +197,7 @@ BOOST_AUTO_TEST_CASE(t_7)
 	auto &config = cfg::config::instance();
 
 	config.init(
+		"test [options]",
 		cfg::make_option<int>("nr1,i", ""),
 		cfg::make_option<int>("nr2,j", ""));
 	
@@ -215,6 +222,7 @@ BOOST_AUTO_TEST_CASE(t_8)
 	auto &config = cfg::config::instance();
 
 	config.init(
+		"test [options]",
 		cfg::make_option<const char*>("i", ""),
 		cfg::make_option<std::string_view>("j", ""),
 		cfg::make_option("k", "baz", ""));
@@ -237,6 +245,7 @@ BOOST_AUTO_TEST_CASE(t_9)
 	config.set_usage("usage: test [options]");
 
 	config.init(
+		"test [options]",
 		cfg::make_option<const char*>("i", "First option"),
 		cfg::make_option<std::string_view>("j", "This is the second option"),
 		cfg::make_option("a-very-long-option-name,k", "baz", "And, you guessed it, this must be option three."));
@@ -321,6 +330,7 @@ BOOST_AUTO_TEST_CASE(t_11)
 	auto &config = cfg::config::instance();
 
 	config.init(
+		"test [options]",
 		cfg::make_option<std::vector<std::string>>("file,f", ""));
 	
 	config.parse(argc, argv);
@@ -344,6 +354,7 @@ BOOST_AUTO_TEST_CASE(t_12)
 	auto &config = cfg::config::instance();
 
 	config.init(
+		"test [options]",
 		cfg::make_option<std::vector<std::string>>("file,f", ""));
 	
 	std::error_code ec;
@@ -384,6 +395,7 @@ verbose
 	auto &config = cfg::config::instance();
 
 	config.init(
+		"test [options]",
 		cfg::make_option<const char*>("aap", ""),
 		cfg::make_option<int>("noot", ""),
 		cfg::make_option<std::string>("mies", ""),
@@ -438,6 +450,7 @@ BOOST_AUTO_TEST_CASE(file_2)
 
 		std::error_code ec;
 		config.init(
+			"test [options]",
 			cfg::make_option<const char*>("aap", ""),
 			cfg::make_option<int>("noot", ""),
 			cfg::make_option<float>("pi", ""),
@@ -458,6 +471,7 @@ BOOST_AUTO_TEST_CASE(file_3)
 	auto &config = cfg::config::instance();
 
 	config.init(
+		"test [options]",
 		cfg::make_option<const char*>("aap", ""),
 		cfg::make_option<int>("noot", ""),
 		cfg::make_option<std::string>("config", ""));
@@ -487,6 +501,7 @@ BOOST_AUTO_TEST_CASE(file_4)
 	auto &config = cfg::config::instance();
 
 	config.init(
+		"test [options]",
 		cfg::make_option<const char*>("aap", ""),
 		cfg::make_option<int>("noot", ""),
 		cfg::make_option<std::string>("config", ""));
