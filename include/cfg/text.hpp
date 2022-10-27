@@ -159,11 +159,24 @@ struct my_charconv
 		return result;
 	}
 
-	template<typename Iterator>
-	static std::to_chars_result to_chars(Iterator a, Iterator b, const T &value)
+	template <typename Iterator, std::enable_if_t<std::is_floating_point_v<T>, int> = 0>
+	static std::to_chars_result to_chars(Iterator first, Iterator last, const T &value)
 	{
-		assert(false);
-		return { nullptr, std::errc::not_supported };
+		int size = last - first;
+		int r;
+
+		if constexpr (std::is_same_v<T, long double>)
+			r = snprintf(first, last - first, "%lg", value);
+		else
+			r = snprintf(first, last - first, "%g", value);
+
+		std::to_chars_result result;
+		if (r < 0 or r >= size)
+			result = { first, std::errc::value_too_large };
+		else
+			result = { first + r, std::errc() };
+
+		return result;
 	}
 };
 

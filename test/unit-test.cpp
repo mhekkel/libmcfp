@@ -234,14 +234,34 @@ BOOST_AUTO_TEST_CASE(t_9)
 {
 	auto &config = cfg::config::instance();
 
+	config.set_usage("usage: test [options]");
+
 	config.init(
 		cfg::make_option<const char*>("i", "First option"),
 		cfg::make_option<std::string_view>("j", "This is the second option"),
 		cfg::make_option("a-very-long-option-name,k", "baz", "And, you guessed it, this must be option three."));
 	
-	std::cerr << config << std::endl;
-}
+// 	std::stringstream ss;
 
+// 	int fd = open("/dev/null", O_RDWR);
+// 	dup2(fd, STDOUT_FILENO);
+
+// 	ss << config << std::endl;
+
+// 	const char kExpected[] = R"(usage: test [options]
+//   -i arg                                First option
+//   -j arg                                This is the second option
+//   -k [ --a-very-long-option-name ] arg (=baz)
+//                                         And, you guessed it, this must be
+//                                         option three.
+
+// )";
+
+// 	std::cerr << '>' << kExpected << '<' << std::endl;
+// 	std::cerr << '>' << ss.str() << '<' << std::endl;
+
+// 	BOOST_CHECK_EQUAL(ss.str(), kExpected);
+}
 
 BOOST_AUTO_TEST_CASE(t_10)
 {

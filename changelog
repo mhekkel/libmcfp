@@ -1,3 +1,6 @@
+Version 1.1.1
+- Better support for older GCC compilers
+
 Version 1.1.0
 - Parse config files
 

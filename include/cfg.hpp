@@ -258,8 +258,6 @@ namespace detail
 			return {};
 		}
 
-		virtual option_base *clone() const = 0;
-
 		uint32_t width() const
 		{
 			uint32_t result = m_name.length();
@@ -367,11 +365,6 @@ namespace detail
 			else
 				return traits_type::to_string(*m_value);
 		}
-
-		option_base *clone() const override
-		{
-			return new option(*this);
-		}
 	};
 
 	template <typename T>
@@ -400,11 +393,6 @@ namespace detail
 		{
 			return { m_values };
 		}
-
-		option_base *clone() const override
-		{
-			return new multiple_option(*this);
-		}
 	};
 
 	template <>
@@ -415,11 +403,6 @@ namespace detail
 		option(std::string_view name, std::string_view desc, bool hidden)
 			: option_base(name, desc, hidden)
 		{
-		}
-
-		virtual option_base *clone() const
-		{
-			return new option(*this);
 		}
 	};
 
@@ -432,6 +415,11 @@ class config
 {
   public:
 	using option_base = detail::option_base;
+
+	void set_usage(std::string_view usage)
+	{
+		m_usage = usage;
+	}
 
 	template <typename... Options>
 	void init(Options... options)
@@ -487,21 +475,16 @@ class config
 	friend std::ostream &operator<<(std::ostream &os, const config &conf)
 	{
 		uint32_t terminal_width = get_terminal_width();
-		uint32_t options_width = 0;
 
-		for (auto &opt : conf.m_impl->m_options)
-		{
-			if (options_width < opt->width())
-				options_width = opt->width();
-		}
+		if (not conf.m_usage.empty())
+			os << conf.m_usage << std::endl;
+
+		uint32_t options_width = conf.m_impl->get_option_width();
 
 		if (options_width > terminal_width / 2)
 			options_width = terminal_width / 2;
 
-		for (auto &opt : conf.m_impl->m_options)
-		{
-			opt->write(os, options_width);
-		}
+		conf.m_impl->write(os, options_width);
 
 		return os;
 	}
@@ -810,46 +793,85 @@ class config
 	config(const config &) = delete;
 	config &operator=(const config &) = delete;
 
-	struct config_impl
+	struct config_impl_base
 	{
-		template <typename... Options>
-		config_impl(Options... options)
-		{
-			(m_options.push_back(options.clone()), ...);
-		}
+		virtual ~config_impl_base() = default;
 
-		~config_impl()
-		{
-			for (auto opt : m_options)
-				delete opt;
-		}
+		virtual option_base *get_option(std::string_view name) = 0;
+		virtual option_base *get_option(char short_name) = 0;
 
-		option_base *get_option(std::string_view name) const
-		{
-			for (auto &o : m_options)
-			{
-				if (o->m_name == name)
-					return &*o;
-			}
-			return nullptr;
-		}
+		virtual uint32_t get_option_width() const = 0;
+		virtual void write(std::ostream &os, uint32_t width) const = 0;
 
-		option_base *get_option(char short_name) const
-		{
-			for (auto &o : m_options)
-			{
-				if (o->m_short_name == short_name)
-					return &*o;
-			}
-			return nullptr;
-		}
-
-		std::vector<option_base *> m_options;
 		std::vector<std::string> m_operands;
 	};
 
-	std::unique_ptr<config_impl> m_impl;
+	template <typename... Options>
+	struct config_impl : public config_impl_base
+	{
+		static constexpr size_t N = sizeof...(Options);
+
+		config_impl(Options... options)
+			: m_options(std::forward<Options>(options)...)
+		{
+		}
+
+		option_base *get_option(std::string_view name) override
+		{
+			return get_option_by_index<0>(name);
+		}
+
+		template<size_t Ix>
+		option_base *get_option_by_index(std::string_view name)
+		{
+			if constexpr (Ix == N)
+				return nullptr;
+			else
+			{
+				option_base &opt = std::get<Ix>(m_options);
+				return (opt.m_name == name) ? &opt : get_option_by_index<Ix + 1>(name);
+			}
+		}
+
+		option_base *get_option(char short_name) override
+		{
+			return get_option_by_index<0>(short_name);
+		}
+
+		template<size_t Ix>
+		option_base *get_option_by_index(char short_name)
+		{
+			if constexpr (Ix == N)
+				return nullptr;
+			else
+			{
+				option_base &opt = std::get<Ix>(m_options);
+				return (opt.m_short_name == short_name) ? &opt : get_option_by_index<Ix + 1>(short_name);
+			}
+		}
+
+		virtual uint32_t get_option_width() const override
+		{
+			return std::apply([](Options const& ...opts) {
+				uint32_t width = 0;
+				((width = std::max(width, opts.width())), ...);
+				return width;
+			}, m_options);
+		}
+
+		virtual void write(std::ostream &os, uint32_t width) const override
+		{
+			std::apply([&os,width](Options const& ...opts) {
+				(opts.write(os, width), ...);
+			}, m_options);
+		}
+
+		std::tuple<Options...> m_options;
+	};
+
+	std::unique_ptr<config_impl_base> m_impl;
 	bool m_ignore_unknown = false;
+	std::string m_usage;
 };
 
 // --------------------------------------------------------------------
