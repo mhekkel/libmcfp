@@ -1,5 +1,7 @@
-Version 1.2.0
+Version 1.2.1
 - Renamed to libcfp and namespace cfp
+
+Version 1.2.0
 - Fix in word wrapping code
 
 Version 1.1.1
