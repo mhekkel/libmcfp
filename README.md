@@ -2,6 +2,8 @@
 
 A library for parsing command line arguments and making them available throughout a program.
 
+There's a config file parser as well.
+
 ## Synopsis
 
 ```c++
@@ -41,13 +43,12 @@ int main(int argc, char * const argv[])
     }
 
     // Optionally read a config file
-    // Config file is by default called myapp.conf
-    // but can be overridden with the --config parameter
-    // Files will be located in current dictory and /etc
-    if (config.has("config"))
-        config.parse_config_file("config", "myapp.conf",
-            { fs::current_path().string(), "/etc/" }
-        );
+    // The parameters below specify that the config file is by default called myapp.conf
+    // but can be overridden with the --config parameter and the config files should be
+    // located in current dictory or /etc
+    config.parse_config_file("config", "myapp.conf",
+        { fs::current_path().string(), "/etc/" }
+    );
 
     // Operands are parameters that are not options
     // E.g. filenames to process
