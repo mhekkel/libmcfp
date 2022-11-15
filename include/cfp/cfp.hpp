@@ -26,7 +26,7 @@
 
 #pragma once
 
-/// \file cfg.hpp
+/// \file cfp.hpp
 /// This header-only library contains code to parse argc/argv and store the
 /// values contained therein into a singleton object.
 
@@ -43,10 +43,10 @@
 #include <type_traits>
 #include <vector>
 
-#include <cfg/text.hpp>
-#include <cfg/utilities.hpp>
+#include <cfp/text.hpp>
+#include <cfp/utilities.hpp>
 
-namespace cfg
+namespace cfp
 {
 
 // we use the new system_error stuff.
@@ -57,7 +57,8 @@ enum class config_error
 	option_does_not_accept_argument,
 	missing_argument_for_option,
 	option_not_specified,
-	invalid_config_file
+	invalid_config_file,
+	wrong_type_cast
 };
 
 class config_category_impl : public std::error_category
@@ -82,6 +83,8 @@ class config_category_impl : public std::error_category
 				return "option was not specified";
 			case config_error::invalid_config_file:
 				return "config file contains a syntax error";
+			case config_error::wrong_type_cast:
+				return "the implementation contains a type cast error";
 			default:
 				assert(false);
 				return "unknown error code";
@@ -466,7 +469,14 @@ class config
 		if (not value.has_value())
 			throw std::system_error(make_error_code(config_error::option_not_specified), std::string{ name });
 
-		return std::any_cast<T>(value);
+		try
+		{
+			return std::any_cast<T>(value);
+		}
+		catch (const std::bad_cast &ex)
+		{
+			throw std::system_error(make_error_code(config_error::wrong_type_cast), std::string{ name });
+		}
 	}
 
 	const std::vector<std::string> &operands() const
@@ -914,13 +924,13 @@ auto make_hidden_option(std::string_view name, std::string_view description)
 	return detail::option<T>(name, description, true);
 }
 
-} // namespace cfg
+} // namespace cfp
 
 namespace std
 {
 
 template <>
-struct is_error_condition_enum<cfg::config_error>
+struct is_error_condition_enum<cfp::config_error>
 	: public true_type
 {
 };

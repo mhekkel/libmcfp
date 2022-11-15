@@ -1,7 +1,7 @@
 
 ####### Expanded from @PACKAGE_INIT@ by configure_package_config_file() #######
 ####### Any changes to this file will be overwritten by the next CMake run ####
-####### The input file was libconfigConfig.cmake.in                            ########
+####### The input file was libcfpConfig.cmake.in                            ########
 
 get_filename_component(PACKAGE_PREFIX_DIR "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
 
@@ -24,6 +24,6 @@ endmacro()
 
 ####################################################################################
 
-INCLUDE("${CMAKE_CURRENT_LIST_DIR}/libconfigTargets.cmake")
+INCLUDE("${CMAKE_CURRENT_LIST_DIR}/libcfpTargets.cmake")
 
-check_required_components(libconfig)
+check_required_components(libcfp)

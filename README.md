@@ -1,28 +1,28 @@
-# libconfig
+# libcfp
 
 A library for parsing command line arguments and making them available throughout a program.
 
 ## Synopsis
 
 ```c++
-#include <cfg.hpp>
+#include <cfp.hpp>
 
 int VERBOSE = 0;
 
 int main(int argc, char * const argv[])
 {
     // config is a singleton class
-    auto &config = cfg::config::instance();
+    auto &config = cfp::config::instance();
 
     // Tell config what options to accept
     // This can be done more than once, replacing
     // the current set of options.
     config.init("usage: test [options] input output",
-        cfg::make_option("verbose,v", "Use verbose output"),
-        cfg::make_option("help,h", "Show this help"),
-        cfg::make_option<std::string>("opt1", "foo", "First option"),
-        cfg::make_option<std::string>("config", "Name of a config file to use"),
-        cfg::make_option<float>("float-value,f", "Another option")
+        cfp::make_option("verbose,v", "Use verbose output"),
+        cfp::make_option("help,h", "Show this help"),
+        cfp::make_option<std::string>("opt1", "foo", "First option"),
+        cfp::make_option<std::string>("config", "Name of a config file to use"),
+        cfp::make_option<float>("float-value,f", "Another option")
     );
 
     // Do the parsing of argv

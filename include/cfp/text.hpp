@@ -31,7 +31,7 @@
 #include <cmath>
 #include <experimental/type_traits>
 
-namespace cfg
+namespace cfp
 {
 
 template <typename T>
@@ -307,8 +307,6 @@ class word_wrapper : public std::vector<std::string_view>
 			CL, // ClosePunctuation,
 			CP, // CloseParenthesis,
 			QU, // Quotation,
-			// GL, // NonBreaking,
-			// NS, // Nonstarter,
 			EX, // Exlamation,
 			SY, // SymbolAllowingBreakAfter,
 			IS, // InfixNumericSeparator,
@@ -316,36 +314,18 @@ class word_wrapper : public std::vector<std::string_view>
 			PO, // PostfixNumeric,
 			NU, // Numeric,
 			AL, // Alphabetic,
-			// ID, // Ideographic,
-			// IN, // Inseperable,
 			HY, // Hyphen,
 			BA, // BreakAfter,
-			// BB, // BreakBefor,
-			// B2, // BreakOpportunityBeforeAndAfter,
-			// ZW, // ZeroWidthSpace,
 			CM, // CombiningMark,
 			WJ, // WordJoiner,
-			// H2, // HangulLVSyllable,
-			// H3, // HangulLVTSyllable,
-			// JL, // HangulLJamo,
-			// JV, // HangulVJamo,
-			// JT, // HangulTJamo,
 
 			MB, // MandatoryBreak,
-			CR, // CarriageReturn,
-			LF, // LineFeed,
-			// NL, // NextLine,
-			// SU, // Surrogate,
 			SP, // Space,
-			// CB, // ContigentBreakOpportunity,
-			// AM, // Ambiguous,
-			// CC, // ComplexContext,
-			UN, // Unknown
 		};
 
 		static const LineBreakClass kASCII_LineBreakTable[128] = {
 			CM, CM, CM, CM, CM, CM, CM, CM,
-			CM, BA, LF, MB, MB, CR, CM, CM,
+			CM, BA, MB, MB, MB, SP, CM, CM,
 			CM, CM, CM, CM, CM, CM, CM, CM,
 			CM, CM, CM, CM, CM, CM, CM, CM,
 			SP, EX, QU, AL, PR, PO, AL, QU,
@@ -371,52 +351,33 @@ class word_wrapper : public std::vector<std::string_view>
 			CPB      // combining prohibited break
 		};
 
-		// const breakAction brkTable[27][27] = {
 		static const BreakAction brkTable[15][15] = {
-			//         OP   CL   CP   QU   /*GL   NS  */ EX   SY   IS   PR   PO   NU   AL   /*ID   IN  */ HY   BA   /*BB   B2   ZW  */ CM   WJ   /*H2   H3   JL   JV   JT */
-			/* OP */ { PBK, PBK, PBK, PBK, /*PBK, PBK,*/ PBK, PBK, PBK, PBK, PBK, PBK, PBK, /*PBK, PBK,*/ PBK, PBK, /*PBK, PBK, PBK,*/ CPB, PBK, /*PBK, PBK, PBK, PBK, PBK*/ },
-			/* CL */ { DBK, PBK, PBK, IBK, /*IBK, PBK,*/ PBK, PBK, PBK, IBK, IBK, DBK, DBK, /*DBK, DBK,*/ IBK, IBK, /*DBK, DBK, PBK,*/ CIB, PBK, /*DBK, DBK, DBK, DBK, DBK*/ },
-			/* CP */ { DBK, PBK, PBK, IBK, /*IBK, PBK,*/ PBK, PBK, PBK, IBK, IBK, IBK, IBK, /*DBK, DBK,*/ IBK, IBK, /*DBK, DBK, PBK,*/ CIB, PBK, /*DBK, DBK, DBK, DBK, DBK*/ },
-			/* QU */ { PBK, PBK, PBK, IBK, /*IBK, IBK,*/ PBK, PBK, PBK, IBK, IBK, IBK, IBK, /*IBK, IBK,*/ IBK, IBK, /*IBK, IBK, PBK,*/ CIB, PBK, /*IBK, IBK, IBK, IBK, IBK*/ },
-			// /* GL */ { IBK, PBK, PBK, IBK, /*IBK, IBK,*/ PBK, PBK, PBK, IBK, IBK, IBK, IBK, /*IBK, IBK,*/ IBK, IBK, /*IBK, IBK, PBK,*/ CIB, PBK, /*IBK, IBK, IBK, IBK, IBK*/ },
-			// /* NS */ { DBK, PBK, PBK, IBK, /*IBK, IBK,*/ PBK, PBK, PBK, DBK, DBK, DBK, DBK, /*DBK, DBK,*/ IBK, IBK, /*DBK, DBK, PBK,*/ CIB, PBK, /*DBK, DBK, DBK, DBK, DBK*/ },
-			/* EX */ { DBK, PBK, PBK, IBK, /*IBK, IBK,*/ PBK, PBK, PBK, DBK, DBK, DBK, DBK, /*DBK, DBK,*/ IBK, IBK, /*DBK, DBK, PBK,*/ CIB, PBK, /*DBK, DBK, DBK, DBK, DBK*/ },
-			/* SY */ { DBK, PBK, PBK, IBK, /*IBK, IBK,*/ PBK, PBK, PBK, DBK, DBK, IBK, DBK, /*DBK, DBK,*/ IBK, IBK, /*DBK, DBK, PBK,*/ CIB, PBK, /*DBK, DBK, DBK, DBK, DBK*/ },
-			/* IS */ { DBK, PBK, PBK, IBK, /*IBK, IBK,*/ PBK, PBK, PBK, DBK, DBK, IBK, IBK, /*DBK, DBK,*/ IBK, IBK, /*DBK, DBK, PBK,*/ CIB, PBK, /*DBK, DBK, DBK, DBK, DBK*/ },
-			/* PR */ { IBK, PBK, PBK, IBK, /*IBK, IBK,*/ PBK, PBK, PBK, DBK, DBK, IBK, IBK, /*IBK, DBK,*/ IBK, IBK, /*DBK, DBK, PBK,*/ CIB, PBK, /*IBK, IBK, IBK, IBK, IBK*/ },
-			/* PO */ { IBK, PBK, PBK, IBK, /*IBK, IBK,*/ PBK, PBK, PBK, DBK, DBK, IBK, IBK, /*DBK, DBK,*/ IBK, IBK, /*DBK, DBK, PBK,*/ CIB, PBK, /*DBK, DBK, DBK, DBK, DBK*/ },
-			/* NU */ { DBK, PBK, PBK, IBK, /*IBK, IBK,*/ PBK, PBK, PBK, IBK, IBK, IBK, IBK, /*DBK, IBK,*/ IBK, IBK, /*DBK, DBK, PBK,*/ CIB, PBK, /*DBK, DBK, DBK, DBK, DBK*/ },
-			/* AL */ { DBK, PBK, PBK, IBK, /*IBK, IBK,*/ PBK, PBK, PBK, DBK, DBK, IBK, IBK, /*DBK, IBK,*/ IBK, IBK, /*DBK, DBK, PBK,*/ CIB, PBK, /*DBK, DBK, DBK, DBK, DBK*/ },
-			// /* ID */ { DBK, PBK, PBK, IBK, /*IBK, IBK,*/ PBK, PBK, PBK, DBK, IBK, DBK, DBK, /*DBK, IBK,*/ IBK, IBK, /*DBK, DBK, PBK,*/ CIB, PBK, /*DBK, DBK, DBK, DBK, DBK*/ },
-			// /* IN */ { DBK, PBK, PBK, IBK, /*IBK, IBK,*/ PBK, PBK, PBK, DBK, DBK, DBK, DBK, /*DBK, IBK,*/ IBK, IBK, /*DBK, DBK, PBK,*/ CIB, PBK, /*DBK, DBK, DBK, DBK, DBK*/ },
-			/* HY */ { DBK, PBK, PBK, IBK, /*DBK, IBK,*/ PBK, PBK, PBK, DBK, DBK, IBK, DBK, /*DBK, DBK,*/ IBK, IBK, /*DBK, DBK, PBK,*/ CIB, PBK, /*DBK, DBK, DBK, DBK, DBK*/ },
-			/* BA */ { DBK, PBK, PBK, IBK, /*DBK, IBK,*/ PBK, PBK, PBK, DBK, DBK, DBK, DBK, /*DBK, DBK,*/ IBK, IBK, /*DBK, DBK, PBK,*/ CIB, PBK, /*DBK, DBK, DBK, DBK, DBK*/ },
-			// /* BB */ { IBK, PBK, PBK, IBK, /*IBK, IBK,*/ PBK, PBK, PBK, IBK, IBK, IBK, IBK, /*IBK, IBK,*/ IBK, IBK, /*IBK, IBK, PBK,*/ CIB, PBK, /*IBK, IBK, IBK, IBK, IBK*/ },
-			// /* B2 */ { DBK, PBK, PBK, IBK, /*IBK, IBK,*/ PBK, PBK, PBK, DBK, DBK, DBK, DBK, /*DBK, DBK,*/ IBK, IBK, /*DBK, PBK, PBK,*/ CIB, PBK, /*DBK, DBK, DBK, DBK, DBK*/ },
-			// /* ZW */ { DBK, DBK, DBK, DBK, /*DBK, DBK,*/ DBK, DBK, DBK, DBK, DBK, DBK, DBK, /*DBK, DBK,*/ DBK, DBK, /*DBK, DBK, PBK,*/ DBK, DBK, /*DBK, DBK, DBK, DBK, DBK*/ },
-			/* CM */ { DBK, PBK, PBK, IBK, /*IBK, IBK,*/ PBK, PBK, PBK, DBK, DBK, IBK, IBK, /*DBK, IBK,*/ IBK, IBK, /*DBK, DBK, PBK,*/ CIB, PBK, /*DBK, DBK, DBK, DBK, DBK*/ },
-			/* WJ */ { IBK, PBK, PBK, IBK, /*IBK, IBK,*/ PBK, PBK, PBK, IBK, IBK, IBK, IBK, /*IBK, IBK,*/ IBK, IBK, /*IBK, IBK, PBK,*/ CIB, PBK, /*IBK, IBK, IBK, IBK, IBK*/ },
-			// /* H2 */ { DBK, PBK, PBK, IBK, /*IBK, IBK,*/ PBK, PBK, PBK, DBK, IBK, DBK, DBK, /*DBK, IBK,*/ IBK, IBK, /*DBK, DBK, PBK,*/ CIB, PBK, /*DBK, DBK, DBK, IBK, IBK*/ },
-			// /* H3 */ { DBK, PBK, PBK, IBK, /*IBK, IBK,*/ PBK, PBK, PBK, DBK, IBK, DBK, DBK, /*DBK, IBK,*/ IBK, IBK, /*DBK, DBK, PBK,*/ CIB, PBK, /*DBK, DBK, DBK, DBK, IBK*/ },
-			// /* JL */ { DBK, PBK, PBK, IBK, /*IBK, IBK,*/ PBK, PBK, PBK, DBK, IBK, DBK, DBK, /*DBK, IBK,*/ IBK, IBK, /*DBK, DBK, PBK,*/ CIB, PBK, /*IBK, IBK, IBK, IBK, DBK*/ },
-			// /* JV */ { DBK, PBK, PBK, IBK, /*IBK, IBK,*/ PBK, PBK, PBK, DBK, IBK, DBK, DBK, /*DBK, IBK,*/ IBK, IBK, /*DBK, DBK, PBK,*/ CIB, PBK, /*DBK, DBK, DBK, IBK, IBK*/ },
-			// /* JT */ { DBK, PBK, PBK, IBK, /*IBK, IBK,*/ PBK, PBK, PBK, DBK, IBK, DBK, DBK, /*DBK, IBK,*/ IBK, IBK, /*DBK, DBK, PBK,*/ CIB, PBK, /*DBK, DBK, DBK, DBK, IBK*/ },
+			//         OP   CL   CP   QU   EX   SY   IS   PR   PO   NU   AL   HY   BA   CM   WJ 
+			/* OP */ { PBK, PBK, PBK, PBK, PBK, PBK, PBK, PBK, PBK, PBK, PBK, PBK, PBK, CPB, PBK },
+			/* CL */ { DBK, PBK, PBK, IBK, PBK, PBK, PBK, IBK, IBK, DBK, DBK, IBK, IBK, CIB, PBK },
+			/* CP */ { DBK, PBK, PBK, IBK, PBK, PBK, PBK, IBK, IBK, IBK, IBK, IBK, IBK, CIB, PBK },
+			/* QU */ { PBK, PBK, PBK, IBK, PBK, PBK, PBK, IBK, IBK, IBK, IBK, IBK, IBK, CIB, PBK },
+			/* EX */ { DBK, PBK, PBK, IBK, PBK, PBK, PBK, DBK, DBK, DBK, DBK, IBK, IBK, CIB, PBK },
+			/* SY */ { DBK, PBK, PBK, IBK, PBK, PBK, PBK, DBK, DBK, IBK, DBK, IBK, IBK, CIB, PBK },
+			/* IS */ { DBK, PBK, PBK, IBK, PBK, PBK, PBK, DBK, DBK, IBK, IBK, IBK, IBK, CIB, PBK },
+			/* PR */ { IBK, PBK, PBK, IBK, PBK, PBK, PBK, DBK, DBK, IBK, IBK, IBK, IBK, CIB, PBK },
+			/* PO */ { IBK, PBK, PBK, IBK, PBK, PBK, PBK, DBK, DBK, IBK, IBK, IBK, IBK, CIB, PBK },
+			/* NU */ { DBK, PBK, PBK, IBK, PBK, PBK, PBK, IBK, IBK, IBK, IBK, IBK, IBK, CIB, PBK },
+			/* AL */ { DBK, PBK, PBK, IBK, PBK, PBK, PBK, DBK, DBK, IBK, IBK, IBK, IBK, CIB, PBK },
+			/* HY */ { DBK, PBK, PBK, IBK, PBK, PBK, PBK, DBK, DBK, IBK, DBK, IBK, IBK, CIB, PBK },
+			/* BA */ { DBK, PBK, PBK, IBK, PBK, PBK, PBK, DBK, DBK, DBK, DBK, IBK, IBK, CIB, PBK },
+			/* CM */ { DBK, PBK, PBK, IBK, PBK, PBK, PBK, DBK, DBK, IBK, IBK, IBK, IBK, CIB, PBK },
+			/* WJ */ { IBK, PBK, PBK, IBK, PBK, PBK, PBK, IBK, IBK, IBK, IBK, IBK, IBK, CIB, PBK },
 		};
 
 		uint8_t ch = *text;
 
 		LineBreakClass cls;
 
-		if (ch == '\n')
-			cls = MB;
-		else if (ch < 128)
-		{
+		if (ch < 128)
 			cls = kASCII_LineBreakTable[ch];
-			if (cls > MB and cls != SP) // duh...
-				cls = AL;
-		}
 		else
-			cls = UN;
+			cls = AL;
 
 		if (cls == SP)
 			cls = WJ;
@@ -429,13 +390,16 @@ class word_wrapper : public std::vector<std::string_view>
 
 			LineBreakClass lcls = ncls;
 
-			if (ch == '\n')
+			if (ch < 128)
+				ncls = kASCII_LineBreakTable[ch];
+			else
+				ncls = AL;
+
+			if (ncls == MB)
 			{
 				++text;
 				break;
 			}
-
-			ncls = kASCII_LineBreakTable[ch];
 
 			if (ncls == SP)
 				continue;
@@ -454,4 +418,4 @@ class word_wrapper : public std::vector<std::string_view>
 	size_t m_width;
 };
 
-} // namespace cfg
+} // namespace cfp

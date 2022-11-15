@@ -1,5 +1,10 @@
+Version 1.2.0
+- Renamed to libcfp and namespace cfp
+- Fix in word wrapping code
+
 Version 1.1.1
 - Better support for older GCC compilers
+
 Version 1.2.0
 - New, tuples base implementation
 - Add 'usage' parameter to init

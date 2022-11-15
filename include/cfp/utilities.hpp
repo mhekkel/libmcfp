@@ -37,7 +37,7 @@
 #include <windows.h>
 #endif
 
-namespace cfg
+namespace cfp
 {
 
 #if defined(_MSC_VER)
@@ -73,4 +73,4 @@ inline uint32_t get_terminal_width()
 }
 #endif
 
-} // namespace cfg
+} // namespace cfp
