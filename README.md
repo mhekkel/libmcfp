@@ -7,67 +7,111 @@ There's a config file parser as well.
 ## Synopsis
 
 ```c++
-#include <cfp.hpp>
+// Example of using libcfp
 
-int VERBOSE = 0;
+#include <iostream>
+#include <filesystem>
+
+#include <cfp/cfp.hpp>
 
 int main(int argc, char * const argv[])
 {
-    // config is a singleton class
+    // config is a singleton
     auto &config = cfp::config::instance();
 
-    // Tell config what options to accept
-    // This can be done more than once, replacing
-    // the current set of options.
-    config.init("usage: test [options] input output",
-        cfp::make_option("verbose,v", "Use verbose output"),
-        cfp::make_option("help,h", "Show this help"),
-        cfp::make_option<std::string>("opt1", "foo", "First option"),
-        cfp::make_option<std::string>("config", "Name of a config file to use"),
-        cfp::make_option<float>("float-value,f", "Another option")
+    // Initialise the config object. This can be done more than once,
+    // e.g. when you have different sets of options depending on the
+    // first operand.
+
+    config.init(
+        // The first parameter is the 'usage' line, used when printing out the options
+        "usage: example [options] file",
+
+        // Flag options (not taking a parameter)
+        cfp::make_option("help,h", "Print this help text"),
+        cfp::make_option("verbose,v", "Verbose level, can be specified more than once to increase level"),
+
+        // A couple of options with parameter
+        cfp::make_option<std::string>("config", "Config file to use"),
+        cfp::make_option<std::string>("text", "The text string to echo"),
+
+        // And options with a default parameter
+        cfp::make_option<int>("a", 1, "first parameter for multiplication"),
+        cfp::make_option<float>("b", 2.0f, "second parameter for multiplication"),
+
+        // You can also allow multiple values
+        cfp::make_option<std::vector<std::string>>("c", "Option c, can be specified more than once"),
+
+        // This option is not shown when printing out the options
+        cfp::make_hidden_option("d", "Debug mode")
     );
 
-    // Do the parsing of argv
-    config.parse(argc, argv);
+    // There are two flavors of calls, ones that take an error_code
+    // and return the error in that code in case something is wrong.
+    // The alternative is calling without an error_code, in which
+    // case an exception is thrown when appropriate
 
-    // Set verbose based on number of times the
-    // -v or --verbose flag was passed
-    VERBOSE = config.count("verbose");
+    // Parse the command line arguments here
 
-    // Check for the help flag
-    if (config.has("help"))
+    std::error_code ec;
+    config.parse(argc, argv, ec);
+    if (ec)
     {
-        // print out the options to the screen
-        std::cout << config << std::endl;
-        exit(0);
-    }
-
-    // Optionally read a config file
-    // The parameters below specify that the config file is by default called myapp.conf
-    // but can be overridden with the --config parameter and the config files should be
-    // located in current dictory or /etc
-    config.parse_config_file("config", "myapp.conf",
-        { fs::current_path().string(), "/etc/" }
-    );
-
-    // Operands are parameters that are not options
-    // E.g. filenames to process
-    if (config.operands().size() != 2)
-    {
-        std::cerr << config << std::endl;
+        std::cerr << "Error parsing arguments: " << ec.message() << std::endl;
         exit(1);
     }
 
-    std::filesystem::path input = config.operands().front();
-    std::filesystem::path output = config.operands().back();
-    
-    // Get values from options with a value
-    std::option1 = config.get<std::string>("opt1");
-    float option2 = 3.14;
-    if (config.has("float-value"))
-        option2 = config.get<float>("float-value");
+    // First check, to see if we need to stop early on
 
-    ... etc
+    if (config.has("help") or config.operands().size() != 1)
+    {
+        // This will print out the 'usage' message with all the visible options
+        std::cerr << config << std::endl;
+        exit(config.has("help") ? 0 : 1);
+    }
 
+    // Configuration files, read it if it exists. If the users
+    // specifies an alternative config file, it is an error if that
+    // file cannot be found.
+
+    config.parse_config_file("config", "example.conf", { "." }, ec);
+    if (ec)
+    {
+        std::cerr << "Error parsing config file: " << ec.message() << std::endl;
+        exit(1);
+    }
+
+    // If options are specified more than once, you can get the count 
+
+    int VERBOSE = config.count("verbose");
+
+    // Operands are arguments that are not options, e.g. files to act upon
+
+    std::cout << "The first operand is " << config.operands().front() << std::endl;
+
+    // Getting the value of a string option
+
+    auto text = config.get<std::string>("text", ec);
+    if (ec)
+    {
+        std::cerr << "Error getting option text: " << ec.message() << std::endl;
+        exit(1);
+    }
+
+    std::cout << "Text option is " << text << std::endl;
+
+    // Likewise for numeric options
+
+    int a = config.get<int>("a");
+    float b = config.get<float>("b");
+
+    std::cout << "a (" << a << ") * b (" << b << ") = " << a * b << std::endl;
+
+    // And multiple strings
+
+    for (std::string s : config.get<std::vector<std::string>>("c"))
+        std::cout << "c: " << s << std::endl;
+
+    return 0;
 }
 ```

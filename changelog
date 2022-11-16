@@ -1,3 +1,7 @@
+Version 1.2.2
+- Added a non-throwing get
+- Added extended example code
+
 Version 1.2.1
 - Renamed to libcfp and namespace cfp
 

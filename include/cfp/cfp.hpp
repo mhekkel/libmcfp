@@ -58,7 +58,8 @@ enum class config_error
 	missing_argument_for_option,
 	option_not_specified,
 	invalid_config_file,
-	wrong_type_cast
+	wrong_type_cast,
+	config_file_not_found
 };
 
 class config_category_impl : public std::error_category
@@ -85,6 +86,8 @@ class config_category_impl : public std::error_category
 				return "config file contains a syntax error";
 			case config_error::wrong_type_cast:
 				return "the implementation contains a type cast error";
+			case config_error::config_file_not_found:
+				return "the specified config file was not found";
 			default:
 				assert(false);
 				return "unknown error code";
@@ -279,6 +282,9 @@ namespace detail
 
 		void write(std::ostream &os, uint32_t width) const
 		{
+			if (m_hidden) // quick exit
+				return;
+
 			uint32_t w2 = 2;
 			os << "  ";
 			if (m_short_name)
@@ -460,23 +466,47 @@ class config
 	template <typename T>
 	auto get(std::string_view name) const
 	{
+		using return_type = std::remove_cv_t<T>;
+
+		std::error_code ec;
+		return_type result = get<T>(name, ec);
+
+		if (ec)
+			throw std::system_error(ec, std::string{ name });
+
+		return result;
+	}
+
+	template <typename T>
+	auto get(std::string_view name, std::error_code &ec) const
+	{
+		using return_type = std::remove_cv_t<T>;
+
+		return_type result{};
 		auto opt = m_impl->get_option(name);
+
 		if (opt == nullptr)
-			throw std::system_error(make_error_code(config_error::unknown_option), std::string{ name });
-
-		std::any value = opt->get_value();
-
-		if (not value.has_value())
-			throw std::system_error(make_error_code(config_error::option_not_specified), std::string{ name });
-
-		try
+			ec = make_error_code(config_error::unknown_option);
+		else
 		{
-			return std::any_cast<T>(value);
+			std::any value = opt->get_value();
+
+			if (not value.has_value())
+				ec = make_error_code(config_error::option_not_specified);
+			else
+			{
+				try
+				{
+					result = std::any_cast<T>(value);
+				}
+				catch (const std::bad_cast &ex)
+				{
+					ec = make_error_code(config_error::wrong_type_cast);
+				}
+			}
 		}
-		catch (const std::bad_cast &ex)
-		{
-			throw std::system_error(make_error_code(config_error::wrong_type_cast), std::string{ name });
-		}
+
+		return result;
 	}
 
 	const std::vector<std::string> &operands() const
@@ -524,6 +554,8 @@ class config
 		std::initializer_list<std::string_view> search_dirs, std::error_code &ec)
 	{
 		std::string file_name{ config_file_name };
+		bool parsed_config_file = false;
+
 		if (has(config_option))
 			file_name = get<std::string>(config_option);
 
@@ -535,8 +567,12 @@ class config
 				continue;
 
 			parse_config_file(file, ec);
+			parsed_config_file = true;
 			break;
 		}
+
+		if (not parsed_config_file and has(config_option))
+			ec = make_error_code(config_error::config_file_not_found);
 	}
 
 	void parse_config_file(const std::filesystem::path &file, std::error_code &ec)
@@ -599,7 +635,7 @@ class config
 				case State::NAME:
 					if (is_name_char(ch))
 						name.insert(name.end(), static_cast<char>(ch));
-					else if	(is_eoln(ch))
+					else if (is_eoln(ch))
 					{
 						auto opt = m_impl->get_option(name);
 
@@ -833,7 +869,7 @@ class config
 			return get_option<0>(name);
 		}
 
-		template<size_t Ix>
+		template <size_t Ix>
 		option_base *get_option([[maybe_unused]] std::string_view name)
 		{
 			if constexpr (Ix == N)
@@ -850,7 +886,7 @@ class config
 			return get_option<0>(short_name);
 		}
 
-		template<size_t Ix>
+		template <size_t Ix>
 		option_base *get_option([[maybe_unused]] char short_name)
 		{
 			if constexpr (Ix == N)
