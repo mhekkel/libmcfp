@@ -26,7 +26,7 @@
 
 #pragma once
 
-/// \file cfp.hpp
+/// \file mcfp.hpp
 /// This header-only library contains code to parse argc/argv and store the
 /// values contained therein into a singleton object.
 
@@ -43,10 +43,10 @@
 #include <type_traits>
 #include <vector>
 
-#include <cfp/text.hpp>
-#include <cfp/utilities.hpp>
+#include <mcfp/text.hpp>
+#include <mcfp/utilities.hpp>
 
-namespace cfp
+namespace mcfp
 {
 
 // we use the new system_error stuff.
@@ -960,13 +960,13 @@ auto make_hidden_option(std::string_view name, std::string_view description)
 	return detail::option<T>(name, description, true);
 }
 
-} // namespace cfp
+} // namespace mcfp
 
 namespace std
 {
 
 template <>
-struct is_error_condition_enum<cfp::config_error>
+struct is_error_condition_enum<mcfp::config_error>
 	: public true_type
 {
 };

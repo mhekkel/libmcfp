@@ -1,23 +1,23 @@
-# libcfp
+# libmcfp
 
-A library for parsing command line arguments and making them available throughout a program.
+A library for parsing command line arguments and configuration files and making them available throughout a program.
 
 There's a config file parser as well.
 
 ## Synopsis
 
 ```c++
-// Example of using libcfp
+// Example of using libmcfp
 
 #include <iostream>
 #include <filesystem>
 
-#include <cfp/cfp.hpp>
+#include <mcfp/mcfp.hpp>
 
 int main(int argc, char * const argv[])
 {
     // config is a singleton
-    auto &config = cfp::config::instance();
+    auto &config = mcfp::config::instance();
 
     // Initialise the config object. This can be done more than once,
     // e.g. when you have different sets of options depending on the
@@ -28,22 +28,22 @@ int main(int argc, char * const argv[])
         "usage: example [options] file",
 
         // Flag options (not taking a parameter)
-        cfp::make_option("help,h", "Print this help text"),
-        cfp::make_option("verbose,v", "Verbose level, can be specified more than once to increase level"),
+        mcfp::make_option("help,h", "Print this help text"),
+        mcfp::make_option("verbose,v", "Verbose level, can be specified more than once to increase level"),
 
         // A couple of options with parameter
-        cfp::make_option<std::string>("config", "Config file to use"),
-        cfp::make_option<std::string>("text", "The text string to echo"),
+        mcfp::make_option<std::string>("config", "Config file to use"),
+        mcfp::make_option<std::string>("text", "The text string to echo"),
 
         // And options with a default parameter
-        cfp::make_option<int>("a", 1, "first parameter for multiplication"),
-        cfp::make_option<float>("b", 2.0f, "second parameter for multiplication"),
+        mcfp::make_option<int>("a", 1, "first parameter for multiplication"),
+        mcfp::make_option<float>("b", 2.0f, "second parameter for multiplication"),
 
         // You can also allow multiple values
-        cfp::make_option<std::vector<std::string>>("c", "Option c, can be specified more than once"),
+        mcfp::make_option<std::vector<std::string>>("c", "Option c, can be specified more than once"),
 
         // This option is not shown when printing out the options
-        cfp::make_hidden_option("d", "Debug mode")
+        mcfp::make_hidden_option("d", "Debug mode")
     );
 
     // There are two flavors of calls, ones that take an error_code

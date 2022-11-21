@@ -31,7 +31,7 @@
 #include <cmath>
 #include <experimental/type_traits>
 
-namespace cfp
+namespace mcfp
 {
 
 template <typename T>
@@ -418,4 +418,4 @@ class word_wrapper : public std::vector<std::string_view>
 	size_t m_width;
 };
 
-} // namespace cfp
+} // namespace mcfp

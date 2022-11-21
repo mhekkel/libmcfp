@@ -29,7 +29,7 @@
 
 #include <filesystem>
 
-#include <cfp/cfp.hpp>
+#include <mcfp/mcfp.hpp>
 
 namespace tt = boost::test_tools;
 namespace utf = boost::unit_test;
@@ -57,15 +57,15 @@ BOOST_AUTO_TEST_CASE(t_1, * utf::tolerance(0.001))
 		"test", "--flag", nullptr
 	};
 
-	auto &config = cfp::config::instance();
+	auto &config = mcfp::config::instance();
 
 	config.init(
 		"test [options]",
-		cfp::make_option("flag", ""),
-		cfp::make_option<int>("param_int", ""),
-		cfp::make_option("param_int_2", 1, ""),
-		cfp::make_option<float>("param_float", ""),
-		cfp::make_option("param_float_2", 3.14f, ""));
+		mcfp::make_option("flag", ""),
+		mcfp::make_option<int>("param_int", ""),
+		mcfp::make_option("param_int_2", 1, ""),
+		mcfp::make_option<float>("param_float", ""),
+		mcfp::make_option("param_float_2", 3.14f, ""));
 	
 	config.parse(argc, argv);
 
@@ -88,11 +88,11 @@ BOOST_AUTO_TEST_CASE(t_2)
 		"test", "-vvvv", "--verbose", nullptr
 	};
 
-	auto &config = cfp::config::instance();
+	auto &config = mcfp::config::instance();
 
 	config.init(
 		"test [options]",
-		cfp::make_option("verbose,v", ""));
+		mcfp::make_option("verbose,v", ""));
 	
 	config.parse(argc, argv);
 
@@ -106,11 +106,11 @@ BOOST_AUTO_TEST_CASE(t_3)
 		"test", "--param_int=42", nullptr
 	};
 
-	auto &config = cfp::config::instance();
+	auto &config = mcfp::config::instance();
 
 	config.init(
 		"test [options]",
-		cfp::make_option<int>("param_int", ""));
+		mcfp::make_option<int>("param_int", ""));
 	
 	config.parse(argc, argv);
 
@@ -125,11 +125,11 @@ BOOST_AUTO_TEST_CASE(t_4)
 		"test", "--param_int", "42", nullptr
 	};
 
-	auto &config = cfp::config::instance();
+	auto &config = mcfp::config::instance();
 
 	config.init(
 		"test [options]",
-		cfp::make_option<int>("param_int", ""));
+		mcfp::make_option<int>("param_int", ""));
 	
 	config.parse(argc, argv);
 
@@ -144,12 +144,12 @@ BOOST_AUTO_TEST_CASE(t_5)
 	};
 	int argc = sizeof(argv) / sizeof(char*);
 	
-	auto &config = cfp::config::instance();
+	auto &config = mcfp::config::instance();
 
 	config.init(
 		"test [options]",
-		cfp::make_option<int>("nr1,i", ""),
-		cfp::make_option<int>("nr2,j", ""));
+		mcfp::make_option<int>("nr1,i", ""),
+		mcfp::make_option<int>("nr2,j", ""));
 	
 	config.parse(argc, argv);
 
@@ -167,12 +167,12 @@ BOOST_AUTO_TEST_CASE(t_6)
 	};
 	int argc = sizeof(argv) / sizeof(char*);
 	
-	auto &config = cfp::config::instance();
+	auto &config = mcfp::config::instance();
 
 	config.init(
 		"test [options]",
-		cfp::make_option<int>("nr1,i", ""),
-		cfp::make_option<int>("nr2,j", ""));
+		mcfp::make_option<int>("nr1,i", ""),
+		mcfp::make_option<int>("nr2,j", ""));
 	
 	config.parse(argc, argv);
 
@@ -194,12 +194,12 @@ BOOST_AUTO_TEST_CASE(t_7)
 	};
 	int argc = sizeof(argv) / sizeof(char*) - 1;
 	
-	auto &config = cfp::config::instance();
+	auto &config = mcfp::config::instance();
 
 	config.init(
 		"test [options]",
-		cfp::make_option<int>("nr1,i", ""),
-		cfp::make_option<int>("nr2,j", ""));
+		mcfp::make_option<int>("nr1,i", ""),
+		mcfp::make_option<int>("nr2,j", ""));
 	
 	config.parse(argc, argv);
 
@@ -219,13 +219,13 @@ BOOST_AUTO_TEST_CASE(t_8)
 	};
 	int argc = sizeof(argv) / sizeof(char*) - 1;
 	
-	auto &config = cfp::config::instance();
+	auto &config = mcfp::config::instance();
 
 	config.init(
 		"test [options]",
-		cfp::make_option<const char*>("i", ""),
-		cfp::make_option<std::string_view>("j", ""),
-		cfp::make_option("k", "baz", ""));
+		mcfp::make_option<const char*>("i", ""),
+		mcfp::make_option<std::string_view>("j", ""),
+		mcfp::make_option("k", "baz", ""));
 	
 	config.parse(argc, argv);
 
@@ -240,15 +240,15 @@ BOOST_AUTO_TEST_CASE(t_8)
 
 BOOST_AUTO_TEST_CASE(t_9)
 {
-	auto &config = cfp::config::instance();
+	auto &config = mcfp::config::instance();
 
 	config.set_usage("usage: test [options]");
 
 	config.init(
 		"test [options]",
-		cfp::make_option<const char*>("i", "First option"),
-		cfp::make_option<std::string_view>("j", "This is the second option"),
-		cfp::make_option("a-very-long-option-name,k", "baz", "And, you guessed it, this must be option three."));
+		mcfp::make_option<const char*>("i", "First option"),
+		mcfp::make_option<std::string_view>("j", "This is the second option"),
+		mcfp::make_option("a-very-long-option-name,k", "baz", "And, you guessed it, this must be option three."));
 	
 // 	std::stringstream ss;
 
@@ -286,7 +286,7 @@ Redistribution and use in source and binary forms, with or without modification,
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 )";
 
-	cfp::word_wrapper ww(s1, 80);
+	mcfp::word_wrapper ww(s1, 80);
 
 	std::ostringstream os;
 
@@ -327,11 +327,11 @@ BOOST_AUTO_TEST_CASE(t_11)
 	};
 	int argc = sizeof(argv) / sizeof(char*) - 1;
 
-	auto &config = cfp::config::instance();
+	auto &config = mcfp::config::instance();
 
 	config.init(
 		"test [options]",
-		cfp::make_option<std::vector<std::string>>("file,f", ""));
+		mcfp::make_option<std::vector<std::string>>("file,f", ""));
 	
 	config.parse(argc, argv);
 
@@ -351,15 +351,15 @@ BOOST_AUTO_TEST_CASE(t_12)
 	};
 	int argc = sizeof(argv) / sizeof(char*) - 1;
 
-	auto &config = cfp::config::instance();
+	auto &config = mcfp::config::instance();
 
 	config.init(
 		"test [options]",
-		cfp::make_option<std::vector<std::string>>("file,f", ""));
+		mcfp::make_option<std::vector<std::string>>("file,f", ""));
 	
 	std::error_code ec;
 	config.parse(argc, argv, ec);
-	BOOST_CHECK(ec == cfp::config_error::unknown_option);
+	BOOST_CHECK(ec == mcfp::config_error::unknown_option);
 
 	config.set_ignore_unknown(true);
 	ec = {};
@@ -392,16 +392,16 @@ verbose
 
 	std::istream is(&buffer);
 
-	auto &config = cfp::config::instance();
+	auto &config = mcfp::config::instance();
 
 	config.init(
 		"test [options]",
-		cfp::make_option<const char*>("aap", ""),
-		cfp::make_option<int>("noot", ""),
-		cfp::make_option<std::string>("mies", ""),
-		cfp::make_option<float>("pi", ""),
-		cfp::make_option<std::string>("s", ""),
-		cfp::make_option("verbose,v", ""));
+		mcfp::make_option<const char*>("aap", ""),
+		mcfp::make_option<int>("noot", ""),
+		mcfp::make_option<std::string>("mies", ""),
+		mcfp::make_option<float>("pi", ""),
+		mcfp::make_option<std::string>("s", ""),
+		mcfp::make_option("verbose,v", ""));
 	
 	std::error_code ec;
 
@@ -426,13 +426,13 @@ verbose
 
 BOOST_AUTO_TEST_CASE(file_2)
 {
-	auto &config = cfp::config::instance();
+	auto &config = mcfp::config::instance();
 
 	std::tuple<std::string_view,std::string_view,std::error_code> tests[] = {
-		{ "aap !", "aap", make_error_code(cfp::config_error::invalid_config_file) },
+		{ "aap !", "aap", make_error_code(mcfp::config_error::invalid_config_file) },
 		{ "aap=aap", "aap", {} },
-		{ "aap", "aap", make_error_code(cfp::config_error::missing_argument_for_option) },
-		{ "verbose=1", "verbose", make_error_code(cfp::config_error::option_does_not_accept_argument) },
+		{ "aap", "aap", make_error_code(mcfp::config_error::missing_argument_for_option) },
+		{ "verbose=1", "verbose", make_error_code(mcfp::config_error::option_does_not_accept_argument) },
 				
 	};
 
@@ -451,11 +451,11 @@ BOOST_AUTO_TEST_CASE(file_2)
 		std::error_code ec;
 		config.init(
 			"test [options]",
-			cfp::make_option<const char*>("aap", ""),
-			cfp::make_option<int>("noot", ""),
-			cfp::make_option<float>("pi", ""),
-			cfp::make_option<std::string>("s", ""),
-			cfp::make_option("verbose,v", ""));
+			mcfp::make_option<const char*>("aap", ""),
+			mcfp::make_option<int>("noot", ""),
+			mcfp::make_option<float>("pi", ""),
+			mcfp::make_option<std::string>("s", ""),
+			mcfp::make_option("verbose,v", ""));
 		
 		config.parse_config_file(is, ec);
 
@@ -468,13 +468,13 @@ BOOST_AUTO_TEST_CASE(file_2)
 
 BOOST_AUTO_TEST_CASE(file_3)
 {
-	auto &config = cfp::config::instance();
+	auto &config = mcfp::config::instance();
 
 	config.init(
 		"test [options]",
-		cfp::make_option<const char*>("aap", ""),
-		cfp::make_option<int>("noot", ""),
-		cfp::make_option<std::string>("config", ""));
+		mcfp::make_option<const char*>("aap", ""),
+		mcfp::make_option<int>("noot", ""),
+		mcfp::make_option<std::string>("config", ""));
 	
 	std::error_code ec;
 
@@ -498,13 +498,13 @@ BOOST_AUTO_TEST_CASE(file_3)
 
 BOOST_AUTO_TEST_CASE(file_4)
 {
-	auto &config = cfp::config::instance();
+	auto &config = mcfp::config::instance();
 
 	config.init(
 		"test [options]",
-		cfp::make_option<const char*>("aap", ""),
-		cfp::make_option<int>("noot", ""),
-		cfp::make_option<std::string>("config", ""));
+		mcfp::make_option<const char*>("aap", ""),
+		mcfp::make_option<int>("noot", ""),
+		mcfp::make_option<std::string>("config", ""));
 	
 	std::error_code ec;
 

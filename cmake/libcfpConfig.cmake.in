@@ -1,5 +1,0 @@
-@PACKAGE_INIT@
-
-INCLUDE("${CMAKE_CURRENT_LIST_DIR}/libcfpTargets.cmake")
-
-check_required_components(libcfp)

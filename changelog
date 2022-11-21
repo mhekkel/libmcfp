@@ -3,7 +3,7 @@ Version 1.2.2
 - Added extended example code
 
 Version 1.2.1
-- Renamed to libcfp and namespace cfp
+- Renamed to libmcfp and namespace mcfp
 
 Version 1.2.0
 - Fix in word wrapping code
