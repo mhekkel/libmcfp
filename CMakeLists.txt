@@ -105,7 +105,7 @@ endif()
 
 configure_package_config_file(
 	${PROJECT_SOURCE_DIR}/cmake/libmcfpConfig.cmake.in
-	${PROJECT_SOURCE_DIR}/cmake/libmcfpConfig.cmake
+	${CMAKE_CURRENT_BINARY_DIR}/libmcfpConfig.cmake
 	INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libmcfp
 	PATH_VARS INCLUDE_INSTALL_DIR
 )
@@ -116,7 +116,7 @@ install(EXPORT libmcfpConfig
 	DESTINATION ${CONFIG_LOC})
 
 install(
-	FILES cmake/libmcfpConfig.cmake "${version_config}"
+	FILES ${CMAKE_CURRENT_BINARY_DIR}/libmcfpConfig.cmake "${version_config}"
 	DESTINATION ${CONFIG_LOC})
 
 if(ENABLE_TESTING)
