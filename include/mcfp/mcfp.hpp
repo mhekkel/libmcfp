@@ -870,7 +870,7 @@ class config
 		}
 
 		template <size_t Ix>
-		option_base *get_option([[maybe_unused]] std::string_view name)
+		option_base *get_option(std::string_view /*name*/)
 		{
 			if constexpr (Ix == N)
 				return nullptr;
@@ -887,7 +887,7 @@ class config
 		}
 
 		template <size_t Ix>
-		option_base *get_option([[maybe_unused]] char short_name)
+		option_base *get_option(char /*short_name*/)
 		{
 			if constexpr (Ix == N)
 				return nullptr;
