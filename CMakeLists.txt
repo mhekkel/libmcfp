@@ -59,6 +59,8 @@ if(MSVC)
 
 	get_WIN32_WINNT(ver)
 	add_definitions(-D_WIN32_WINNT=${ver})
+
+	add_definitions(-DNOMINMAX)
 endif()
 
 add_library(libmcfp INTERFACE)
@@ -122,9 +124,11 @@ install(
 if(ENABLE_TESTING)
 	enable_testing()
 
+	find_package(Boost REQUIRED)
+
 	add_executable(libmcfp-unit-test ${PROJECT_SOURCE_DIR}/test/unit-test.cpp)
 
-	target_link_libraries(libmcfp-unit-test libmcfp::libmcfp)
+	target_link_libraries(libmcfp-unit-test libmcfp::libmcfp Boost::boost)
 
 	if(MSVC)
 		# Specify unwind semantics so that MSVC knowns how to handle exceptions

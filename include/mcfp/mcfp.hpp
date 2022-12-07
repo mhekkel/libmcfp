@@ -166,7 +166,7 @@ namespace detail
 		static value_type set_value(std::string_view argument, std::error_code &ec)
 		{
 			value_type value{};
-			auto r = charconv<value_type>::from_chars(argument.begin(), argument.end(), value);
+			auto r = charconv<value_type>::from_chars(argument.data(), argument.data() + argument.length(), value);
 			if (r.ec != std::errc())
 				ec = std::make_error_code(r.ec);
 			return value;
@@ -499,7 +499,7 @@ class config
 				{
 					result = std::any_cast<T>(value);
 				}
-				catch (const std::bad_cast &ex)
+				catch (const std::bad_cast &)
 				{
 					ec = make_error_code(config_error::wrong_type_cast);
 				}
@@ -870,7 +870,7 @@ class config
 		}
 
 		template <size_t Ix>
-		option_base *get_option(std::string_view /*name*/)
+		option_base *get_option([[maybe_unused]] std::string_view name)
 		{
 			if constexpr (Ix == N)
 				return nullptr;
@@ -887,7 +887,7 @@ class config
 		}
 
 		template <size_t Ix>
-		option_base *get_option(char /*short_name*/)
+		option_base *get_option([[maybe_unused]] char short_name)
 		{
 			if constexpr (Ix == N)
 				return nullptr;

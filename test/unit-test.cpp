@@ -365,7 +365,7 @@ BOOST_AUTO_TEST_CASE(t_12)
 	ec = {};
 
 	config.parse(argc, argv, ec);
-	BOOST_CHECK(ec == std::errc());
+	BOOST_CHECK(not ec);
 }
 
 // --------------------------------------------------------------------
@@ -407,7 +407,7 @@ verbose
 
 	config.parse_config_file(is, ec);
 
-	BOOST_CHECK(ec == std::errc());
+	BOOST_CHECK(not ec);
 
 	BOOST_CHECK(config.has("aap"));
 	BOOST_CHECK_EQUAL(config.get<std::string>("aap"), "1");
@@ -487,7 +487,7 @@ BOOST_AUTO_TEST_CASE(file_3)
 
 	config.parse_config_file("config", "bla-bla.conf", { gTestDir.string() }, ec);
 
-	BOOST_CHECK(ec == std::errc());
+	BOOST_CHECK(not ec);
 
 	BOOST_CHECK(config.has("aap"));
 	BOOST_CHECK_EQUAL(config.get<std::string>("aap"), "aap");
@@ -517,7 +517,7 @@ BOOST_AUTO_TEST_CASE(file_4)
 
 	config.parse_config_file("config", "unit-test.conf", { gTestDir.string() }, ec);
 
-	BOOST_CHECK(ec == std::errc());
+	BOOST_CHECK(not ec);
 
 	BOOST_CHECK(config.has("aap"));
 	BOOST_CHECK_EQUAL(config.get<std::string>("aap"), "aap");
