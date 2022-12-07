@@ -94,8 +94,8 @@ constexpr inline bool is_detected_exact_v = is_detected_exact<Expected, Op, Args
 
 #else
 
-template <class... Args>
-using std::experimental::is_detected<Args...>;
+template <template<class...> class Op, class... Args>
+constexpr inline bool is_detected_v = std::experimental::is_detected<Op,Args...>::value;
 
 #endif
 
