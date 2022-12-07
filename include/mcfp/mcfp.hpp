@@ -94,7 +94,7 @@ class config_category_impl : public std::error_category
 		}
 	}
 
-	bool equivalent(const std::error_code &code, int condition) const noexcept override
+	bool equivalent(const std::error_code &/*code*/, int /*condition*/) const noexcept override
 	{
 		return false;
 	}
@@ -137,9 +137,9 @@ struct is_container_type : std::false_type
 template <typename T>
 struct is_container_type<T,
 	std::enable_if_t<
-		std::experimental::is_detected_v<value_type_t, T> and
-		std::experimental::is_detected_v<iterator_t, T> and
-		not std::experimental::is_detected_v<std_string_npos_t, T>>> : std::true_type
+		is_detected_v<value_type_t, T> and
+		is_detected_v<iterator_t, T> and
+		not is_detected_v<std_string_npos_t, T>>> : std::true_type
 {
 };
 
@@ -187,7 +187,7 @@ namespace detail
 	{
 		using value_type = std::filesystem::path;
 
-		static value_type set_value(std::string_view argument, std::error_code &ec)
+		static value_type set_value(std::string_view argument, std::error_code &/*ec*/)
 		{
 			return value_type{ argument };
 		}
@@ -203,7 +203,7 @@ namespace detail
 	{
 		using value_type = std::string;
 
-		static value_type set_value(std::string_view argument, std::error_code &ec)
+		static value_type set_value(std::string_view argument, std::error_code &/*ec*/)
 		{
 			return value_type{ argument };
 		}
@@ -249,7 +249,7 @@ namespace detail
 
 		virtual ~option_base() = default;
 
-		virtual void set_value(std::string_view value, std::error_code &ec)
+		virtual void set_value(std::string_view /*value*/, std::error_code &/*ec*/)
 		{
 			assert(false);
 		}
@@ -264,9 +264,9 @@ namespace detail
 			return {};
 		}
 
-		uint32_t width() const
+		size_t width() const
 		{
-			uint32_t result = m_name.length();
+			size_t result = m_name.length();
 			if (result <= 1)
 				result = 2;
 			else if (m_short_name != 0)
@@ -280,12 +280,12 @@ namespace detail
 			return result + 6;
 		}
 
-		void write(std::ostream &os, uint32_t width) const
+		void write(std::ostream &os, size_t width) const
 		{
 			if (m_hidden) // quick exit
 				return;
 
-			uint32_t w2 = 2;
+			size_t w2 = 2;
 			os << "  ";
 			if (m_short_name)
 			{
@@ -516,12 +516,12 @@ class config
 
 	friend std::ostream &operator<<(std::ostream &os, const config &conf)
 	{
-		uint32_t terminal_width = get_terminal_width();
+		size_t terminal_width = get_terminal_width();
 
 		if (not conf.m_usage.empty())
 			os << conf.m_usage << std::endl;
 
-		uint32_t options_width = conf.m_impl->get_option_width();
+		size_t options_width = conf.m_impl->get_option_width();
 
 		if (options_width > terminal_width / 2)
 			options_width = terminal_width / 2;
@@ -848,8 +848,8 @@ class config
 		virtual option_base *get_option(std::string_view name) = 0;
 		virtual option_base *get_option(char short_name) = 0;
 
-		virtual uint32_t get_option_width() const = 0;
-		virtual void write(std::ostream &os, uint32_t width) const = 0;
+		virtual size_t get_option_width() const = 0;
+		virtual void write(std::ostream &os, size_t width) const = 0;
 
 		std::vector<std::string> m_operands;
 	};
@@ -898,16 +898,16 @@ class config
 			}
 		}
 
-		virtual uint32_t get_option_width() const override
+		virtual size_t get_option_width() const override
 		{
 			return std::apply([](Options const& ...opts) {
-				uint32_t width = 0;
+				size_t width = 0;
 				((width = std::max(width, opts.width())), ...);
 				return width;
 			}, m_options);
 		}
 
-		virtual void write(std::ostream &os, uint32_t width) const override
+		virtual void write(std::ostream &os, size_t width) const override
 		{
 			std::apply([&os,width](Options const& ...opts) {
 				(opts.write(os, width), ...);
