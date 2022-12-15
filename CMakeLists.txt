@@ -47,18 +47,21 @@ if(MSVC)
 	# make msvc standards compliant...
 	add_compile_options(/permissive-)
 
-	macro(get_WIN32_WINNT version)
-		if(WIN32 AND CMAKE_SYSTEM_VERSION)
-			set(ver ${CMAKE_SYSTEM_VERSION})
-			string(REPLACE "." "" ver ${ver})
-			string(REGEX REPLACE "([0-9])" "0\\1" ver ${ver})
+    if(${CMAKE_SYSTEM_VERSION} GREATER_EQUAL 10) # Windows 10
+        add_definitions(-D _WIN32_WINNT=0x0A00)
+    elseif(${CMAKE_SYSTEM_VERSION} EQUAL 6.3) # Windows 8.1
+        add_definitions(-D _WIN32_WINNT=0x0603)
+    elseif(${CMAKE_SYSTEM_VERSION} EQUAL 6.2) # Windows 8
+        add_definitions(-D _WIN32_WINNT=0x0602)
+    elseif(${CMAKE_SYSTEM_VERSION} EQUAL 6.1) # Windows 7
+        add_definitions(-D _WIN32_WINNT=0x0601)
+    elseif(${CMAKE_SYSTEM_VERSION} EQUAL 6.0) # Windows Vista
+        add_definitions(-D _WIN32_WINNT=0x0600)
+    else() # Windows XP (5.1)
+        add_definitions(-D _WIN32_WINNT=0x0501)
+    endif()
 
-			set(${version} "0x${ver}")
-		endif()
-	endmacro()
-
-	get_WIN32_WINNT(ver)
-	add_definitions(-D_WIN32_WINNT=${ver})
+	add_definitions(-DNOMINMAX)
 endif()
 
 add_library(libmcfp INTERFACE)
@@ -105,7 +108,7 @@ endif()
 
 configure_package_config_file(
 	${PROJECT_SOURCE_DIR}/cmake/libmcfpConfig.cmake.in
-	${PROJECT_SOURCE_DIR}/cmake/libmcfpConfig.cmake
+	${CMAKE_CURRENT_BINARY_DIR}/libmcfpConfig.cmake
 	INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libmcfp
 	PATH_VARS INCLUDE_INSTALL_DIR
 )
@@ -116,15 +119,17 @@ install(EXPORT libmcfpConfig
 	DESTINATION ${CONFIG_LOC})
 
 install(
-	FILES cmake/libmcfpConfig.cmake "${version_config}"
+	FILES ${CMAKE_CURRENT_BINARY_DIR}/libmcfpConfig.cmake "${version_config}"
 	DESTINATION ${CONFIG_LOC})
 
 if(ENABLE_TESTING)
 	enable_testing()
 
+	find_package(Boost REQUIRED)
+
 	add_executable(libmcfp-unit-test ${PROJECT_SOURCE_DIR}/test/unit-test.cpp)
 
-	target_link_libraries(libmcfp-unit-test libmcfp::libmcfp)
+	target_link_libraries(libmcfp-unit-test libmcfp::libmcfp Boost::boost)
 
 	if(MSVC)
 		# Specify unwind semantics so that MSVC knowns how to handle exceptions
