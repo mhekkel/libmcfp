@@ -115,3 +115,18 @@ int main(int argc, char * const argv[])
     return 0;
 }
 ```
+
+## Installation
+
+Use [cmake](https://cmake.org/) to install _libmcfp_.
+
+```bash
+git clone https://github.com/mhekkel/libmcfp.git
+cd libmcfp
+mkdir build
+cd build
+cmake ..
+cmake --build .
+cmake --install .
+```
+
