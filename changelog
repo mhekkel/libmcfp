@@ -1,3 +1,6 @@
+Version 1.2.4
+- Simpler get (added a version without template arguments)
+
 Version 1.2.3
 - MSVC compatibility
 

@@ -509,6 +509,16 @@ class config
 		return result;
 	}
 
+	std::string get(std::string_view name) const
+	{
+		return get<std::string>(name);
+	}
+
+	std::string get(std::string_view name, std::error_code &ec) const
+	{
+		return get<std::string>(name, ec);
+	}
+
 	const std::vector<std::string> &operands() const
 	{
 		return m_impl->m_operands;
