@@ -25,7 +25,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 # set the project name
-project(libmcfp VERSION 1.2.4 LANGUAGES CXX)
+project(libmcfp VERSION 1.2.5 LANGUAGES CXX)
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
