@@ -14,7 +14,7 @@ Welcome to libmcfp's documentation!
    installation
    api/library_root
 
-
 * :ref:`genindex`
+
 .. * :ref:`modindex`
 .. * :ref:`search`

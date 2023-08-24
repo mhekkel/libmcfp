@@ -26,7 +26,7 @@
 
 #pragma once
 
-/// \file mcfp.hpp
+/// \file
 /// This header-only library contains code to parse argc/argv and store the
 /// values contained therein into a singleton object.
 
