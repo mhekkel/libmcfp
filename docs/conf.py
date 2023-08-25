@@ -54,7 +54,7 @@ exhale_args = {
     # "exhaleExecutesDoxygen": True
     "contentsDirectives" : False,
     
-    "verboseBuild": True
+    "verboseBuild": False
 }
 
 # Tell sphinx what the primary language being documented is.
@@ -70,7 +70,6 @@ templates_path = ['_templates']
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
-
 
 # -- Options for HTML output -------------------------------------------------
 
