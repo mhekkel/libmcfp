@@ -3,18 +3,20 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to libmcfp's documentation!
-===================================
+Documentation for libmcfp
+=========================
+
+
+
 
 .. toctree::
+   :hidden:
    :maxdepth: 2
    :caption: Contents:
 
    synopsis
+   synopsis-2
    installation
    api/library_root
+   genindex
 
-* :ref:`genindex`
-
-.. * :ref:`modindex`
-.. * :ref:`search`

@@ -43,394 +43,43 @@
 #include <type_traits>
 #include <vector>
 
+#include <mcfp/error.hpp>
 #include <mcfp/text.hpp>
 #include <mcfp/utilities.hpp>
+#include <mcfp/detail/options.hpp>
 
 namespace mcfp
 {
 
-// we use the new system_error stuff.
-
-enum class config_error
-{
-	unknown_option = 1,
-	option_does_not_accept_argument,
-	missing_argument_for_option,
-	option_not_specified,
-	invalid_config_file,
-	wrong_type_cast,
-	config_file_not_found
-};
-
-class config_category_impl : public std::error_category
-{
-  public:
-	const char *name() const noexcept override
-	{
-		return "configuration";
-	}
-
-	std::string message(int ev) const override
-	{
-		switch (static_cast<config_error>(ev))
-		{
-			case config_error::unknown_option:
-				return "unknown option";
-			case config_error::option_does_not_accept_argument:
-				return "option does not accept argument";
-			case config_error::missing_argument_for_option:
-				return "missing argument for option";
-			case config_error::option_not_specified:
-				return "option was not specified";
-			case config_error::invalid_config_file:
-				return "config file contains a syntax error";
-			case config_error::wrong_type_cast:
-				return "the implementation contains a type cast error";
-			case config_error::config_file_not_found:
-				return "the specified config file was not found";
-			default:
-				assert(false);
-				return "unknown error code";
-		}
-	}
-
-	bool equivalent(const std::error_code &/*code*/, int /*condition*/) const noexcept override
-	{
-		return false;
-	}
-};
-
-inline std::error_category &config_category()
-{
-	static config_category_impl instance;
-	return instance;
-}
-
-inline std::error_code make_error_code(config_error e)
-{
-	return std::error_code(static_cast<int>(e), config_category());
-}
-
-inline std::error_condition make_error_condition(config_error e)
-{
-	return std::error_condition(static_cast<int>(e), config_category());
-}
-
 // --------------------------------------------------------------------
-// Some template wizardry to detect containers, needed to have special
-// handling of options that can be repeated.
-
-template <typename T>
-using iterator_t = typename T::iterator;
-
-template <typename T>
-using value_type_t = typename T::value_type;
-
-template <typename T>
-using std_string_npos_t = decltype(T::npos);
-
-template <typename T, typename = void>
-struct is_container_type : std::false_type
-{
-};
-
-template <typename T>
-struct is_container_type<T,
-	std::enable_if_t<
-		is_detected_v<value_type_t, T> and
-		is_detected_v<iterator_t, T> and
-		not is_detected_v<std_string_npos_t, T>>> : std::true_type
-{
-};
-
-template <typename T>
-inline constexpr bool is_container_type_v = is_container_type<T>::value;
-
-// --------------------------------------------------------------------
-// The options classes
-
-namespace detail
-{
-	// The option traits classes are used to convert from the string-based
-	// command line argument to the type that should be stored.
-	// In fact, here is where the command line arguments are checked for
-	// proper formatting.
-	template <typename T, typename = void>
-	struct option_traits;
-
-	template <typename T>
-	struct option_traits<T, typename std::enable_if_t<std::is_arithmetic_v<T>>>
-	{
-		using value_type = T;
-
-		static value_type set_value(std::string_view argument, std::error_code &ec)
-		{
-			value_type value{};
-			auto r = charconv<value_type>::from_chars(argument.data(), argument.data() + argument.length(), value);
-			if (r.ec != std::errc())
-				ec = std::make_error_code(r.ec);
-			return value;
-		}
-
-		static std::string to_string(const T &value)
-		{
-			char b[32];
-			auto r = charconv<value_type>::to_chars(b, b + sizeof(b), value);
-			if (r.ec != std::errc())
-				throw std::system_error(std::make_error_code(r.ec));
-			return { b, r.ptr };
-		}
-	};
-
-	template <>
-	struct option_traits<std::filesystem::path>
-	{
-		using value_type = std::filesystem::path;
-
-		static value_type set_value(std::string_view argument, std::error_code &/*ec*/)
-		{
-			return value_type{ argument };
-		}
-
-		static std::string to_string(const std::filesystem::path &value)
-		{
-			return value.string();
-		}
-	};
-
-	template <typename T>
-	struct option_traits<T, typename std::enable_if_t<not std::is_arithmetic_v<T> and std::is_assignable_v<std::string, T>>>
-	{
-		using value_type = std::string;
-
-		static value_type set_value(std::string_view argument, std::error_code &/*ec*/)
-		{
-			return value_type{ argument };
-		}
-
-		static std::string to_string(const T &value)
-		{
-			return { value };
-		}
-	};
-
-	// The Options. The reason to have this weird constructing of
-	// polymorphic options based on templates is to have a very
-	// simple interface. The disadvantage is that the options have
-	// to be copied during the construction of the config object.
-
-	struct option_base
-	{
-		std::string m_name;        ///< The long argument name
-		std::string m_desc;        ///< The description of the argument
-		char m_short_name;         ///< The single character name of the argument, can be zero
-		bool m_is_flag = true,     ///< When true, this option does not allow arguments
-			m_has_default = false, ///< When true, this option has a default value.
-			m_multi = false,       ///< When true, this option allows mulitple values.
-			m_hidden;              ///< When true, this option is hidden from the help text
-		int m_seen = 0;            ///< How often the option was seen on the command line
-
-		option_base(const option_base &rhs) = default;
-
-		option_base(std::string_view name, std::string_view desc, bool hidden)
-			: m_name(name)
-			, m_desc(desc)
-			, m_short_name(0)
-			, m_hidden(hidden)
-		{
-			if (m_name.length() == 1)
-				m_short_name = m_name.front();
-			else if (m_name.length() > 2 and m_name[m_name.length() - 2] == ',')
-			{
-				m_short_name = m_name.back();
-				m_name.erase(m_name.end() - 2, m_name.end());
-			}
-		}
-
-		virtual ~option_base() = default;
-
-		virtual void set_value(std::string_view /*value*/, std::error_code &/*ec*/)
-		{
-			assert(false);
-		}
-
-		virtual std::any get_value() const
-		{
-			return {};
-		}
-
-		virtual std::string get_default_value() const
-		{
-			return {};
-		}
-
-		size_t width() const
-		{
-			size_t result = m_name.length();
-			if (result <= 1)
-				result = 2;
-			else if (m_short_name != 0)
-				result += 7;
-			if (not m_is_flag)
-			{
-				result += 4;
-				if (m_has_default)
-					result += 4 + get_default_value().length();
-			}
-			return result + 6;
-		}
-
-		void write(std::ostream &os, size_t width) const
-		{
-			if (m_hidden) // quick exit
-				return;
-
-			size_t w2 = 2;
-			os << "  ";
-			if (m_short_name)
-			{
-				os << '-' << m_short_name;
-				w2 += 2;
-				if (m_name.length() > 1)
-				{
-					os << " [ --" << m_name << " ]";
-					w2 += 7 + m_name.length();
-				}
-			}
-			else
-			{
-				os << "--" << m_name;
-				w2 += 2 + m_name.length();
-			}
-
-			if (not m_is_flag)
-			{
-				os << " arg";
-				w2 += 4;
-
-				if (m_has_default)
-				{
-					auto default_value = get_default_value();
-					os << " (=" << default_value << ')';
-					w2 += 4 + default_value.length();
-				}
-			}
-
-			auto leading_spaces = width;
-			if (w2 + 2 > width)
-				os << std::endl;
-			else
-				leading_spaces = width - w2;
-
-			word_wrapper ww(m_desc, get_terminal_width() - width);
-			for (auto line : ww)
-			{
-				os << std::string(leading_spaces, ' ') << line << std::endl;
-				leading_spaces = width;
-			}
-		}
-	};
-
-	template <typename T>
-	struct option : public option_base
-	{
-		using traits_type = option_traits<T>;
-		using value_type = typename option_traits<T>::value_type;
-
-		std::optional<value_type> m_value;
-
-		option(const option &rhs) = default;
-
-		option(std::string_view name, std::string_view desc, bool hidden)
-			: option_base(name, desc, hidden)
-		{
-			m_is_flag = false;
-		}
-
-		option(std::string_view name, const value_type &default_value, std::string_view desc, bool hidden)
-			: option(name, desc, hidden)
-		{
-			m_has_default = true;
-			m_value = default_value;
-		}
-
-		void set_value(std::string_view argument, std::error_code &ec) override
-		{
-			m_value = traits_type::set_value(argument, ec);
-		}
-
-		std::any get_value() const override
-		{
-			std::any result;
-			if (m_value)
-				result = *m_value;
-			return result;
-		}
-
-		std::string get_default_value() const override
-		{
-			if constexpr (std::is_same_v<value_type, std::string>)
-				return *m_value;
-			else
-				return traits_type::to_string(*m_value);
-		}
-	};
-
-	template <typename T>
-	struct multiple_option : public option_base
-	{
-		using value_type = typename T::value_type;
-		using traits_type = option_traits<value_type>;
-
-		std::vector<value_type> m_values;
-
-		multiple_option(const multiple_option &rhs) = default;
-
-		multiple_option(std::string_view name, std::string_view desc, bool hidden)
-			: option_base(name, desc, hidden)
-		{
-			m_is_flag = false;
-			m_multi = true;
-		}
-
-		void set_value(std::string_view argument, std::error_code &ec) override
-		{
-			m_values.emplace_back(traits_type::set_value(argument, ec));
-		}
-
-		std::any get_value() const override
-		{
-			return { m_values };
-		}
-	};
-
-	template <>
-	struct option<void> : public option_base
-	{
-		option(const option &rhs) = default;
-
-		option(std::string_view name, std::string_view desc, bool hidden)
-			: option_base(name, desc, hidden)
-		{
-		}
-	};
-
-} // namespace detail
-
-// --------------------------------------------------------------------
-/// \brief A singleton class. Use config::instance to create an instance
+/**
+ * @brief A singleton class. Use config::instance to create and/or
+ * retrieve the single instance
+ * 
+ */
 
 class config
 {
-  public:
 	using option_base = detail::option_base;
 
+  public:
+
+	/**
+	 * @brief Set the 'usage' string
+	 * 
+	 * @param usage The usage message
+	 */
 	void set_usage(std::string_view usage)
 	{
 		m_usage = usage;
 	}
 
-	/// \brief Initialise a config instance with a \a usage message and a set of \a options
+	/**
+	 * @brief Initialise a config instance with a \a usage message and a set of \a options
+	 * 
+	 * @param usage The usage message
+	 * @param options Variadic list of options recognised by this config object
+	 */
 	template <typename... Options>
 	void init(std::string_view usage, Options... options)
 	{
@@ -438,11 +87,22 @@ class config
 		m_impl.reset(new config_impl(std::forward<Options>(options)...));
 	}
 
+	/**
+	 * @brief Set the ignore unknown flag
+	 * 
+	 * @param ignore_unknown When true, unknown options are simply ignored instead of
+	 * throwing an error
+	 */
 	void set_ignore_unknown(bool ignore_unknown)
 	{
 		m_ignore_unknown = ignore_unknown;
 	}
 
+	/**
+	 * @brief Use this to retrieve the single instance of this class
+	 * 
+	 * @return config& The singleton instance
+	 */
 	static config &instance()
 	{
 		static std::unique_ptr<config> s_instance;
@@ -451,18 +111,39 @@ class config
 		return *s_instance;
 	}
 
+	/**
+	 * @brief Simply return true if the option with \a name has a value assigned
+	 * 
+	 * @param name The name of the option
+	 * @return bool Returns true when the option has a value
+	 */
 	bool has(std::string_view name) const
 	{
 		auto opt = m_impl->get_option(name);
 		return opt != nullptr and (opt->m_seen > 0 or opt->m_has_default);
 	}
 
+	/**
+	 * @brief Return how often an option with the name \a name was seen.
+	 * Use e.g. to increase verbosity level
+	 * 
+	 * @param name The name of the option to check
+	 * @return int The count for the named option
+	 */
 	int count(std::string_view name) const
 	{
 		auto opt = m_impl->get_option(name);
 		return opt ? opt->m_seen : 0;
 	}
 
+	/**
+	 * @brief Returns the value for the option with name \a name. Throws
+	 * an exception if the option has not value assigned
+	 * 
+	 * @tparam T The type of the value requested.
+	 * @param name The name of the option requested
+	 * @return auto The value of the named option
+	 */
 	template <typename T>
 	auto get(std::string_view name) const
 	{
@@ -477,6 +158,16 @@ class config
 		return result;
 	}
 
+	/**
+	 * @brief Returns the value for the option with name \a name. If
+	 * the option has no value assigned or is of a wrong type,
+	 * ec is set to an appropriate error
+	 * 
+	 * @tparam T The type of the value requested.
+	 * @param name The name of the option requested
+	 * @param ec The error status is returned in this variable
+	 * @return auto The value of the named option
+	 */
 	template <typename T>
 	auto get(std::string_view name, std::error_code &ec) const
 	{
@@ -509,21 +200,53 @@ class config
 		return result;
 	}
 
+	/**
+	 * @brief Return the std::string value of the option with name \a name
+	 * If no value was assigned, or the type of the option cannot be casted
+	 * to a string, an exception is thrown.
+	 * 
+	 * @param name The name of the option value requested
+	 * @return std::string The value of the option
+	 */
 	std::string get(std::string_view name) const
 	{
 		return get<std::string>(name);
 	}
 
+	/**
+	 * @brief Return the std::string value of the option with name \a name
+	 * If no value was assigned, or the type of the option cannot be casted
+	 * to a string, an error is returned in \a ec.
+	 * 
+	 * @param name The name of the option value requested
+	 * @param ec The error status is returned in this variable
+	 * @return std::string The value of the option
+	 */
 	std::string get(std::string_view name, std::error_code &ec) const
 	{
 		return get<std::string>(name, ec);
 	}
 
+	/**
+	 * @brief Return the list of operands.
+	 * 
+	 * @return const std::vector<std::string>& The operand as a vector of strings
+	 */
 	const std::vector<std::string> &operands() const
 	{
 		return m_impl->m_operands;
 	}
 
+	/**
+	 * @brief Write the configuration to the std::ostream \a os
+	 * This will print the usage string and each of the configured
+	 * options along with their optional default value as well as
+	 * their help string
+	 * 
+	 * @param os The std::ostream to write to, usually std::cout or std::cerr
+	 * @param conf The config object to write out
+	 * @return std::ostream& Returns the parameter \a os
+	 */
 	friend std::ostream &operator<<(std::ostream &os, const config &conf)
 	{
 		size_t terminal_width = get_terminal_width();
@@ -543,6 +266,13 @@ class config
 
 	// --------------------------------------------------------------------
 
+	/**
+	 * @brief Parse the \a argv vector containing \a argc elements. Throws
+	 * an exception if any error was found
+	 * 
+	 * @param argc The number of elements in \a argv
+	 * @param argv The vector of command line arguments
+	 */
 	void parse(int argc, const char *const argv[])
 	{
 		std::error_code ec;
@@ -551,6 +281,17 @@ class config
 			throw std::system_error(ec);
 	}
 
+	/**
+	 * @brief Parse a configuration file called \a config_file_name optionally
+	 * specified on the command line with option \a config_option
+	 * The file is searched for in each of the directories specified in \a search_dirs
+	 * This function throws an exception if an error was found during processing
+	 * 
+	 * @param config_option The name of the option used to specify the config file
+	 * @param config_file_name The default name of the option file to use if the config
+	 * option was not specified on the command line
+	 * @param search_dirs The list of directories to search for the config file
+	 */
 	void parse_config_file(std::string_view config_option, std::string_view config_file_name,
 		std::initializer_list<std::string_view> search_dirs)
 	{
@@ -560,6 +301,18 @@ class config
 			throw std::system_error(ec);
 	}
 
+	/**
+	 * @brief Parse a configuration file called \a config_file_name optionally
+	 * specified on the command line with option \a config_option
+	 * The file is searched for in each of the directories specified in \a search_dirs
+	 * If an error is found it is returned in the variable \a ec
+	 * 
+	 * @param config_option The name of the option used to specify the config file
+	 * @param config_file_name The default name of the option file to use if the config
+	 * option was not specified on the command line
+	 * @param search_dirs The list of directories to search for the config file
+	 * @param ec The variable containing the error status
+	 */
 	void parse_config_file(std::string_view config_option, std::string_view config_file_name,
 		std::initializer_list<std::string_view> search_dirs, std::error_code &ec)
 	{
@@ -585,12 +338,21 @@ class config
 			ec = make_error_code(config_error::config_file_not_found);
 	}
 
+	/**
+	 * @brief Parse a configuration file specified by \a file
+	 * If an error is found it is returned in the variable \a ec
+	 * 
+	 * @param file The path to the config file
+	 * @param ec The variable containing the error status
+	 */
 	void parse_config_file(const std::filesystem::path &file, std::error_code &ec)
 	{
 		std::ifstream is(file);
 		if (is.is_open())
 			parse_config_file(is, ec);
 	}
+
+  private:
 
 	static bool is_name_char(int ch)
 	{
@@ -602,6 +364,15 @@ class config
 		return ch == '\n' or ch == '\r' or ch == std::char_traits<char>::eof();
 	}
 
+  public:
+
+	/**
+	 * @brief Parse the configuration file in \a is
+	 * If an error is found it is returned in the variable \a ec
+	 * 
+	 * @param is A std::istream for the contents of a config file
+	 * @param ec The variable containing the error status
+	 */
 	void parse_config_file(std::istream &is, std::error_code &ec)
 	{
 		auto &buffer = *is.rdbuf();
@@ -727,6 +498,14 @@ class config
 		}
 	}
 
+	/**
+	 * @brief Parse the \a argv vector containing \a argc elements.
+	 * In case of an error, the error is returned in \a ec
+	 * 
+	 * @param argc The number of elements in \a argv
+	 * @param argv The vector of command line arguments
+	 * @param ec The variable receiving the error status
+	 */
 	void parse(int argc, const char *const argv[], std::error_code &ec)
 	{
 		using namespace std::literals;
@@ -934,40 +713,107 @@ class config
 
 // --------------------------------------------------------------------
 
-template <typename T = void, std::enable_if_t<not is_container_type_v<T>, int> = 0>
+/**
+ * @brief Create an option with name \a name and without a default value.
+ * If \a T is void the option does not expect a value and is in fact a flag. 
+ * 
+ * If the type of \a T is a container (std::vector e.g.) the option can be
+ * specified multiple times on the command line. 
+ * 
+ * The name \a name may end with a comma and a single character. This last
+ * character will then be the short version whereas the leading characters
+ * make up the long version.
+ * 
+ * @tparam T The type of the option
+ * @param name The name of the option
+ * @param description The help text for this option
+ * @return auto The option object created
+ */
+template <typename T = void, std::enable_if_t<not detail::is_container_type_v<T>, int> = 0>
 auto make_option(std::string_view name, std::string_view description)
 {
 	return detail::option<T>(name, description, false);
 }
 
-template <typename T = void, std::enable_if_t<not is_container_type_v<T>, int> = 0>
-auto make_hidden_option(std::string_view name, std::string_view description)
-{
-	return detail::option<T>(name, description, true);
-}
-
-template <typename T, std::enable_if_t<not is_container_type_v<T>, int> = 0>
-auto make_option(std::string_view name, const T &v, std::string_view description)
-{
-	return detail::option<T>(name, v, description, false);
-}
-
-template <typename T, std::enable_if_t<not is_container_type_v<T>, int> = 0>
-auto make_hidden_option(std::string_view name, const T &v, std::string_view description)
-{
-	return detail::option<T>(name, v, description, true);
-}
-
-template <typename T, std::enable_if_t<is_container_type_v<T>, int> = 0>
+template <typename T, std::enable_if_t<detail::is_container_type_v<T>, int> = 0>
 auto make_option(std::string_view name, std::string_view description)
 {
 	return detail::multiple_option<T>(name, description, false);
 }
 
-template <typename T, std::enable_if_t<is_container_type_v<T>, int> = 0>
+/**
+ * @brief Create an option with name \a name and with a default value \a v.
+ * 
+ * If the type of \a T is a container (std::vector e.g.) the option can be
+ * specified multiple times on the command line. 
+ * 
+ * The name \a name may end with a comma and a single character. This last
+ * character will then be the short version whereas the leading characters
+ * make up the long version.
+ * 
+ * @tparam T The type of the option
+ * @param name The name of the option
+ * @param v The default value to use
+ * @param description The help text for this option
+ * @return auto The option object created
+ */
+template <typename T, std::enable_if_t<not detail::is_container_type_v<T>, int> = 0>
+auto make_option(std::string_view name, const T &v, std::string_view description)
+{
+	return detail::option<T>(name, v, description, false);
+}
+
+/**
+ * @brief Create an option with name \a name and without a default value.
+ * If \a T is void the option does not expect a value and is in fact a flag. 
+ * This option will not be shown in the help / usage output.
+ * 
+ * If the type of \a T is a container (std::vector e.g.) the option can be
+ * specified multiple times on the command line. 
+ * 
+ * The name \a name may end with a comma and a single character. This last
+ * character will then be the short version whereas the leading characters
+ * make up the long version.
+ * 
+ * @tparam T The type of the option
+ * @param name The name of the option
+ * @param description The help text for this option
+ * @return auto The option object created
+ */
+template <typename T = void, std::enable_if_t<not detail::is_container_type_v<T>, int> = 0>
 auto make_hidden_option(std::string_view name, std::string_view description)
 {
 	return detail::option<T>(name, description, true);
+}
+
+template <typename T, std::enable_if_t<detail::is_container_type_v<T>, int> = 0>
+auto make_hidden_option(std::string_view name, std::string_view description)
+{
+	return detail::multiple_option<T>(name, description, true);
+}
+
+/**
+ * @brief Create an option with name \a name and with default value \a v.
+ * If \a T is void the option does not expect a value and is in fact a flag. 
+ * This option will not be shown in the help / usage output.
+ * 
+ * If the type of \a T is a container (std::vector e.g.) the option can be
+ * specified multiple times on the command line. 
+ * 
+ * The name \a name may end with a comma and a single character. This last
+ * character will then be the short version whereas the leading characters
+ * make up the long version.
+ * 
+ * @tparam T The type of the option
+ * @param name The name of the option
+ * @param v The default value to use
+ * @param description The help text for this option
+ * @return auto The option object created
+ */
+template <typename T, std::enable_if_t<not detail::is_container_type_v<T>, int> = 0>
+auto make_hidden_option(std::string_view name, const T &v, std::string_view description)
+{
+	return detail::option<T>(name, v, description, true);
 }
 
 } // namespace mcfp

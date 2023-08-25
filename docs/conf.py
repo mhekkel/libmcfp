@@ -31,7 +31,9 @@ release = '1.2.4'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "breathe", "exhale", "myst_parser"
+    "breathe",
+    "exhale",
+    "myst_parser"
 ]
 
 # Setup the breathe extension
@@ -42,7 +44,7 @@ exhale_args = {
     # These arguments are required
     "containmentFolder":     "./api",
     "rootFileName":          "library_root.rst",
-    "doxygenStripFromPath":  "..",
+    "doxygenStripFromPath":  "../include/",
     # Heavily encouraged optional argument (see docs)
     "rootFileTitle":         "API Reference",
     # Suggested optional arguments
@@ -50,6 +52,9 @@ exhale_args = {
     # TIP: if using the sphinx-bootstrap-theme, you need
     # "treeViewIsBootstrap": True,
     # "exhaleExecutesDoxygen": True
+    "contentsDirectives" : False,
+    
+    "verboseBuild": True
 }
 
 # Tell sphinx what the primary language being documented is.
@@ -72,7 +77,7 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'furo'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
