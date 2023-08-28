@@ -57,9 +57,7 @@ exhale_args = {
     # "treeViewIsBootstrap": True,
     "exhaleExecutesDoxygen": True,
     "exhaleDoxygenStdin": '''
-EXCLUDE_SYMBOLS        = mcfp::detail::*, \
-                         mcfp::config_* \
-                         std*
+EXCLUDE_SYMBOLS        = mcfp::detail::*, mcfp::config_*, mcfp::config::ig_*, mcfp::config_category*, mcfp::make_error_*, std*
 FILE_PATTERNS          = *.hpp
 GENERATE_XML           = YES
 GENERATE_HTML          = NO

@@ -1,4 +1,3 @@
-find_package(Doxygen REQUIRED)
 find_package(Sphinx REQUIRED)
 
 # Find all the public headers
@@ -12,6 +11,7 @@ set(SPHINX_BUILD ${CMAKE_CURRENT_BINARY_DIR}/sphinx)
 add_custom_target(Sphinx ALL
                   COMMAND
                   ${SPHINX_EXECUTABLE} -b html
+				  -Dbreathe_projects.mcfp=${CMAKE_CURRENT_BINARY_DIR}/doxygen/xml
                   ${SPHINX_SOURCE} ${SPHINX_BUILD}
 				  DEPENDS ${MCFP_PUBLIC_HEADERS}
                   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
