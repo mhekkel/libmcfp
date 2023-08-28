@@ -1,3 +1,6 @@
+Version 1.2.5
+- Replace test for _MSC_VER with more generic _WIN32
+
 Version 1.2.4
 - Simpler get (added a version without template arguments)
 
