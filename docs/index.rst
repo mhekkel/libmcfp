@@ -1,21 +1,38 @@
-.. libmcfp documentation master file, created by
-   sphinx-quickstart on Wed Aug 23 19:06:06 2023.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+libmcfp
+=======
 
-Documentation for libmcfp
-=========================
+Introduction
+------------
 
+libmcfp is a header only library for C++ that allows you to parse command line arguments and configuration files and then access this information from anywhere in your source code.
 
+Installation
+------------
 
+Use `CMake <https://cmake.org/>`_ to install **libmcfp**.
+
+.. code-block:: sh
+
+   git clone https://github.com/mhekkel/libmcfp.git
+   cd libmcfp
+   cmake -S . -B build
+   cmake --build build
+   cmake --install build
+
+Synopsis
+--------
+
+.. include:: ../README.md
+  :parser: myst_parser.sphinx_
+  :start-after: ## Synopsis
+  :end-before: Installation
+  :tab-width: 4
 
 .. toctree::
    :hidden:
    :maxdepth: 2
    :caption: Contents:
 
-   synopsis
-   synopsis-2
    installation
    api/library_root
    genindex
