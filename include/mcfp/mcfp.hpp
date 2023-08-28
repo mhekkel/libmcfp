@@ -28,7 +28,7 @@
 
 /// \file
 /// This header-only library contains code to parse argc/argv and store the
-/// values contained therein into a singleton object.
+/// values provided into a singleton object.
 
 #include <cassert>
 #include <cstring>
@@ -53,7 +53,7 @@ namespace mcfp
 
 // --------------------------------------------------------------------
 /**
- * @brief A singleton class. Use config::instance to create and/or
+ * @brief A singleton class. Use @ref mcfp::config::instance to create and/or
  * retrieve the single instance
  * 
  */
@@ -78,7 +78,7 @@ class config
 	 * @brief Initialise a config instance with a \a usage message and a set of \a options
 	 * 
 	 * @param usage The usage message
-	 * @param options Variadic list of options recognised by this config object
+	 * @param options Variadic list of options recognised by this config object, use @ref mcfp::make_option and variants to create these
 	 */
 	template <typename... Options>
 	void init(std::string_view usage, Options... options)
