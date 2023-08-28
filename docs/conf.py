@@ -36,6 +36,10 @@ extensions = [
     "myst_parser"
 ]
 
+breathe_projects = {
+	"mcfp": "../build/docs/doxygen/xml"
+}
+
 # Setup the breathe extension
 breathe_default_project = "mcfp"
 
@@ -51,7 +55,17 @@ exhale_args = {
     # "createTreeView":        True,
     # TIP: if using the sphinx-bootstrap-theme, you need
     # "treeViewIsBootstrap": True,
-    # "exhaleExecutesDoxygen": True
+    "exhaleExecutesDoxygen": True,
+    "exhaleDoxygenStdin": '''
+EXCLUDE_SYMBOLS        = mcfp::detail::*, \
+                         mcfp::config_* \
+                         std*
+FILE_PATTERNS          = *.hpp
+GENERATE_XML           = YES
+GENERATE_HTML          = NO
+GENERATE_TODOLIST      = NO
+INPUT                  = ../include
+''',
     "contentsDirectives" : False,
     
     "verboseBuild": False
