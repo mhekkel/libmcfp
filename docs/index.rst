@@ -1,8 +1,5 @@
-libmcfp
-=======
-
 Introduction
-------------
+============
 
 This library attempts to implement the `POSIX.1-2017 <https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html>`_ standard for parsing arguments passed to an application. These arguments are delivered to the main function as the well known argc and argv parameters. This library allows you to parse the contents of these variables and then provides easy access to the information. The library also contains code to parse configuration files 
 
@@ -51,11 +48,10 @@ Synopsis
   :tab-width: 4
 
 .. toctree::
-   :hidden:
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Contents
 
-   installation
-   api/library_root
-   genindex
+   self
+   api/library_root.rst
+   genindex.rst
 

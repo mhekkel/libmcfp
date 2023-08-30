@@ -630,6 +630,8 @@ class config
 	config(const config &) = delete;
 	config &operator=(const config &) = delete;
 
+	/// @cond
+
 	struct config_impl_base
 	{
 		virtual ~config_impl_base() = default;
@@ -709,6 +711,8 @@ class config
 	std::unique_ptr<config_impl_base> m_impl;
 	bool m_ignore_unknown = false;
 	std::string m_usage;
+
+	/// @endcond
 };
 
 // --------------------------------------------------------------------
