@@ -78,7 +78,7 @@ class config
 	 * @brief Initialise a config instance with a \a usage message and a set of \a options
 	 * 
 	 * @param usage The usage message
-	 * @param options Variadic list of options recognised by this config object, use @ref mcfp::make_option and variants to create these
+	 * @param options Variadic list of options recognised by this config object, use mcfp::make_option and variants to create these
 	 */
 	template <typename... Options>
 	void init(std::string_view usage, Options... options)

@@ -6,6 +6,11 @@ build:
     python: "3.11"
   apt_packages:
     - "doxygen"
+    - "cmake"
+  jobs:
+    pre_build:
+      - "cmake -S . -B build"
+      - "cmake --build build --target Doxygen"
 
 # Build from the docs/ directory with Sphinx
 sphinx:

@@ -37,7 +37,7 @@ extensions = [
 ]
 
 breathe_projects = {
-	"mcfp": "../build/docs/doxygen/xml"
+	"mcfp": "../build/docs/xml"
 }
 
 # Setup the breathe extension
@@ -55,15 +55,7 @@ exhale_args = {
     # "createTreeView":        True,
     # TIP: if using the sphinx-bootstrap-theme, you need
     # "treeViewIsBootstrap": True,
-    "exhaleExecutesDoxygen": True,
-    "exhaleDoxygenStdin": '''
-EXCLUDE_SYMBOLS        = mcfp::detail::*, mcfp::config_*, mcfp::config::ig_*, mcfp::config_category*, mcfp::make_error_*, std*
-FILE_PATTERNS          = *.hpp
-GENERATE_XML           = YES
-GENERATE_HTML          = NO
-GENERATE_TODOLIST      = NO
-INPUT                  = ../include
-''',
+    "exhaleExecutesDoxygen": False,
     "contentsDirectives" : False,
     
     "verboseBuild": False
