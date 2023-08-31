@@ -1,3 +1,5 @@
+[![Documentation Status](https://readthedocs.org/projects/libmcfp/badge/?version=latest)](https://libmcfp.readthedocs.io/en/latest/?badge=latest)
+
 # libmcfp
 
 A library for parsing command line arguments and configuration files and making them available throughout a program.
