@@ -31,13 +31,12 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
-include(Dart)
+include(CTest)
 
 set(CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 17 CACHE STRING "The minimum version of C++ required for this library")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-option(ENABLE_TESTING "Build the unit test applications" OFF)
 option(BUILD_DOCUMENTATION "Build the documentation" OFF)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
@@ -125,7 +124,7 @@ install(
 	FILES ${CMAKE_CURRENT_BINARY_DIR}/libmcfpConfig.cmake "${version_config}"
 	DESTINATION ${CONFIG_LOC})
 
-if(ENABLE_TESTING)
+if(BUILD_TESTING)
 	enable_testing()
 
 	find_package(Boost REQUIRED)
