@@ -387,6 +387,22 @@ BOOST_AUTO_TEST_CASE(t_13)
 	BOOST_TEST(config.get("test") == "bla");
 }
 
+BOOST_AUTO_TEST_CASE(t_14)
+{
+	const char *const argv[] = {
+		"test", "-test=bla", nullptr
+	};
+	int argc = sizeof(argv) / sizeof(char*) - 1;
+
+	auto &config = mcfp::config::instance();
+
+	config.init(
+		"test [options]",
+		mcfp::make_option<std::string>("test", ""));
+	
+	BOOST_CHECK_THROW(config.parse(argc, argv), std::system_error);
+}
+
 // --------------------------------------------------------------------
 
 BOOST_AUTO_TEST_CASE(file_1, * utf::tolerance(0.001))

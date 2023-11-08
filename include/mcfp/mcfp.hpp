@@ -84,6 +84,7 @@ class config
 	void init(std::string_view usage, Options... options)
 	{
 		m_usage = usage;
+		m_ignore_unknown = false;
 		m_impl.reset(new config_impl(std::forward<Options>(options)...));
 	}
 
