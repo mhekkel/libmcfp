@@ -125,8 +125,6 @@ install(
 	DESTINATION ${CONFIG_LOC})
 
 if(BUILD_TESTING)
-	enable_testing()
-
 	find_package(Boost REQUIRED)
 
 	add_executable(libmcfp-unit-test ${PROJECT_SOURCE_DIR}/test/unit-test.cpp)
