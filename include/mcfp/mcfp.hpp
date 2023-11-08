@@ -747,23 +747,6 @@ auto make_option(std::string_view name, std::string_view description)
 }
 
 /**
- * @brief Create an option with name \a name and without a value i.e. it
- * is in fact a flag.
- * 
- * The name \a name may end with a comma and a single character. This last
- * character will then be the short version whereas the leading characters
- * make up the long version.
- * 
- * @param name The name of the option
- * @param description The help text for this option
- * @return auto The option object created
- */
-auto make_option(std::string_view name, std::string_view description)
-{
-	return detail::option<void>(name, description, false);
-}
-
-/**
  * @brief Create an option with name \a name and with a default value \a v.
  * 
  * If the type of \a T is a container (std::vector e.g.) the option can be
