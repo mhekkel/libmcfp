@@ -1,4 +1,5 @@
-[![Documentation Status](https://readthedocs.org/projects/libmcfp/badge/?version=latest)](https://libmcfp.readthedocs.io/en/latest/?badge=latest)
+[![github CI](https://github.com/mhekkel/libmcfp/actions/workflows/cmake-multi-platform.yml/badge.svg)](https://github.com/mhekkel/libmcfp/actions)
+[![github CI](https://github.com/mhekkel/libmcfp/actions/workflows/build-documentation.yml/badge.svg)](https://github.com/mhekkel/libmcfp/actions)
 
 # libmcfp
 

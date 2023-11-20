@@ -45,7 +45,7 @@ jobs:
         cmake --build build --target Sphinx-libmcfp
         ls -l ${{ steps.strings.outputs.build-output-dir }}
         ls -l ${{ steps.strings.outputs.build-output-dir }}/docs/sphinx
-          
+
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v2
       with:
