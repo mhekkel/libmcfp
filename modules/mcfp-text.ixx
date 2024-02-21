@@ -24,32 +24,22 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+module;
+
+#include <algorithm>
+#include <string>
+#include <vector>
+#include <limits>
 
 /**
  * @file text.hpp
  * This file contains an implementation of charconv and of work wrapping code
  */
 
-#include <mcfp/detail/charconv.hpp>
+export module mcfp:text;
 
 namespace mcfp
 {
-
-/**	Import of the private implementation of charconv which maybe
- * resolved to the std::charconv implementation or a private one
- * defined in the detail namespace.
-*/
-
-template <typename T>
-using charconv = typename detail::charconv<T>;
-
-/** Use the private implementation of is_detected_v which maybe
- * resolved to the std::is_detected_v template when available
- */
-
-template <template<class...> class Op, class... Args>
-constexpr inline bool is_detected_v = detail::is_detected_v<Op,Args...>;
 
 // --------------------------------------------------------------------
 /// Simplified line breaking code taken from a decent text editor.
@@ -57,7 +47,7 @@ constexpr inline bool is_detected_v = detail::is_detected_v<Op,Args...>;
 /// The algorithm uses dynamic programming to find the optimal
 /// separation in lines.
 
-class word_wrapper : public std::vector<std::string_view>
+export class word_wrapper : public std::vector<std::string_view>
 {
   public:
 	word_wrapper(std::string_view text, size_t width)

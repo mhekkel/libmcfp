@@ -24,7 +24,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+module;
+
+#include <cassert>
+#include <string>
+#include <system_error>
+
+export module mcfp:error;
 
 /**
  * @file error.hpp
@@ -32,10 +38,6 @@
  * Header file containing the error codes used by libmcfp
  *
  */
-
-#include <cassert>
-#include <string>
-#include <system_error>
 
 namespace mcfp
 {
@@ -47,7 +49,7 @@ namespace mcfp
  * 
  * @brief A stronly typed class containing the error codes reported by @ref mcfp::config
  */
-enum class config_error
+export enum class config_error
 {
 	unknown_option = 1,              /**< The option requested does not exist, was not part of @ref mcfp::config::init. This error is returned by @ref mcfp::config::get */
 	option_does_not_accept_argument, /**< When parsing the command line arguments a value (argument) was specified for an option that should not have one */
@@ -61,7 +63,7 @@ enum class config_error
  * @brief The implementation for @ref config_category error messages
  *
  */
-class config_category_impl : public std::error_category
+export class config_category_impl : public std::error_category
 {
   public:
 	/**
@@ -122,18 +124,18 @@ class config_category_impl : public std::error_category
  *
  * @return std::error_category&
  */
-inline std::error_category &config_category()
+export std::error_category &config_category()
 {
 	static config_category_impl instance;
 	return instance;
 }
 
-inline std::error_code make_error_code(config_error e)
+export std::error_code make_error_code(config_error e)
 {
 	return std::error_code(static_cast<int>(e), config_category());
 }
 
-inline std::error_condition make_error_condition(config_error e)
+export std::error_condition make_error_condition(config_error e)
 {
 	return std::error_condition(static_cast<int>(e), config_category());
 }

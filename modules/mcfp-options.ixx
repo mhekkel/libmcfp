@@ -24,14 +24,28 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+module;
 
+#include <any>
 #include <cassert>
+#include <charconv>
+#include <cmath>
+#include <compare>
+#include <experimental/type_traits>
 #include <filesystem>
 #include <string>
+#include <optional>
+#include <system_error>
 #include <type_traits>
+#include <vector>
 
-namespace mcfp::detail
+export module mcfp:options;
+
+import :error;
+import :text;
+import :utilities;
+
+namespace mcfp
 {
 
 // --------------------------------------------------------------------
@@ -52,28 +66,21 @@ struct is_container_type : std::false_type
 {
 };
 
-
-
-
-
 /**
  * @brief Template to detect whether a type is a container
  */
 
-
-
 template <typename T>
 struct is_container_type<T,
 	std::enable_if_t<
-		is_detected_v<value_type_t, T> and
-		is_detected_v<iterator_t, T> and
-		not is_detected_v<std_string_npos_t, T>>> : std::true_type
+		std::experimental::is_detected_v<value_type_t, T> and
+		std::experimental::is_detected_v<iterator_t, T> and
+		not std::experimental::is_detected_v<std_string_npos_t, T>>> : std::true_type
 {
 };
 
 template <typename T>
-inline constexpr bool is_container_type_v = is_container_type<T>::value;
-
+constexpr bool is_container_type_v = is_container_type<T>::value;
 
 // --------------------------------------------------------------------
 // The options classes
@@ -85,15 +92,21 @@ inline constexpr bool is_container_type_v = is_container_type<T>::value;
 template <typename T, typename = void>
 struct option_traits;
 
+
+// So sad, libc++ has no std::from_chars for floating point types
 template <typename T>
-struct option_traits<T, typename std::enable_if_t<std::is_arithmetic_v<T>>>
+using from_chars_function = decltype(std::from_chars(std::declval<const char *>(), std::declval<const char *>(), std::declval<T &>()));
+
+template <typename T>
+requires std::is_arithmetic_v<T> and std::experimental::is_detected_v<from_chars_function, T>
+struct option_traits<T>
 {
 	using value_type = T;
 
 	static value_type set_value(std::string_view argument, std::error_code &ec)
 	{
 		value_type value{};
-		auto r = charconv<value_type>::from_chars(argument.data(), argument.data() + argument.length(), value);
+		auto r = std::from_chars(argument.data(), argument.data() + argument.length(), value);
 		if (r.ec != std::errc())
 			ec = std::make_error_code(r.ec);
 		return value;
@@ -102,7 +115,156 @@ struct option_traits<T, typename std::enable_if_t<std::is_arithmetic_v<T>>>
 	static std::string to_string(const T &value)
 	{
 		char b[32];
-		auto r = charconv<value_type>::to_chars(b, b + sizeof(b), value);
+		auto r = std::to_chars(b, b + sizeof(b), value);
+		if (r.ec != std::errc())
+			throw std::system_error(std::make_error_code(r.ec));
+		return { b, r.ptr };
+	}
+};
+
+// Since libc++ does not have std::from_chars for floating points, we have to write it ourselves
+template <std::floating_point T>
+std::from_chars_result from_chars(const char *first, const char *last, T &value)
+{
+	using value_type = T;
+
+	std::from_chars_result result{ first, {} };
+
+	enum State
+	{
+		IntegerSign,
+		Integer,
+		Fraction,
+		ExponentSign,
+		Exponent
+	} state = IntegerSign;
+	int sign = 1;
+	unsigned long long vi = 0;
+	long double f = 1;
+	int exponent_sign = 1;
+	int exponent = 0;
+	bool done = false;
+
+	while (not done and result.ec == std::errc())
+	{
+		char ch = result.ptr != last ? *result.ptr : 0;
+		++result.ptr;
+
+		switch (state)
+		{
+			case IntegerSign:
+				if (ch == '-')
+				{
+					sign = -1;
+					state = Integer;
+				}
+				else if (ch == '+')
+					state = Integer;
+				else if (ch >= '0' and ch <= '9')
+				{
+					vi = ch - '0';
+					state = Integer;
+				}
+				else if (ch == '.')
+					state = Fraction;
+				else
+					result.ec = std::errc::invalid_argument;
+				break;
+
+			case Integer:
+				if (ch >= '0' and ch <= '9')
+					vi = 10 * vi + (ch - '0');
+				else if (ch == 'e' or ch == 'E')
+					state = ExponentSign;
+				else if (ch == '.')
+					state = Fraction;
+				else
+				{
+					done = true;
+					--result.ptr;
+				}
+				break;
+
+			case Fraction:
+				if (ch >= '0' and ch <= '9')
+				{
+					vi = 10 * vi + (ch - '0');
+					f /= 10;
+				}
+				else if (ch == 'e' or ch == 'E')
+					state = ExponentSign;
+				else
+				{
+					done = true;
+					--result.ptr;
+				}
+				break;
+
+			case ExponentSign:
+				if (ch == '-')
+				{
+					exponent_sign = -1;
+					state = Exponent;
+				}
+				else if (ch == '+')
+					state = Exponent;
+				else if (ch >= '0' and ch <= '9')
+				{
+					exponent = ch - '0';
+					state = Exponent;
+				}
+				else
+					result.ec = std::errc::invalid_argument;
+				break;
+
+			case Exponent:
+				if (ch >= '0' and ch <= '9')
+					exponent = 10 * exponent + (ch - '0');
+				else
+				{
+					done = true;
+					--result.ptr;
+				}
+				break;
+		}
+	}
+
+	if (result.ec == std::errc())
+	{
+		long double v = f * vi * sign;
+		if (exponent != 0)
+			v *= std::pow(10, exponent * exponent_sign);
+
+		if (std::isnan(v))
+			result.ec = std::errc::invalid_argument;
+		else if (std::abs(v) > std::numeric_limits<value_type>::max())
+			result.ec = std::errc::result_out_of_range;
+
+		value = static_cast<value_type>(v);
+	}
+
+	return result;
+}
+
+template <std::floating_point T>
+requires (std::experimental::is_detected_v<from_chars_function, T> == false)
+struct option_traits<T>
+{
+	using value_type = T;
+
+	static value_type set_value(std::string_view argument, std::error_code &ec)
+	{
+		value_type value{};
+		auto r = mcfp::from_chars(argument.data(), argument.data() + argument.length(), value);
+		if (r.ec != std::errc())
+			ec = std::make_error_code(r.ec);
+		return value;
+	}
+
+	static std::string to_string(const T &value)
+	{
+		char b[32];
+		auto r = std::to_chars(b, b + sizeof(b), value);
 		if (r.ec != std::errc())
 			throw std::system_error(std::make_error_code(r.ec));
 		return { b, r.ptr };
@@ -126,7 +288,8 @@ struct option_traits<std::filesystem::path>
 };
 
 template <typename T>
-struct option_traits<T, typename std::enable_if_t<not std::is_arithmetic_v<T> and std::is_assignable_v<std::string, T>>>
+requires (not std::is_arithmetic_v<T> and std::is_assignable_v<std::string, T>)
+struct option_traits<T>
 {
 	using value_type = std::string;
 
@@ -342,4 +505,4 @@ struct option<void> : public option_base
 	}
 };
 
-} // namespace mcfp::detail
+} // namespace mcfp

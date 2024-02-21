@@ -24,7 +24,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+module;
 
 #include <climits>
 #include <cstdint>
@@ -37,13 +37,15 @@
 #include <windows.h>
 #endif
 
+export module mcfp:utilities;
+
 namespace mcfp
 {
 
 #if defined(_WIN32)
 /// @brief Get the width in columns of the current terminal
 /// @return number of columns of the terminal
-inline uint32_t get_terminal_width()
+uint32_t get_terminal_width()
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     ::GetConsoleScreenBufferInfo(::GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
@@ -53,7 +55,7 @@ inline uint32_t get_terminal_width()
 #elif __has_include(<sys/ioctl.h>)
 /// @brief Get the width in columns of the current terminal
 /// @return number of columns of the terminal
-inline uint32_t get_terminal_width()
+uint32_t get_terminal_width()
 {
 	uint32_t result = 80;
 
@@ -67,7 +69,7 @@ inline uint32_t get_terminal_width()
 }
 #else
 #warning "Could not find the terminal width, falling back to default"
-inline uint32_t get_terminal_width()
+uint32_t get_terminal_width()
 {
 	return 80;
 }

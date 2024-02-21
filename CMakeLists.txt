@@ -22,10 +22,10 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.28)
 
 # set the project name
-project(libmcfp VERSION 1.2.5 LANGUAGES CXX)
+project(mcfp VERSION 2.0.0 LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
@@ -34,7 +34,7 @@ include(CMakePackageConfigHelpers)
 include(CTest)
 
 set(CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_STANDARD 17 CACHE STRING "The minimum version of C++ required for this library")
+set(CMAKE_CXX_STANDARD 20 CACHE STRING "The minimum version of C++ required for this library")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(BUILD_DOCUMENTATION "Build the documentation" OFF)
@@ -70,23 +70,36 @@ if(MSVC)
 	add_definitions(-DNOMINMAX)
 endif()
 
-add_library(libmcfp INTERFACE)
-add_library(libmcfp::libmcfp ALIAS libmcfp)
+add_library(mcfp)
+# add_library(mcfp::mcfp ALIAS mcfp)
 
-target_include_directories(libmcfp INTERFACE
-	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+target_sources(mcfp PUBLIC FILE_SET mcfp_modules
+	TYPE CXX_MODULES
+	FILES
+		${CMAKE_CURRENT_SOURCE_DIR}/modules/mcfp-error.ixx
+		${CMAKE_CURRENT_SOURCE_DIR}/modules/mcfp-options.ixx
+		${CMAKE_CURRENT_SOURCE_DIR}/modules/mcfp-text.ixx
+		${CMAKE_CURRENT_SOURCE_DIR}/modules/mcfp-utilities.ixx
+		${CMAKE_CURRENT_SOURCE_DIR}/modules/mcfp-config.ixx
+		${CMAKE_CURRENT_SOURCE_DIR}/modules/mcfp.ixx)
+
+target_compile_options(mcfp PUBLIC "-stdlib=libc++")
+target_link_options(mcfp PUBLIC "-stdlib=libc++")
+
+target_include_directories(mcfp INTERFACE
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include;${CMAKE_CURRENT_SOURCE_DIR}/modules>
 	$<INSTALL_INTERFACE:include>
 )
 
 # adding header sources just helps IDEs
-target_sources(libmcfp INTERFACE
+target_sources(mcfp INTERFACE
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>$<INSTALL_INTERFACE:include>/mcfp/mcfp.hpp
 )
 
-set_target_properties(libmcfp PROPERTIES PUBLIC_HEADER include/mcfp/mcfp.hpp)
+set_target_properties(mcfp PROPERTIES PUBLIC_HEADER include/mcfp/mcfp.hpp)
 
 # installation
-set(version_config "${CMAKE_CURRENT_BINARY_DIR}/libmcfpConfigVersion.cmake")
+set(version_config "${CMAKE_CURRENT_BINARY_DIR}/mcfp-config-version.cmake")
 
 set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR})
 
@@ -94,8 +107,8 @@ write_basic_package_version_file("${version_config}"
 	VERSION ${PROJECT_VERSION}
 	COMPATIBILITY SameMajorVersion)
 
-install(TARGETS libmcfp
-	EXPORT libmcfpConfig
+install(TARGETS mcfp
+	EXPORT mcfp-config
 	PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 install(
@@ -104,47 +117,51 @@ install(
 	COMPONENT Devel
 )
 
-export(TARGETS libmcfp NAMESPACE libmcfp:: FILE libmcfpTargets.cmake)
+export(TARGETS mcfp NAMESPACE mcfp:: FILE mcfp-targets.cmake)
 
 if(WIN32 AND NOT CYGWIN)
 	set(CONFIG_LOC CMake)
 else()
-	set(CONFIG_LOC "${CMAKE_INSTALL_LIBDIR}/cmake/libmcfp")
+	set(CONFIG_LOC "${CMAKE_INSTALL_LIBDIR}/cmake/mcfp")
 endif()
 
 configure_package_config_file(
-	${PROJECT_SOURCE_DIR}/cmake/libmcfpConfig.cmake.in
-	${CMAKE_CURRENT_BINARY_DIR}/libmcfpConfig.cmake
-	INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libmcfp
+	${PROJECT_SOURCE_DIR}/cmake/mcfp-config.cmake.in
+	${CMAKE_CURRENT_BINARY_DIR}/mcfp-config.cmake
+	INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/mcfp
 	PATH_VARS INCLUDE_INSTALL_DIR
 )
 
-install(EXPORT libmcfpConfig
-	FILE libmcfpTargets.cmake
-	NAMESPACE libmcfp::
+install(EXPORT mcfp-config
+	FILE mcfp-targets.cmake
+	NAMESPACE mcfp::
 	DESTINATION ${CONFIG_LOC})
 
 install(
-	FILES ${CMAKE_CURRENT_BINARY_DIR}/libmcfpConfig.cmake "${version_config}"
+	FILES ${CMAKE_CURRENT_BINARY_DIR}/mcfp-config.cmake "${version_config}"
 	DESTINATION ${CONFIG_LOC})
 
 if(BUILD_TESTING)
+	# add_subdirectory(test)
+
 	find_package(Boost REQUIRED)
 
-	add_executable(libmcfp-unit-test ${PROJECT_SOURCE_DIR}/test/unit-test.cpp)
-
-	target_link_libraries(libmcfp-unit-test libmcfp::libmcfp Boost::boost)
-
+	add_executable(mcfp-unit-test ${CMAKE_CURRENT_SOURCE_DIR}/test/unit-test.cpp)
+	
+	target_link_libraries(mcfp-unit-test mcfp Boost::boost)
+	target_link_options(mcfp-unit-test PRIVATE "-stdlib=libc++")
+	
 	if(MSVC)
 		# Specify unwind semantics so that MSVC knowns how to handle exceptions
-		target_compile_options(libmcfp-unit-test PRIVATE /EHsc)
+		target_compile_options(mcfp-unit-test PRIVATE /EHsc)
 	endif()
-
-	add_test(NAME libmcfp-unit-test
-		COMMAND $<TARGET_FILE:libmcfp-unit-test> -- ${PROJECT_SOURCE_DIR}/test)
+	
+	add_test(NAME mcfp-unit-test
+		COMMAND $<TARGET_FILE:mcfp-unit-test> -- ${CMAKE_CURRENT_SOURCE_DIR}/test)
+	
 endif()
 
-if(BUILD_DOCUMENTATION)
-	add_subdirectory(docs)
-endif()
+# if(BUILD_DOCUMENTATION)
+# 	add_subdirectory(docs)
+# endif()
 

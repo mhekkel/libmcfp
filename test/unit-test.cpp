@@ -29,7 +29,7 @@
 
 #include <filesystem>
 
-#include <mcfp/mcfp.hpp>
+import mcfp;
 
 namespace tt = boost::test_tools;
 namespace utf = boost::unit_test;
