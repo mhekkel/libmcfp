@@ -2,4 +2,4 @@
 
 INCLUDE("${CMAKE_CURRENT_LIST_DIR}/mcfp-targets.cmake")
 
-check_required_components(libmcfp)
+check_required_components(mcfp)
