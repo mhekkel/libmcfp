@@ -1,4 +1,15 @@
-find_package(Catch2 REQUIRED)
+find_package(Catch2 QUIET)
+
+if(NOT Catch2_FOUND)
+	FetchContent_Declare(
+		Catch2
+		GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+		GIT_TAG v2.13.9)
+
+	FetchContent_MakeAvailable(Catch2)
+
+	set(Catch2_VERSION "2.13.9")
+endif()
 
 add_executable(mcfp-unit-test ${CMAKE_CURRENT_SOURCE_DIR}/unit-test.cpp)
 
