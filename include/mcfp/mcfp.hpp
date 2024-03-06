@@ -403,7 +403,7 @@ class config
 						value.clear();
 						state = State::NAME;
 					}
-					else if (ch == '#')
+					else if (ch == '#' or ch == ';')
 						state = State::COMMENT;
 					else if (ch != ' ' and ch != '\t' and not is_eoln(ch))
 						ec = make_error_code(config_error::invalid_config_file);
