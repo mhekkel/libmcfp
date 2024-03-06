@@ -27,7 +27,6 @@
 module;
 
 #include <cassert>
-#include <string>
 #include <system_error>
 
 export module mcfp:error;

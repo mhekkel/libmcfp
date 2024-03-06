@@ -26,35 +26,6 @@
 
 module;
 
-#include <algorithm>
-#include <any>
-#include <cassert>
-#include <charconv>
-#include <climits>
-#include <cmath>
-#include <compare>
-#include <cstdint>
-#include <cstring>
-#include <deque>
-#include <experimental/type_traits>
-#include <filesystem>
-#include <fstream>
-#include <limits>
-#include <memory>
-#include <optional>
-#include <string>
-#include <system_error>
-#include <type_traits>
-#include <vector>
-
-#if __has_include(<sys/ioctl.h>)
-#include <sys/ioctl.h>
-#include <fcntl.h>
-#include <unistd.h>
-#elif defined(_WIN32)
-#include <windows.h>
-#endif
-
 export module mcfp;
 
 export import :config;

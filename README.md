@@ -60,7 +60,7 @@ int main(int argc, char * const argv[])
     config.parse(argc, argv, ec);
     if (ec)
     {
-        std::cerr << "Error parsing arguments: " << ec.message() << std::endl;
+        std::cerr << "Error parsing arguments: " << ec.message() << '\n';
         exit(1);
     }
 
@@ -69,7 +69,7 @@ int main(int argc, char * const argv[])
     if (config.has("help") or config.operands().size() != 1)
     {
         // This will print out the 'usage' message with all the visible options
-        std::cerr << config << std::endl;
+        std::cerr << config << '\n';
         exit(config.has("help") ? 0 : 1);
     }
 
@@ -80,7 +80,7 @@ int main(int argc, char * const argv[])
     config.parse_config_file("config", "example.conf", { "." }, ec);
     if (ec)
     {
-        std::cerr << "Error parsing config file: " << ec.message() << std::endl;
+        std::cerr << "Error parsing config file: " << ec.message() << '\n';
         exit(1);
     }
 
@@ -90,30 +90,30 @@ int main(int argc, char * const argv[])
 
     // Operands are arguments that are not options, e.g. files to act upon
 
-    std::cout << "The first operand is " << config.operands().front() << std::endl;
+    std::cout << "The first operand is " << config.operands().front() << '\n';
 
     // Getting the value of a string option
 
     auto text = config.get<std::string>("text", ec);
     if (ec)
     {
-        std::cerr << "Error getting option text: " << ec.message() << std::endl;
+        std::cerr << "Error getting option text: " << ec.message() << '\n';
         exit(1);
     }
 
-    std::cout << "Text option is " << text << std::endl;
+    std::cout << "Text option is " << text << '\n';
 
     // Likewise for numeric options
 
     int a = config.get<int>("a");
     float b = config.get<float>("b");
 
-    std::cout << "a (" << a << ") * b (" << b << ") = " << a * b << std::endl;
+    std::cout << "a (" << a << ") * b (" << b << ") = " << a * b << '\n';
 
     // And multiple strings
 
     for (std::string s : config.get<std::vector<std::string>>("c"))
-        std::cout << "c: " << s << std::endl;
+        std::cout << "c: " << s << '\n';
 
     return 0;
 }

@@ -26,15 +26,16 @@
 
 module;
 
+#include <algorithm>
 #include <any>
 #include <cassert>
 #include <charconv>
 #include <cmath>
-#include <compare>
 #include <experimental/type_traits>
 #include <filesystem>
-#include <string>
+#include <limits>
 #include <optional>
+#include <string>
 #include <system_error>
 #include <type_traits>
 #include <vector>
@@ -92,13 +93,12 @@ constexpr bool is_container_type_v = is_container_type<T>::value;
 template <typename T, typename = void>
 struct option_traits;
 
-
 // So sad, libc++ has no std::from_chars for floating point types
 template <typename T>
 using from_chars_function = decltype(std::from_chars(std::declval<const char *>(), std::declval<const char *>(), std::declval<T &>()));
 
 template <typename T>
-requires std::is_arithmetic_v<T> and std::experimental::is_detected_v<from_chars_function, T>
+	requires std::is_arithmetic_v<T> and std::experimental::is_detected_v<from_chars_function, T>
 struct option_traits<T>
 {
 	using value_type = T;
@@ -247,7 +247,7 @@ std::from_chars_result from_chars(const char *first, const char *last, T &value)
 }
 
 template <std::floating_point T>
-requires (std::experimental::is_detected_v<from_chars_function, T> == false)
+	requires(std::experimental::is_detected_v<from_chars_function, T> == false)
 struct option_traits<T>
 {
 	using value_type = T;
@@ -288,7 +288,7 @@ struct option_traits<std::filesystem::path>
 };
 
 template <typename T>
-requires (not std::is_arithmetic_v<T> and std::is_assignable_v<std::string, T>)
+	requires(not std::is_arithmetic_v<T> and std::is_assignable_v<std::string, T>)
 struct option_traits<T>
 {
 	using value_type = std::string;
@@ -408,14 +408,14 @@ struct option_base
 
 		auto leading_spaces = width;
 		if (w2 + 2 > width)
-			os << std::endl;
+			os << '\n';
 		else
 			leading_spaces = width - w2;
 
 		word_wrapper ww(m_desc, get_terminal_width() - width);
 		for (auto line : ww)
 		{
-			os << std::string(leading_spaces, ' ') << line << std::endl;
+			os << std::string(leading_spaces, ' ') << line << '\n';
 			leading_spaces = width;
 		}
 	}

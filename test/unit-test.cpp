@@ -255,7 +255,7 @@ BOOST_AUTO_TEST_CASE(t_9)
 // 	int fd = open("/dev/null", O_RDWR);
 // 	dup2(fd, STDOUT_FILENO);
 
-// 	ss << config << std::endl;
+// 	ss << config << '\n';
 
 // 	const char kExpected[] = R"(usage: test [options]
 //   -i arg                                First option
@@ -266,8 +266,8 @@ BOOST_AUTO_TEST_CASE(t_9)
 
 // )";
 
-// 	std::cerr << '>' << kExpected << '<' << std::endl;
-// 	std::cerr << '>' << ss.str() << '<' << std::endl;
+// 	std::cerr << '>' << kExpected << '<' << '\n';
+// 	std::cerr << '>' << ss.str() << '<' << '\n';
 
 // 	BOOST_CHECK_EQUAL(ss.str(), kExpected);
 }
@@ -291,7 +291,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 	std::ostringstream os;
 
 	for (auto line : ww)
-		os << line << std::endl;
+		os << line << '\n';
 	
 	BOOST_CHECK_EQUAL(os.str(), R"(SPDX-License-Identifier: BSD-2-Clause
 
