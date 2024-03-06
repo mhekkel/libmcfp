@@ -73,6 +73,8 @@ endif()
 add_library(mcfp INTERFACE)
 add_library(mcfp::mcfp ALIAS mcfp)
 
+target_compile_features(mcfp INTERFACE cxx_std_20)
+
 # adding header sources just helps IDEs
 target_sources(mcfp PUBLIC
 	FILE_SET mcfp_headers TYPE HEADERS
