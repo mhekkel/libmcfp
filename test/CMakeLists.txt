@@ -1,8 +1,14 @@
-find_package(Boost REQUIRED)
+find_package(Catch2 REQUIRED)
 
 add_executable(mcfp-unit-test ${CMAKE_CURRENT_SOURCE_DIR}/unit-test.cpp)
 
-target_link_libraries(mcfp-unit-test mcfp::mcfp Boost::boost)
+target_link_libraries(mcfp-unit-test mcfp::mcfp)
+
+if(${Catch2_VERSION} VERSION_GREATER_EQUAL 3.0.0)
+	target_compile_definitions(mcfp-unit-test PUBLIC CATCH22=0)
+else()
+	target_compile_definitions(mcfp-unit-test PUBLIC CATCH22=1)
+endif()
 
 if(MSVC)
 	# Specify unwind semantics so that MSVC knowns how to handle exceptions
@@ -10,4 +16,4 @@ if(MSVC)
 endif()
 
 add_test(NAME mcfp-unit-test
-	COMMAND $<TARGET_FILE:mcfp-unit-test> -- ${CMAKE_CURRENT_SOURCE_DIR})
+	COMMAND $<TARGET_FILE:mcfp-unit-test> --data-dir ${CMAKE_CURRENT_SOURCE_DIR})
