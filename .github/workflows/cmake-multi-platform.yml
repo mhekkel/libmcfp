@@ -16,8 +16,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         include:
-          - os: windows-latest
-            cpp_compiler: cl
+        #   - os: windows-latest
+        #     cpp_compiler: cl
           - os: ubuntu-latest
             cpp_compiler: g++
           - os: macos-latest
