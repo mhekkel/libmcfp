@@ -1,6 +1,6 @@
 Version 1.3.0
 - Config file syntax improvements (better conforming to ini file syntax)
-- 
+- Better cmake file
 
 Version 1.2.5
 - Replace test for _MSC_VER with more generic _WIN32
