@@ -33,14 +33,14 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
-#elif defined(_WIN32)
+#elif defined(_MSC_VER)
 #include <windows.h>
 #endif
 
 namespace mcfp
 {
 
-#if defined(_WIN32)
+#if defined(_MSC_VER)
 /// @brief Get the width in columns of the current terminal
 /// @return number of columns of the terminal
 inline uint32_t get_terminal_width()

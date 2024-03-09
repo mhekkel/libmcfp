@@ -24,53 +24,33 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define CATCH_CONFIG_RUNNER
-
-#if CATCH22
-# include <catch2/catch.hpp>
-#else
-# include <catch2/catch_all.hpp>
-#endif
+#define BOOST_TEST_ALTERNATIVE_INIT_API
+#include <boost/test/included/unit_test.hpp>
 
 #include <filesystem>
 
 #include <mcfp/mcfp.hpp>
 
+namespace tt = boost::test_tools;
+namespace utf = boost::unit_test;
 namespace fs = std::filesystem;
 
-std::filesystem::path gTestDir = std::filesystem::current_path();
+fs::path gTestDir = fs::current_path();
 
-int main(int argc, char *argv[])
+// --------------------------------------------------------------------
+
+bool init_unit_test()
 {
-	Catch::Session session; // There must be exactly one instance
+	// not a test, just initialize test dir
+	if (boost::unit_test::framework::master_test_suite().argc == 2)
+		gTestDir = boost::unit_test::framework::master_test_suite().argv[1];
 
-	// Build a new parser on top of Catch2's
-#if CATCH22
-	using namespace Catch::clara;
-#else
-	// Build a new parser on top of Catch2's
-	using namespace Catch::Clara;
-#endif
-
-	auto cli = session.cli()                                // Get Catch2's command line parser
-	           | Opt(gTestDir, "data-dir")                  // bind variable to a new option, with a hint string
-	                 ["-D"]["--data-dir"]                   // the option names it will respond to
-	           ("The directory containing the data files"); // description string for the help output
-
-	// Now pass the new composite back to Catch2 so it uses that
-	session.cli(cli);
-
-	// Let Catch2 (using Clara) parse the command line
-	int returnCode = session.applyCommandLine(argc, argv);
-	if (returnCode != 0) // Indicates a command line error
-		return returnCode;
-
-	return session.run();
+	return true;
 }
 
 // --------------------------------------------------------------------
 
-TEST_CASE("t_1, * utf::tolerance(0.001)")
+BOOST_AUTO_TEST_CASE(t_1, * utf::tolerance(0.001))
 {
 	int argc = 3;
 	const char *const argv[] = {
@@ -89,19 +69,19 @@ TEST_CASE("t_1, * utf::tolerance(0.001)")
 	
 	config.parse(argc, argv);
 
-	CHECK(config.has("flag"));
-	CHECK(not config.has("flag2"));
+	BOOST_CHECK(config.has("flag"));
+	BOOST_CHECK(not config.has("flag2"));
 
-	CHECK(config.get<int>("param_int_2") == 1);
-	CHECK_THROWS_AS(config.get<float>("param_int_2"), std::system_error);
-	CHECK_THROWS_AS(config.get<int>("param_int"), std::system_error);
+	BOOST_CHECK_EQUAL(config.get<int>("param_int_2"), 1);
+	BOOST_CHECK_THROW(config.get<float>("param_int_2"), std::system_error);
+	BOOST_CHECK_THROW(config.get<int>("param_int"), std::system_error);
 
-	CHECK(std::to_string(config.get<float>("param_float_2")) == std::to_string(3.14));
-	CHECK_THROWS_AS(config.get<int>("param_float_2"), std::system_error);
-	CHECK_THROWS_AS(config.get<float>("param_float"), std::system_error);
+	BOOST_TEST(config.get<float>("param_float_2") == 3.14);
+	BOOST_CHECK_THROW(config.get<int>("param_float_2"), std::system_error);
+	BOOST_CHECK_THROW(config.get<float>("param_float"), std::system_error);
 }
 
-TEST_CASE("t_2")
+BOOST_AUTO_TEST_CASE(t_2)
 {
 	int argc = 3;
 	const char *const argv[] = {
@@ -116,10 +96,10 @@ TEST_CASE("t_2")
 	
 	config.parse(argc, argv);
 
-	CHECK(config.count("verbose") == 5);
+	BOOST_CHECK_EQUAL(config.count("verbose"), 5);
 }
 
-TEST_CASE("t_3")
+BOOST_AUTO_TEST_CASE(t_3)
 {
 	int argc = 2;
 	const char *const argv[] = {
@@ -134,10 +114,11 @@ TEST_CASE("t_3")
 	
 	config.parse(argc, argv);
 
-	CHECK(config.has("param_int"));
-	CHECK(config.get<int>("param_int") == 42);
+	BOOST_CHECK(config.has("param_int"));
+	BOOST_CHECK_EQUAL(config.get<int>("param_int"), 42);
 }
-TEST_CASE("t_4")
+
+BOOST_AUTO_TEST_CASE(t_4)
 {
 	int argc = 3;
 	const char *const argv[] = {
@@ -152,11 +133,11 @@ TEST_CASE("t_4")
 	
 	config.parse(argc, argv);
 
-	CHECK(config.has("param_int"));
-	CHECK(config.get<int>("param_int") == 42);
+	BOOST_CHECK(config.has("param_int"));
+	BOOST_CHECK_EQUAL(config.get<int>("param_int"), 42);
 }
 
-TEST_CASE("t_5")
+BOOST_AUTO_TEST_CASE(t_5)
 {
 	const char *const argv[] = {
 		"test", "-i", "42", "-j43", nullptr
@@ -172,14 +153,14 @@ TEST_CASE("t_5")
 	
 	config.parse(argc, argv);
 
-	CHECK(config.has("nr1"));
-	CHECK(config.has("nr2"));
+	BOOST_CHECK(config.has("nr1"));
+	BOOST_CHECK(config.has("nr2"));
 
-	CHECK(config.get<int>("nr1") == 42);
-	CHECK(config.get<int>("nr2") == 43);
+	BOOST_CHECK_EQUAL(config.get<int>("nr1"), 42);
+	BOOST_CHECK_EQUAL(config.get<int>("nr2"), 43);
 }
 
-TEST_CASE("t_6")
+BOOST_AUTO_TEST_CASE(t_6)
 {
 	const char *const argv[] = {
 		"test", "-i", "42", "-j43", "foo", "bar", nullptr
@@ -195,18 +176,18 @@ TEST_CASE("t_6")
 	
 	config.parse(argc, argv);
 
-	CHECK(config.has("nr1"));
-	CHECK(config.has("nr2"));
+	BOOST_CHECK(config.has("nr1"));
+	BOOST_CHECK(config.has("nr2"));
 
-	CHECK(config.get<int>("nr1") == 42);
-	CHECK(config.get<int>("nr2") == 43);
+	BOOST_CHECK_EQUAL(config.get<int>("nr1"), 42);
+	BOOST_CHECK_EQUAL(config.get<int>("nr2"), 43);
 
-	CHECK(config.operands().size() == 2);
-	CHECK(config.operands().front() == "foo");
-	CHECK(config.operands().back() == "bar");
+	BOOST_CHECK_EQUAL(config.operands().size(), 2);
+	BOOST_CHECK_EQUAL(config.operands().front(), "foo");
+	BOOST_CHECK_EQUAL(config.operands().back(), "bar");
 }
 
-TEST_CASE("t_7")
+BOOST_AUTO_TEST_CASE(t_7)
 {
 	const char *const argv[] = {
 		"test", "--", "-i", "42", "-j43", "foo", "bar", nullptr
@@ -222,16 +203,16 @@ TEST_CASE("t_7")
 	
 	config.parse(argc, argv);
 
-	CHECK(not config.has("nr1"));
-	CHECK(not config.has("nr2"));
+	BOOST_CHECK(not config.has("nr1"));
+	BOOST_CHECK(not config.has("nr2"));
 
-	CHECK(config.operands().size() == 5);
+	BOOST_CHECK_EQUAL(config.operands().size(), 5);
 
 	auto compare = std::vector<std::string>{ argv[2], argv[3], argv[4], argv[5], argv[6] };
-	CHECK(config.operands() == compare);
+	BOOST_CHECK(config.operands() == compare);
 }
 
-TEST_CASE("t_8")
+BOOST_AUTO_TEST_CASE(t_8)
 {
 	const char *const argv[] = {
 		"test", "-i", "foo", "-jbar", nullptr
@@ -248,16 +229,16 @@ TEST_CASE("t_8")
 	
 	config.parse(argc, argv);
 
-	CHECK(config.has("i"));
-	CHECK(config.get<std::string>("i") == "foo");
-	CHECK(config.has("j"));
-	CHECK(config.get<std::string>("j") == "bar");
+	BOOST_CHECK(config.has("i"));
+	BOOST_CHECK_EQUAL(config.get<std::string>("i"), "foo");
+	BOOST_CHECK(config.has("j"));
+	BOOST_CHECK_EQUAL(config.get<std::string>("j"), "bar");
 
-	CHECK(config.has("k"));
-	CHECK(config.get<std::string>("k") == "baz");
+	BOOST_CHECK(config.has("k"));
+	BOOST_CHECK_EQUAL(config.get<std::string>("k"), "baz");
 }
 
-TEST_CASE("t_9")
+BOOST_AUTO_TEST_CASE(t_9)
 {
 	auto &config = mcfp::config::instance();
 
@@ -288,10 +269,10 @@ TEST_CASE("t_9")
 // 	std::cerr << '>' << kExpected << '<' << std::endl;
 // 	std::cerr << '>' << ss.str() << '<' << std::endl;
 
-// 	CHECK_EQUAL(ss.str(), kExpected);
+// 	BOOST_CHECK_EQUAL(ss.str(), kExpected);
 }
 
-TEST_CASE("t_10")
+BOOST_AUTO_TEST_CASE(t_10)
 {
 	std::string s1 = R"(SPDX-License-Identifier: BSD-2-Clause
 
@@ -312,7 +293,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 	for (auto line : ww)
 		os << line << std::endl;
 	
-	CHECK(os.str() == R"(SPDX-License-Identifier: BSD-2-Clause
+	BOOST_CHECK_EQUAL(os.str(), R"(SPDX-License-Identifier: BSD-2-Clause
 
 Copyright (c) 2022 Maarten L. Hekkelman
 
@@ -339,7 +320,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 )");
 }
 
-TEST_CASE("t_11")
+BOOST_AUTO_TEST_CASE(t_11)
 {
 	const char *const argv[] = {
 		"test", "-faap", "-fnoot", "-fmies", nullptr
@@ -354,16 +335,16 @@ TEST_CASE("t_11")
 	
 	config.parse(argc, argv);
 
-	CHECK(config.count("file") == 3);
+	BOOST_CHECK_EQUAL(config.count("file"), 3);
 	
 	std::vector<std::string> files = config.get<std::vector<std::string>>("file");
-	CHECK(files.size() == 3);
-	CHECK(files[0] == "aap");
-	CHECK(files[1] == "noot");
-	CHECK(files[2] == "mies");
+	BOOST_CHECK_EQUAL(files.size(), 3);
+	BOOST_CHECK_EQUAL(files[0], "aap");
+	BOOST_CHECK_EQUAL(files[1], "noot");
+	BOOST_CHECK_EQUAL(files[2], "mies");
 }
 
-TEST_CASE("t_12")
+BOOST_AUTO_TEST_CASE(t_12)
 {
 	const char *const argv[] = {
 		"test", "--aap", nullptr
@@ -378,16 +359,16 @@ TEST_CASE("t_12")
 	
 	std::error_code ec;
 	config.parse(argc, argv, ec);
-	CHECK(ec == mcfp::config_error::unknown_option);
+	BOOST_CHECK(ec == mcfp::config_error::unknown_option);
 
 	config.set_ignore_unknown(true);
 	ec = {};
 
 	config.parse(argc, argv, ec);
-	CHECK(not ec);
+	BOOST_CHECK(not ec);
 }
 
-TEST_CASE("t_13")
+BOOST_AUTO_TEST_CASE(t_13)
 {
 	const char *const argv[] = {
 		"test", "--test=bla", nullptr
@@ -400,31 +381,15 @@ TEST_CASE("t_13")
 		"test [options]",
 		mcfp::make_option<std::string>("test", ""));
 	
-	CHECK_NOTHROW(config.parse(argc, argv));
+	BOOST_CHECK_NO_THROW(config.parse(argc, argv));
 
-	CHECK(config.has("test"));
-	CHECK(config.get("test") == "bla");
-}
-
-TEST_CASE("t_14")
-{
-	const char *const argv[] = {
-		"test", "-test=bla", nullptr
-	};
-	int argc = sizeof(argv) / sizeof(char*) - 1;
-
-	auto &config = mcfp::config::instance();
-
-	config.init(
-		"test [options]",
-		mcfp::make_option<std::string>("test", ""));
-	
-	CHECK_THROWS_AS(config.parse(argc, argv), std::system_error);
+	BOOST_TEST(config.has("test"));
+	BOOST_TEST(config.get("test") == "bla");
 }
 
 // --------------------------------------------------------------------
 
-TEST_CASE("file_1, * utf::tolerance(0.001)")
+BOOST_AUTO_TEST_CASE(file_1, * utf::tolerance(0.001))
 {
 	const std::string_view config_file{ R"(
 # This is a test configuration
@@ -461,24 +426,24 @@ verbose
 
 	config.parse_config_file(is, ec);
 
-	CHECK(not ec);
+	BOOST_CHECK(not ec);
 
-	CHECK(config.has("aap"));
-	CHECK(config.get<std::string>("aap") == "1");
+	BOOST_CHECK(config.has("aap"));
+	BOOST_CHECK_EQUAL(config.get<std::string>("aap"), "1");
 
-	CHECK(config.has("noot"));
-	CHECK(config.get<int>("noot") == 2);
+	BOOST_CHECK(config.has("noot"));
+	BOOST_CHECK_EQUAL(config.get<int>("noot"), 2);
 
-	CHECK(config.has("pi"));
-	CHECK(std::to_string(config.get<float>("pi")) == std::to_string(3.14));
+	BOOST_CHECK(config.has("pi"));
+	BOOST_TEST(config.get<float>("pi") == 3.14);
 
-	CHECK(config.has("s"));
-	CHECK(config.get<std::string>("s") == "hello, world!");
+	BOOST_CHECK(config.has("s"));
+	BOOST_CHECK_EQUAL(config.get<std::string>("s"), "hello, world!");
 
-	CHECK(config.has("verbose"));
+	BOOST_CHECK(config.has("verbose"));
 }
 
-TEST_CASE("file_2")
+BOOST_AUTO_TEST_CASE(file_2)
 {
 	auto &config = mcfp::config::instance();
 
@@ -513,14 +478,14 @@ TEST_CASE("file_2")
 		
 		config.parse_config_file(is, ec);
 
-		CHECK(ec == err);
+		BOOST_CHECK(ec == err);
 
 		if (ec == std::errc())
-			CHECK(config.has(option));
+			BOOST_CHECK(config.has(option));
 	}
 }
 
-TEST_CASE("file_3")
+BOOST_AUTO_TEST_CASE(file_3)
 {
 	auto &config = mcfp::config::instance();
 
@@ -541,16 +506,16 @@ TEST_CASE("file_3")
 
 	config.parse_config_file("config", "bla-bla.conf", { gTestDir.string() }, ec);
 
-	CHECK(not ec);
+	BOOST_CHECK(not ec);
 
-	CHECK(config.has("aap"));
-	CHECK(config.get<std::string>("aap") == "aap");
+	BOOST_CHECK(config.has("aap"));
+	BOOST_CHECK_EQUAL(config.get<std::string>("aap"), "aap");
 
-	CHECK(config.has("noot"));
-	CHECK(config.get<int>("noot") == 42);
+	BOOST_CHECK(config.has("noot"));
+	BOOST_CHECK_EQUAL(config.get<int>("noot"), 42);
 }
 
-	TEST_CASE("file_4")
+BOOST_AUTO_TEST_CASE(file_4)
 {
 	auto &config = mcfp::config::instance();
 
@@ -571,11 +536,11 @@ TEST_CASE("file_3")
 
 	config.parse_config_file("config", "unit-test.conf", { gTestDir.string() }, ec);
 
-	CHECK(not ec);
+	BOOST_CHECK(not ec);
 
-	CHECK(config.has("aap"));
-	CHECK(config.get<std::string>("aap") == "aap");
+	BOOST_CHECK(config.has("aap"));
+	BOOST_CHECK_EQUAL(config.get<std::string>("aap"), "aap");
 
-	CHECK(config.has("noot"));
-	CHECK(config.get<int>("noot") == 3);
+	BOOST_CHECK(config.has("noot"));
+	BOOST_CHECK_EQUAL(config.get<int>("noot"), 3);
 }

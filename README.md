@@ -1,6 +1,3 @@
-[![github CI](https://github.com/mhekkel/libmcfp/actions/workflows/cmake-multi-platform.yml/badge.svg)](https://github.com/mhekkel/libmcfp/actions)
-[![github CI](https://github.com/mhekkel/libmcfp/actions/workflows/build-documentation.yml/badge.svg)](https://github.com/mhekkel/libmcfp/actions)
-
 # libmcfp
 
 A library for parsing command line arguments and configuration files and making them available throughout a program.
@@ -132,3 +129,4 @@ cmake ..
 cmake --build .
 cmake --install .
 ```
+
