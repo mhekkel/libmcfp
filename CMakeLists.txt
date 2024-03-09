@@ -25,19 +25,25 @@
 cmake_minimum_required(VERSION 3.16)
 
 # set the project name
-project(libmcfp VERSION 1.2.4 LANGUAGES CXX)
+project(libmcfp VERSION 1.3.1 LANGUAGES CXX)
+
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
-include(Dart)
+include(CTest)
 
 set(CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 17 CACHE STRING "The minimum version of C++ required for this library")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-option(ENABLE_TESTING "Build the unit test applications" OFF)
+option(BUILD_DOCUMENTATION "Build the documentation" OFF)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+	if("${CMAKE_CXX_COMPILER_VERSION}" LESS 9.4)
+		message(FATAL_ERROR "Your GNU g++ is too old, need at least 9.4")
+	endif()
+
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers")
 elseif(MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
@@ -67,75 +73,43 @@ endif()
 add_library(libmcfp INTERFACE)
 add_library(libmcfp::libmcfp ALIAS libmcfp)
 
-target_include_directories(libmcfp INTERFACE
-	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-	$<INSTALL_INTERFACE:include>
-)
+target_compile_features(libmcfp INTERFACE cxx_std_20)
 
 # adding header sources just helps IDEs
-target_sources(libmcfp INTERFACE
-	$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>$<INSTALL_INTERFACE:include>/mcfp/mcfp.hpp
+target_sources(libmcfp PUBLIC
+	FILE_SET mcfp_headers TYPE HEADERS
+	BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+	FILES
+	include/mcfp/detail/charconv.hpp
+	include/mcfp/detail/options.hpp
+	include/mcfp/error.hpp
+	include/mcfp/mcfp.hpp
+	include/mcfp/text.hpp
+	include/mcfp/utilities.hpp
 )
-
-set_target_properties(libmcfp PROPERTIES PUBLIC_HEADER include/mcfp/mcfp.hpp)
 
 # installation
-set(version_config "${CMAKE_CURRENT_BINARY_DIR}/libmcfpConfigVersion.cmake")
-
-set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR})
-
-write_basic_package_version_file("${version_config}"
-	VERSION ${PROJECT_VERSION}
-	COMPATIBILITY SameMajorVersion)
-
 install(TARGETS libmcfp
-	EXPORT libmcfpConfig
-	PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+	EXPORT mcfp
+	FILE_SET mcfp_headers
+	DESTINATION include/)
 
-install(
-	DIRECTORY include/mcfp
-	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-	COMPONENT Devel
-)
-
-export(TARGETS libmcfp NAMESPACE libmcfp:: FILE libmcfpTargets.cmake)
-
-if(WIN32 AND NOT CYGWIN)
-	set(CONFIG_LOC CMake)
-else()
-	set(CONFIG_LOC "${CMAKE_INSTALL_LIBDIR}/cmake/libmcfp")
-endif()
-
-configure_package_config_file(
-	${PROJECT_SOURCE_DIR}/cmake/libmcfpConfig.cmake.in
-	${CMAKE_CURRENT_BINARY_DIR}/libmcfpConfig.cmake
-	INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libmcfp
-	PATH_VARS INCLUDE_INSTALL_DIR
-)
-
-install(EXPORT libmcfpConfig
-	FILE libmcfpTargets.cmake
+install(EXPORT mcfp
 	NAMESPACE libmcfp::
-	DESTINATION ${CONFIG_LOC})
+	DESTINATION lib/cmake/libmcfp
+	FILE "libmcfpTargets.cmake")
 
-install(
-	FILES ${CMAKE_CURRENT_BINARY_DIR}/libmcfpConfig.cmake "${version_config}"
-	DESTINATION ${CONFIG_LOC})
+configure_file(${PROJECT_SOURCE_DIR}/cmake/libmcfpConfig.cmake.in
+	${CMAKE_CURRENT_BINARY_DIR}/libmcfpConfig.cmake @ONLY)
 
-if(ENABLE_TESTING)
-	enable_testing()
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libmcfpConfig.cmake"
+	DESTINATION lib/cmake/libmcfp)
 
-	find_package(Boost REQUIRED)
-
-	add_executable(libmcfp-unit-test ${PROJECT_SOURCE_DIR}/test/unit-test.cpp)
-
-	target_link_libraries(libmcfp-unit-test libmcfp::libmcfp Boost::boost)
-
-	if(MSVC)
-		# Specify unwind semantics so that MSVC knowns how to handle exceptions
-		target_compile_options(libmcfp-unit-test PRIVATE /EHsc)
-	endif()
-
-	add_test(NAME libmcfp-unit-test
-		COMMAND $<TARGET_FILE:libmcfp-unit-test> -- ${PROJECT_SOURCE_DIR}/test)
+if(BUILD_TESTING)
+	add_subdirectory(test)
 endif()
+
+if(BUILD_DOCUMENTATION)
+	add_subdirectory(docs)
+endif()
+

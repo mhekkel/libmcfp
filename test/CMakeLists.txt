@@ -15,7 +15,7 @@ endif()
 
 add_executable(mcfp-unit-test ${CMAKE_CURRENT_SOURCE_DIR}/unit-test.cpp)
 
-target_link_libraries(mcfp-unit-test mcfp::mcfp Catch2::Catch2)
+target_link_libraries(mcfp-unit-test libmcfp::libmcfp Catch2::Catch2)
 
 if(${Catch2_VERSION} VERSION_GREATER_EQUAL 3.0.0)
 	target_compile_definitions(mcfp-unit-test PUBLIC CATCH22=0)
