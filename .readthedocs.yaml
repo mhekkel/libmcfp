@@ -10,7 +10,7 @@ build:
   jobs:
     pre_build:
       - "cmake -S . -B build -DBUILD_DOCUMENTATION=ON -DBUILD_TESTING=OFF"
-      - "cmake --build build --target Doxygen-mcfp"
+      - "cmake --build build --target Doxygen-libmcfp"
 
 # Build from the docs/ directory with Sphinx
 sphinx:
