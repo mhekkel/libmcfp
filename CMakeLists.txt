@@ -76,7 +76,7 @@ add_library(libmcfp::libmcfp ALIAS libmcfp)
 target_compile_features(libmcfp INTERFACE cxx_std_20)
 
 if(MSVC)
-	target_compile_definitions(libmcfp PUBLIC NOMINMAX=1)
+	target_compile_definitions(libmcfp INTERFACE NOMINMAX=1)
 endif()
 
 # adding header sources just helps IDEs
