@@ -33,6 +33,7 @@
 #include <cassert>
 #include <cstring>
 
+#include <algorithm>
 #include <any>
 #include <charconv>
 #include <deque>
