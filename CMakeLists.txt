@@ -22,7 +22,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.23)
 
 # set the project name
 project(libmcfp VERSION 1.3.1 LANGUAGES CXX)
@@ -103,8 +103,9 @@ install(EXPORT mcfp
 	DESTINATION lib/cmake/libmcfp
 	FILE "libmcfpTargets.cmake")
 
-configure_file(${PROJECT_SOURCE_DIR}/cmake/libmcfpConfig.cmake.in
-	${CMAKE_CURRENT_BINARY_DIR}/libmcfpConfig.cmake @ONLY)
+configure_package_config_file(${PROJECT_SOURCE_DIR}/cmake/libmcfpConfig.cmake.in
+	${CMAKE_CURRENT_BINARY_DIR}/libmcfpConfig.cmake
+	INSTALL_DESTINATION lib/cmake/libmcfp)
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libmcfpConfig.cmake"
 	DESTINATION lib/cmake/libmcfp)
