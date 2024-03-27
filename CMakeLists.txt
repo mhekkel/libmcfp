@@ -25,7 +25,7 @@
 cmake_minimum_required(VERSION 3.23)
 
 # set the project name
-project(libmcfp VERSION 1.3.2 LANGUAGES CXX)
+project(libmcfp VERSION 1.3.3 LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
@@ -81,7 +81,7 @@ endif()
 
 # adding header sources just helps IDEs
 target_sources(libmcfp PUBLIC
-	FILE_SET mcfp_headers TYPE HEADERS
+	FILE_SET libmcfp_headers TYPE HEADERS
 	BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
 	FILES
 	include/mcfp/detail/charconv.hpp
@@ -94,11 +94,11 @@ target_sources(libmcfp PUBLIC
 
 # installation
 install(TARGETS libmcfp
-	EXPORT mcfp
-	FILE_SET mcfp_headers
+	EXPORT libmcfp
+	FILE_SET libmcfp_headers
 	DESTINATION include/)
 
-install(EXPORT mcfp
+install(EXPORT libmcfp
 	NAMESPACE libmcfp::
 	DESTINATION lib/cmake/libmcfp
 	FILE "libmcfpTargets.cmake")
