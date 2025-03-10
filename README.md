@@ -11,7 +11,7 @@ There's a config file parser as well.
 
 ## Synopsis
 
-```c++
+```cpp
 // Example of using libmcfp
 
 #include <iostream>
