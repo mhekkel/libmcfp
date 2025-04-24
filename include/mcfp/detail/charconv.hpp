@@ -26,6 +26,8 @@
 
 #pragma once
 
+#include "fast_float/fast_float.h"
+
 #include <algorithm>
 #include <charconv>
 #include <cmath>
@@ -104,144 +106,15 @@ struct my_charconv
 {
 	using value_type = T;
 
-	static std::from_chars_result from_chars(const char *first, const char *last, value_type &value)
+	static auto from_chars(const char *first, const char *last, value_type &value)
 	{
-		std::from_chars_result result{ first, {} };
-
-		enum State
-		{
-			IntegerSign,
-			Integer,
-			Fraction,
-			ExponentSign,
-			Exponent
-		} state = IntegerSign;
-		int sign = 1;
-		unsigned long long vi = 0;
-		long double f = 1;
-		int exponent_sign = 1;
-		int exponent = 0;
-		bool done = false;
-
-		while (not done and result.ec == std::errc())
-		{
-			char ch = result.ptr != last ? *result.ptr : 0;
-			++result.ptr;
-
-			switch (state)
-			{
-				case IntegerSign:
-					if (ch == '-')
-					{
-						sign = -1;
-						state = Integer;
-					}
-					else if (ch == '+')
-						state = Integer;
-					else if (ch >= '0' and ch <= '9')
-					{
-						vi = ch - '0';
-						state = Integer;
-					}
-					else if (ch == '.')
-						state = Fraction;
-					else
-						result.ec = std::errc::invalid_argument;
-					break;
-
-				case Integer:
-					if (ch >= '0' and ch <= '9')
-						vi = 10 * vi + (ch - '0');
-					else if (ch == 'e' or ch == 'E')
-						state = ExponentSign;
-					else if (ch == '.')
-						state = Fraction;
-					else
-					{
-						done = true;
-						--result.ptr;
-					}
-					break;
-
-				case Fraction:
-					if (ch >= '0' and ch <= '9')
-					{
-						vi = 10 * vi + (ch - '0');
-						f /= 10;
-					}
-					else if (ch == 'e' or ch == 'E')
-						state = ExponentSign;
-					else
-					{
-						done = true;
-						--result.ptr;
-					}
-					break;
-
-				case ExponentSign:
-					if (ch == '-')
-					{
-						exponent_sign = -1;
-						state = Exponent;
-					}
-					else if (ch == '+')
-						state = Exponent;
-					else if (ch >= '0' and ch <= '9')
-					{
-						exponent = ch - '0';
-						state = Exponent;
-					}
-					else
-						result.ec = std::errc::invalid_argument;
-					break;
-
-				case Exponent:
-					if (ch >= '0' and ch <= '9')
-						exponent = 10 * exponent + (ch - '0');
-					else
-					{
-						done = true;
-						--result.ptr;
-					}
-					break;
-			}
-		}
-
-		if (result.ec == std::errc())
-		{
-			long double v = f * vi * sign;
-			if (exponent != 0)
-				v *= std::pow(10, exponent * exponent_sign);
-
-			if (std::isnan(v))
-				result.ec = std::errc::invalid_argument;
-			else if (std::abs(v) > std::numeric_limits<value_type>::max())
-				result.ec = std::errc::result_out_of_range;
-
-			value = static_cast<value_type>(v);
-		}
-
-		return result;
+		return fast_float::from_chars(first, last, value);
 	}
 
 	template <typename Iterator, std::enable_if_t<std::is_floating_point_v<T>, int> = 0>
-	static std::to_chars_result to_chars(Iterator first, Iterator last, const T &value)
+	static auto to_chars(Iterator first, Iterator last, const T &value)
 	{
-		int size = last - first;
-		int r;
-
-		if constexpr (std::is_same_v<T, long double>)
-			r = snprintf(first, last - first, "%lg", value);
-		else
-			r = snprintf(first, last - first, "%g", value);
-
-		std::to_chars_result result;
-		if (r < 0 or r >= size)
-			result = { first, std::errc::value_too_large };
-		else
-			result = { first + r, std::errc() };
-
-		return result;
+		return std::to_chars(first, last, value);
 	}
 };
 
@@ -265,5 +138,11 @@ using from_chars_function = decltype(std::from_chars(std::declval<const char *>(
 
 template <typename T>
 using charconv = typename std::conditional_t<is_detected_v<from_chars_function, T>, std_charconv<T>, my_charconv<T>>;
+
+template <typename T>
+constexpr auto from_chars(const char *s, const char *e, T &v)
+{
+	return charconv<T>::from_chars(s, e, v);
+}
 
 }

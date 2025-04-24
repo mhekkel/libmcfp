@@ -32,6 +32,7 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 include(CTest)
+include(CPM)
 
 set(CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 17 CACHE STRING "The minimum version of C++ required for this library")
@@ -70,10 +71,16 @@ if(MSVC)
 	add_definitions(-DNOMINMAX)
 endif()
 
+CPMAddPackage(
+	NAME fast_float
+	GITHUB_REPOSITORY "fastfloat/fast_float"
+	GIT_TAG v8.0.2)
+
 add_library(mcfp INTERFACE)
 add_library(mcfp::mcfp ALIAS mcfp)
 
 target_compile_features(mcfp INTERFACE cxx_std_20)
+target_link_libraries(mcfp INTERFACE fast_float)
 
 if(MSVC)
 	target_compile_definitions(mcfp INTERFACE NOMINMAX=1)
