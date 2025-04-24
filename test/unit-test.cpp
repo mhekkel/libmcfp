@@ -43,10 +43,10 @@ int main(int argc, char *argv[])
 	// Build a new parser on top of Catch2's
 	using namespace Catch::Clara;
 
-	auto cli = session.cli()                                // Get Catch2's command line parser
-	           | Opt(gTestDir, "data-dir")                  // bind variable to a new option, with a hint string
-	                 ["-D"]["--data-dir"]                   // the option names it will respond to
-	           ("The directory containing the data files"); // description string for the help output
+	auto cli = session.cli();                        // Get Catch2's command line parser
+	cli |= Opt(gTestDir, "data-dir")                 // bind variable to a new option, with a hint string
+		["-D"]["--data-dir"]                         // the option names it will respond to
+		("The directory containing the data files"); // description string for the help output
 
 	// Now pass the new composite back to Catch2 so it uses that
 	session.cli(cli);
@@ -77,7 +77,7 @@ TEST_CASE("t_1, * utf::tolerance(0.001)")
 		mcfp::make_option("param_int_2", 1, ""),
 		mcfp::make_option<float>("param_float", ""),
 		mcfp::make_option("param_float_2", 3.14f, ""));
-	
+
 	config.parse(argc, argv);
 
 	CHECK(config.has("flag"));
@@ -104,7 +104,7 @@ TEST_CASE("t_2")
 	config.init(
 		"test [options]",
 		mcfp::make_option("verbose,v", ""));
-	
+
 	config.parse(argc, argv);
 
 	CHECK(config.count("verbose") == 5);
@@ -122,7 +122,7 @@ TEST_CASE("t_3")
 	config.init(
 		"test [options]",
 		mcfp::make_option<int>("param_int", ""));
-	
+
 	config.parse(argc, argv);
 
 	CHECK(config.has("param_int"));
@@ -140,7 +140,7 @@ TEST_CASE("t_4")
 	config.init(
 		"test [options]",
 		mcfp::make_option<int>("param_int", ""));
-	
+
 	config.parse(argc, argv);
 
 	CHECK(config.has("param_int"));
@@ -152,15 +152,15 @@ TEST_CASE("t_5")
 	const char *const argv[] = {
 		"test", "-i", "42", "-j43", nullptr
 	};
-	int argc = sizeof(argv) / sizeof(char*);
-	
+	int argc = sizeof(argv) / sizeof(char *);
+
 	auto &config = mcfp::config::instance();
 
 	config.init(
 		"test [options]",
 		mcfp::make_option<int>("nr1,i", ""),
 		mcfp::make_option<int>("nr2,j", ""));
-	
+
 	config.parse(argc, argv);
 
 	CHECK(config.has("nr1"));
@@ -175,15 +175,15 @@ TEST_CASE("t_6")
 	const char *const argv[] = {
 		"test", "-i", "42", "-j43", "foo", "bar", nullptr
 	};
-	int argc = sizeof(argv) / sizeof(char*);
-	
+	int argc = sizeof(argv) / sizeof(char *);
+
 	auto &config = mcfp::config::instance();
 
 	config.init(
 		"test [options]",
 		mcfp::make_option<int>("nr1,i", ""),
 		mcfp::make_option<int>("nr2,j", ""));
-	
+
 	config.parse(argc, argv);
 
 	CHECK(config.has("nr1"));
@@ -202,15 +202,15 @@ TEST_CASE("t_7")
 	const char *const argv[] = {
 		"test", "--", "-i", "42", "-j43", "foo", "bar", nullptr
 	};
-	int argc = sizeof(argv) / sizeof(char*) - 1;
-	
+	int argc = sizeof(argv) / sizeof(char *) - 1;
+
 	auto &config = mcfp::config::instance();
 
 	config.init(
 		"test [options]",
 		mcfp::make_option<int>("nr1,i", ""),
 		mcfp::make_option<int>("nr2,j", ""));
-	
+
 	config.parse(argc, argv);
 
 	CHECK(not config.has("nr1"));
@@ -227,16 +227,16 @@ TEST_CASE("t_8")
 	const char *const argv[] = {
 		"test", "-i", "foo", "-jbar", nullptr
 	};
-	int argc = sizeof(argv) / sizeof(char*) - 1;
-	
+	int argc = sizeof(argv) / sizeof(char *) - 1;
+
 	auto &config = mcfp::config::instance();
 
 	config.init(
 		"test [options]",
-		mcfp::make_option<const char*>("i", ""),
+		mcfp::make_option<const char *>("i", ""),
 		mcfp::make_option<std::string_view>("j", ""),
 		mcfp::make_option("k", "baz", ""));
-	
+
 	config.parse(argc, argv);
 
 	CHECK(config.has("i"));
@@ -256,30 +256,30 @@ TEST_CASE("t_9")
 
 	config.init(
 		"test [options]",
-		mcfp::make_option<const char*>("i", "First option"),
+		mcfp::make_option<const char *>("i", "First option"),
 		mcfp::make_option<std::string_view>("j", "This is the second option"),
 		mcfp::make_option("a-very-long-option-name,k", "baz", "And, you guessed it, this must be option three."));
-	
-// 	std::stringstream ss;
 
-// 	int fd = open("/dev/null", O_RDWR);
-// 	dup2(fd, STDOUT_FILENO);
+	// 	std::stringstream ss;
 
-// 	ss << config << std::endl;
+	// 	int fd = open("/dev/null", O_RDWR);
+	// 	dup2(fd, STDOUT_FILENO);
 
-// 	const char kExpected[] = R"(usage: test [options]
-//   -i arg                                First option
-//   -j arg                                This is the second option
-//   -k [ --a-very-long-option-name ] arg (=baz)
-//                                         And, you guessed it, this must be
-//                                         option three.
+	// 	ss << config << std::endl;
 
-// )";
+	// 	const char kExpected[] = R"(usage: test [options]
+	//   -i arg                                First option
+	//   -j arg                                This is the second option
+	//   -k [ --a-very-long-option-name ] arg (=baz)
+	//                                         And, you guessed it, this must be
+	//                                         option three.
 
-// 	std::cerr << '>' << kExpected << '<' << std::endl;
-// 	std::cerr << '>' << ss.str() << '<' << std::endl;
+	// )";
 
-// 	CHECK_EQUAL(ss.str(), kExpected);
+	// 	std::cerr << '>' << kExpected << '<' << std::endl;
+	// 	std::cerr << '>' << ss.str() << '<' << std::endl;
+
+	// 	CHECK_EQUAL(ss.str(), kExpected);
 }
 
 TEST_CASE("t_10")
@@ -302,7 +302,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 	for (auto line : ww)
 		os << line << std::endl;
-	
+
 	CHECK(os.str() == R"(SPDX-License-Identifier: BSD-2-Clause
 
 Copyright (c) 2022 Maarten L. Hekkelman
@@ -335,18 +335,18 @@ TEST_CASE("t_11")
 	const char *const argv[] = {
 		"test", "-faap", "-fnoot", "-fmies", nullptr
 	};
-	int argc = sizeof(argv) / sizeof(char*) - 1;
+	int argc = sizeof(argv) / sizeof(char *) - 1;
 
 	auto &config = mcfp::config::instance();
 
 	config.init(
 		"test [options]",
 		mcfp::make_option<std::vector<std::string>>("file,f", ""));
-	
+
 	config.parse(argc, argv);
 
 	CHECK(config.count("file") == 3);
-	
+
 	std::vector<std::string> files = config.get<std::vector<std::string>>("file");
 	CHECK(files.size() == 3);
 	CHECK(files[0] == "aap");
@@ -359,14 +359,14 @@ TEST_CASE("t_12")
 	const char *const argv[] = {
 		"test", "--aap", nullptr
 	};
-	int argc = sizeof(argv) / sizeof(char*) - 1;
+	int argc = sizeof(argv) / sizeof(char *) - 1;
 
 	auto &config = mcfp::config::instance();
 
 	config.init(
 		"test [options]",
 		mcfp::make_option<std::vector<std::string>>("file,f", ""));
-	
+
 	std::error_code ec;
 	config.parse(argc, argv, ec);
 	CHECK(ec == mcfp::config_error::unknown_option);
@@ -383,14 +383,14 @@ TEST_CASE("t_13")
 	const char *const argv[] = {
 		"test", "--test=bla", nullptr
 	};
-	int argc = sizeof(argv) / sizeof(char*) - 1;
+	int argc = sizeof(argv) / sizeof(char *) - 1;
 
 	auto &config = mcfp::config::instance();
 
 	config.init(
 		"test [options]",
 		mcfp::make_option<std::string>("test", ""));
-	
+
 	CHECK_NOTHROW(config.parse(argc, argv));
 
 	CHECK(config.has("test"));
@@ -402,14 +402,14 @@ TEST_CASE("t_14")
 	const char *const argv[] = {
 		"test", "-test=bla", nullptr
 	};
-	int argc = sizeof(argv) / sizeof(char*) - 1;
+	int argc = sizeof(argv) / sizeof(char *) - 1;
 
 	auto &config = mcfp::config::instance();
 
 	config.init(
 		"test [options]",
 		mcfp::make_option<std::string>("test", ""));
-	
+
 	CHECK_THROWS_AS(config.parse(argc, argv), std::system_error);
 }
 
@@ -429,7 +429,7 @@ verbose
 
 	struct membuf : public std::streambuf
 	{
-		membuf(char * text, size_t length)
+		membuf(char *text, size_t length)
 		{
 			this->setg(text, text, text + length);
 		}
@@ -441,13 +441,13 @@ verbose
 
 	config.init(
 		"test [options]",
-		mcfp::make_option<const char*>("aap", ""),
+		mcfp::make_option<const char *>("aap", ""),
 		mcfp::make_option<int>("noot", ""),
 		mcfp::make_option<std::string>("mies", ""),
 		mcfp::make_option<float>("pi", ""),
 		mcfp::make_option<std::string>("s", ""),
 		mcfp::make_option("verbose,v", ""));
-	
+
 	std::error_code ec;
 
 	config.parse_config_file(is, ec);
@@ -473,19 +473,19 @@ TEST_CASE("file_2")
 {
 	auto &config = mcfp::config::instance();
 
-	std::tuple<std::string_view,std::string_view,std::error_code> tests[] = {
+	std::tuple<std::string_view, std::string_view, std::error_code> tests[] = {
 		{ "aap !", "aap", make_error_code(mcfp::config_error::invalid_config_file) },
 		{ "aap=aap", "aap", {} },
 		{ "aap", "aap", make_error_code(mcfp::config_error::missing_argument_for_option) },
 		{ "verbose=1", "verbose", make_error_code(mcfp::config_error::option_does_not_accept_argument) },
-				
+
 	};
 
 	for (const auto &[config_file, option, err] : tests)
 	{
 		struct membuf : public std::streambuf
 		{
-			membuf(char * text, size_t length)
+			membuf(char *text, size_t length)
 			{
 				this->setg(text, text, text + length);
 			}
@@ -496,12 +496,12 @@ TEST_CASE("file_2")
 		std::error_code ec;
 		config.init(
 			"test [options]",
-			mcfp::make_option<const char*>("aap", ""),
+			mcfp::make_option<const char *>("aap", ""),
 			mcfp::make_option<int>("noot", ""),
 			mcfp::make_option<float>("pi", ""),
 			mcfp::make_option<std::string>("s", ""),
 			mcfp::make_option("verbose,v", ""));
-		
+
 		config.parse_config_file(is, ec);
 
 		CHECK(ec == err);
@@ -517,16 +517,16 @@ TEST_CASE("file_3")
 
 	config.init(
 		"test [options]",
-		mcfp::make_option<const char*>("aap", ""),
+		mcfp::make_option<const char *>("aap", ""),
 		mcfp::make_option<int>("noot", ""),
 		mcfp::make_option<std::string>("config", ""));
-	
+
 	std::error_code ec;
 
 	const char *const argv[] = {
 		"test", "--aap=aap", "--noot=42", "--config=unit-test.conf", nullptr
 	};
-	int argc = sizeof(argv) / sizeof(char*) - 1;
+	int argc = sizeof(argv) / sizeof(char *) - 1;
 
 	config.parse(argc, argv);
 
@@ -541,22 +541,22 @@ TEST_CASE("file_3")
 	CHECK(config.get<int>("noot") == 42);
 }
 
-	TEST_CASE("file_4")
+TEST_CASE("file_4")
 {
 	auto &config = mcfp::config::instance();
 
 	config.init(
 		"test [options]",
-		mcfp::make_option<const char*>("aap", ""),
+		mcfp::make_option<const char *>("aap", ""),
 		mcfp::make_option<int>("noot", ""),
 		mcfp::make_option<std::string>("config", ""));
-	
+
 	std::error_code ec;
 
 	const char *const argv[] = {
 		"test", "--aap=aap", nullptr
 	};
-	int argc = sizeof(argv) / sizeof(char*) - 1;
+	int argc = sizeof(argv) / sizeof(char *) - 1;
 
 	config.parse(argc, argv);
 
