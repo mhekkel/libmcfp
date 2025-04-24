@@ -93,7 +93,7 @@ struct option_traits<T, typename std::enable_if_t<std::is_arithmetic_v<T>>>
 	static value_type set_value(std::string_view argument, std::error_code &ec)
 	{
 		value_type value{};
-		auto r = detail::from_chars(argument.data(), argument.data() + argument.length(), value);
+		auto r = from_chars(argument.data(), argument.data() + argument.length(), value);
 		if (r.ec != std::errc())
 			ec = std::make_error_code(r.ec);
 		return value;
