@@ -110,12 +110,6 @@ struct my_charconv
 	{
 		return fast_float::from_chars(first, last, value);
 	}
-
-	template <typename Iterator, std::enable_if_t<std::is_floating_point_v<T>, int> = 0>
-	static auto to_chars(Iterator first, Iterator last, const T &value)
-	{
-		return std::to_chars(first, last, value);
-	}
 };
 
 template <typename T>
@@ -124,12 +118,6 @@ struct std_charconv
 	static std::from_chars_result from_chars(const char *a, const char *b, T &d)
 	{
 		return std::from_chars(a, b, d);
-	}
-
-	template<typename Iterator>
-	static std::to_chars_result to_chars(Iterator a, Iterator b, const T &value)
-	{
-		return std::to_chars(a, b, value);
 	}
 };
 
