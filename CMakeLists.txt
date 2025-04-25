@@ -166,7 +166,7 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libmcfpConfig.cmake"
 	"${CMAKE_CURRENT_BINARY_DIR}/libmcfpConfigVersion.cmake"
 	DESTINATION lib/cmake/libmcfp)
 
-if(BUILD_TESTING)
+if(BUILD_TESTING AND PROJECT_IS_TOP_LEVEL)
 	add_subdirectory(test)
 endif()
 
