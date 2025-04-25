@@ -26,10 +26,6 @@
 
 #pragma once
 
-#if defined(USE_FAST_FLOAT)
-# include "fast_float/fast_float.h"
-#endif
-
 #include <algorithm>
 #include <charconv>
 #include <cmath>
@@ -104,20 +100,46 @@ constexpr inline bool is_detected_v = std::experimental::is_detected<Op, Args...
 
 #endif
 
-#if defined(USE_FAST_FLOAT)
+// Unfortunately, the std library for clang does not support from_chars with float types
+// Now, this code is not very speed sensitive, so we work around this limitation using
+// std::stof/std::stod
 
 template <typename T>
-struct my_charconv
-{
-	using value_type = T;
+struct my_charconv;
 
-	static auto from_chars(const char *first, const char *last, value_type &value)
+template<>
+struct my_charconv<float>
+{
+	static std::from_chars_result from_chars(const char *first, const char *last, float &value)
 	{
-		return fast_float::from_chars(first, last, value);
+		try
+		{
+			value = std::stof(std::string(first, last));
+			return { last, std::errc{} };
+		}
+		catch(const std::exception& e)
+		{
+			return { first, std::errc::invalid_argument };
+		}
 	}
 };
 
-#endif
+template<>
+struct my_charconv<double>
+{
+	static std::from_chars_result from_chars(const char *first, const char *last, double &value)
+	{
+		try
+		{
+			value = std::stod(std::string(first, last));
+			return { last, std::errc{} };
+		}
+		catch(const std::exception& e)
+		{
+			return { first, std::errc::invalid_argument };
+		}
+	}
+};
 
 template <typename T>
 struct std_charconv
@@ -128,20 +150,13 @@ struct std_charconv
 	}
 };
 
+// Make sure we only use our kludge when necessary.
+
 template <typename T>
 using from_chars_function = decltype(std::from_chars(std::declval<const char *>(), std::declval<const char *>(), std::declval<T &>()));
 
-#if defined(USE_FAST_FLOAT)
-
 template <typename T>
 using charconv = typename std::conditional_t<is_detected_v<from_chars_function, T>, std_charconv<T>, my_charconv<T>>;
-
-#else
-
-template <typename T>
-using charconv = std_charconv<T>;
-
-#endif
 
 template <typename T>
 constexpr auto from_chars(const char *s, const char *e, T &v)
