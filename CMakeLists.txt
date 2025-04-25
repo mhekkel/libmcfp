@@ -75,7 +75,7 @@ try_compile(STD_CHARCONV_COMPILING
 	SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/test-charconv.cpp)
 
 if(NOT STD_CHARCONV_COMPILING)
-	message(WARNING "Using fast_float for std::from_chars")
+	message(NOTICE "Using fast_float for std::from_chars")
 	CPMAddPackage(
 		NAME fast_float
 		GITHUB_REPOSITORY "fastfloat/fast_float"
