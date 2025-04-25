@@ -25,7 +25,7 @@
 cmake_minimum_required(VERSION 3.23)
 
 # set the project name
-project(mcfp VERSION 1.4.0 LANGUAGES CXX)
+project(mcfp VERSION 1.4.1 LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
@@ -39,11 +39,6 @@ set(CMAKE_CXX_STANDARD 17 CACHE STRING "The minimum version of C++ required for 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(BUILD_DOCUMENTATION "Build the documentation" OFF)
-set(MCFP_BUILD_TESTING OFF CACHE BOOL "Set this to build testing code")
-
-if(BUILD_TESTING AND NOT MCFP_BUILD_TESTING)
-	message(NOTICE "Set MCFP_BUILD_TESTING=ON to build testing")
-endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 	if("${CMAKE_CXX_COMPILER_VERSION}" LESS 9.4)
@@ -145,7 +140,7 @@ install(EXPORT mcfp
 	DESTINATION lib/cmake/libmcfp
 	FILE "libmcfpTargets.cmake")
 
-if(MCFP_BUILD_TESTING)
+if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()
 

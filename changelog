@@ -1,3 +1,7 @@
+Version 1.4.1
+- Remove libmcfp cmake config entirely
+- Do not build when the project is not TOP_LEVEL
+
 Version 1.4.0
 - Better error reporting
 
