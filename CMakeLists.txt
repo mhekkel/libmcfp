@@ -71,16 +71,24 @@ if(MSVC)
 	add_definitions(-DNOMINMAX)
 endif()
 
-CPMAddPackage(
-	NAME fast_float
-	GITHUB_REPOSITORY "fastfloat/fast_float"
-	GIT_TAG v8.0.2)
+try_compile(STD_CHARCONV_COMPILING
+	SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/test-charconv.cpp)
+
+if(NOT STD_CHARCONV_COMPILING)
+	message(WARNING "Using fast_float for std::from_chars")
+	CPMAddPackage(
+		NAME fast_float
+		GITHUB_REPOSITORY "fastfloat/fast_float"
+		GIT_TAG v8.0.2)
+	set(LINK_FAST_FLOAT fast_float)
+endif()
 
 add_library(mcfp INTERFACE)
 add_library(mcfp::mcfp ALIAS mcfp)
 
 target_compile_features(mcfp INTERFACE cxx_std_20)
-target_link_libraries(mcfp INTERFACE fast_float)
+target_link_libraries(mcfp INTERFACE $<IF:$<BOOL:${STD_CHARCONV_COMPILING}>,,fast_float>)
+target_compile_definitions(mcfp INTERFACE $<IF:$<BOOL:${STD_CHARCONV_COMPILING}>,,USE_FAST_FLOAT>)
 
 if(MSVC)
 	target_compile_definitions(mcfp INTERFACE NOMINMAX=1)
@@ -137,7 +145,7 @@ write_basic_package_version_file(
 	COMPATIBILITY AnyNewerVersion)
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/mcfpConfig.cmake"
- 	"${CMAKE_CURRENT_BINARY_DIR}/mcfpConfigVersion.cmake"
+	"${CMAKE_CURRENT_BINARY_DIR}/mcfpConfigVersion.cmake"
 	DESTINATION lib/cmake/mcfp)
 
 # Install old config file, for use in older code

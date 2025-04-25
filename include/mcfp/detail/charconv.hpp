@@ -26,7 +26,9 @@
 
 #pragma once
 
-#include "fast_float/fast_float.h"
+#if defined(USE_FAST_FLOAT)
+# include "fast_float/fast_float.h"
+#endif
 
 #include <algorithm>
 #include <charconv>
@@ -35,9 +37,9 @@
 #include <vector>
 
 #if __has_include(<experimental/type_traits>)
-#include <experimental/type_traits>
+# include <experimental/type_traits>
 #else
-#include <type_traits>
+# include <type_traits>
 #endif
 
 namespace mcfp::detail
@@ -47,21 +49,22 @@ namespace mcfp::detail
 // This code is copied from:
 // https://ld2015.scusa.lsu.edu/cppreference/en/cpp/experimental/is_detected.html
 
-template< class... >
+template <class...>
 using void_t = void;
 
 namespace detail
 {
 	template <class Default, class AlwaysVoid,
-			template<class...> class Op, class... Args>
+		template <class...> class Op, class... Args>
 	struct detector
 	{
 		using value_t = std::false_type;
 		using type = Default;
 	};
-	
-	template <class Default, template<class...> class Op, class... Args>
-	struct detector<Default, void_t<Op<Args...>>, Op, Args...> {
+
+	template <class Default, template <class...> class Op, class... Args>
+	struct detector<Default, void_t<Op<Args...>>, Op, Args...>
+	{
 		// Note that std::void_t is a c++17 feature
 		using value_t = std::true_type;
 		using type = Op<Args...>;
@@ -72,34 +75,36 @@ struct nonesuch
 {
 	nonesuch() = delete;
 	~nonesuch() = delete;
-	nonesuch(nonesuch const&) = delete;
-	void operator=(nonesuch const&) = delete;
+	nonesuch(nonesuch const &) = delete;
+	void operator=(nonesuch const &) = delete;
 };
 
-template <template<class...> class Op, class... Args>
+template <template <class...> class Op, class... Args>
 using is_detected = typename detail::detector<nonesuch, void, Op, Args...>::value_t;
 
-template <template<class...> class Op, class... Args>
-constexpr inline bool is_detected_v = is_detected<Op,Args...>::value;
+template <template <class...> class Op, class... Args>
+constexpr inline bool is_detected_v = is_detected<Op, Args...>::value;
 
-template <template<class...> class Op, class... Args>
+template <template <class...> class Op, class... Args>
 using detected_t = typename detail::detector<nonesuch, void, Op, Args...>::type;
 
-template <class Default, template<class...> class Op, class... Args>
+template <class Default, template <class...> class Op, class... Args>
 using detected_or = detail::detector<Default, void, Op, Args...>;
 
 template <class Expected, template <class...> class Op, class... Args>
 using is_detected_exact = std::is_same<Expected, detected_t<Op, Args...>>;
 
-template <class Expected, template<class...> class Op, class... Args>
+template <class Expected, template <class...> class Op, class... Args>
 constexpr inline bool is_detected_exact_v = is_detected_exact<Expected, Op, Args...>::value;
 
 #else
 
-template <template<class...> class Op, class... Args>
-constexpr inline bool is_detected_v = std::experimental::is_detected<Op,Args...>::value;
+template <template <class...> class Op, class... Args>
+constexpr inline bool is_detected_v = std::experimental::is_detected<Op, Args...>::value;
 
 #endif
+
+#if defined(USE_FAST_FLOAT)
 
 template <typename T>
 struct my_charconv
@@ -111,6 +116,8 @@ struct my_charconv
 		return fast_float::from_chars(first, last, value);
 	}
 };
+
+#endif
 
 template <typename T>
 struct std_charconv
@@ -124,8 +131,17 @@ struct std_charconv
 template <typename T>
 using from_chars_function = decltype(std::from_chars(std::declval<const char *>(), std::declval<const char *>(), std::declval<T &>()));
 
+#if defined(USE_FAST_FLOAT)
+
 template <typename T>
 using charconv = typename std::conditional_t<is_detected_v<from_chars_function, T>, std_charconv<T>, my_charconv<T>>;
+
+#else
+
+template <typename T>
+using charconv = std_charconv<T>;
+
+#endif
 
 template <typename T>
 constexpr auto from_chars(const char *s, const char *e, T &v)
@@ -133,4 +149,4 @@ constexpr auto from_chars(const char *s, const char *e, T &v)
 	return charconv<T>::from_chars(s, e, v);
 }
 
-}
+} // namespace mcfp::detail
