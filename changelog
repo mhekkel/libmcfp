@@ -1,6 +1,8 @@
 Version 1.4.1
 - Remove libmcfp cmake config entirely
-- Do not build when the project is not TOP_LEVEL
+- Do not build tests when BUILD_TESTING is ON, use
+  our own flag instead. Avoids building tests when
+  included by other packages.
 
 Version 1.4.0
 - Better error reporting
