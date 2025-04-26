@@ -1,7 +1,7 @@
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
- * Copyright (c) 2022 Maarten L. Hekkelman
+ * Copyright (c) 2022-2025 Maarten L. hekkelman
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -286,7 +286,7 @@ TEST_CASE("t_10")
 {
 	std::string s1 = R"(SPDX-License-Identifier: BSD-2-Clause
 
-Copyright (c) 2022 Maarten L. Hekkelman
+Copyright (c) 2022-2025 Maarten L. hekkelman
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 
@@ -305,7 +305,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 	CHECK(os.str() == R"(SPDX-License-Identifier: BSD-2-Clause
 
-Copyright (c) 2022 Maarten L. Hekkelman
+Copyright (c) 2022-2025 Maarten L. hekkelman
 
 Redistribution and use in source and binary forms, with or without 
 modification, are permitted provided that the following conditions are met:
