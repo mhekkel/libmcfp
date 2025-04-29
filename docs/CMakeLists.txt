@@ -40,4 +40,4 @@ add_custom_target("Sphinx-${PROJECT_NAME}" ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	COMMENT "Generating documentation with Sphinx")
 
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/sphinx/ DESTINATION ${CMAKE_INSTALL_DOCDIR} PATTERN .doctrees EXCLUDE)
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/sphinx/ DESTINATION share/doc/mcfp PATTERN .doctrees EXCLUDE)
