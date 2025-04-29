@@ -117,7 +117,7 @@ struct my_charconv<float>
 			value = std::stof(std::string(first, last));
 			return { last, std::errc{} };
 		}
-		catch (const std::exception &e)
+		catch (const std::exception &/* e */)
 		{
 			return { first, std::errc::invalid_argument };
 		}
@@ -134,7 +134,7 @@ struct my_charconv<double>
 			value = std::stod(std::string(first, last));
 			return { last, std::errc{} };
 		}
-		catch (const std::exception &e)
+		catch (const std::exception &/* e */)
 		{
 			return { first, std::errc::invalid_argument };
 		}
