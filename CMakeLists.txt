@@ -50,6 +50,11 @@ add_library(mcfp::mcfp ALIAS mcfp)
 
 target_compile_features(mcfp INTERFACE cxx_std_20)
 
+# My god... why?
+if(MSVC)
+	target_compile_definitions(cifpp PUBLIC NOMINMAX=1)
+endif()
+
 # adding header sources just helps IDEs
 target_sources(mcfp PUBLIC
 	FILE_SET mcfp_headers TYPE HEADERS

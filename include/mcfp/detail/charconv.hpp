@@ -29,7 +29,6 @@
 #include <algorithm>
 #include <charconv>
 #include <cmath>
-#include <exception>
 #include <string>
 #include <vector>
 
