@@ -1,3 +1,6 @@
+Version 1.4.2
+- Clean up makefile
+
 Version 1.4.1
 - Remove libmcfp cmake config entirely
 - Do not build tests when BUILD_TESTING is ON, use

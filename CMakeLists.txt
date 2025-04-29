@@ -25,24 +25,15 @@
 cmake_minimum_required(VERSION 3.23)
 
 # set the project name
-project(mcfp VERSION 1.4.1 LANGUAGES CXX)
+project(mcfp VERSION 1.4.2 LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
-include(CTest)
 include(CPM)
+include(CTest)
 
-set(CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_STANDARD 17 CACHE STRING "The minimum version of C++ required for this library")
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(BUILD_DOCUMENTATION "Build the documentation" OFF)
-set(MCFP_BUILD_TESTING OFF CACHE BOOL "Set this to build testing code")
-
-if(BUILD_TESTING AND NOT MCFP_BUILD_TESTING)
-	message(NOTICE "Set MCFP_BUILD_TESTING=ON to build testing")
-endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 	if("${CMAKE_CXX_COMPILER_VERSION}" LESS 9.4)
@@ -54,35 +45,10 @@ elseif(MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
 endif()
 
-if(MSVC)
-	# make msvc standards compliant...
-	add_compile_options(/permissive-)
-
-	if(${CMAKE_SYSTEM_VERSION} GREATER_EQUAL 10) # Windows 10
-		add_definitions(-D _WIN32_WINNT=0x0A00)
-	elseif(${CMAKE_SYSTEM_VERSION} EQUAL 6.3) # Windows 8.1
-		add_definitions(-D _WIN32_WINNT=0x0603)
-	elseif(${CMAKE_SYSTEM_VERSION} EQUAL 6.2) # Windows 8
-		add_definitions(-D _WIN32_WINNT=0x0602)
-	elseif(${CMAKE_SYSTEM_VERSION} EQUAL 6.1) # Windows 7
-		add_definitions(-D _WIN32_WINNT=0x0601)
-	elseif(${CMAKE_SYSTEM_VERSION} EQUAL 6.0) # Windows Vista
-		add_definitions(-D _WIN32_WINNT=0x0600)
-	else() # Windows XP (5.1)
-		add_definitions(-D _WIN32_WINNT=0x0501)
-	endif()
-
-	add_definitions(-DNOMINMAX)
-endif()
-
 add_library(mcfp INTERFACE)
 add_library(mcfp::mcfp ALIAS mcfp)
 
 target_compile_features(mcfp INTERFACE cxx_std_20)
-
-if(MSVC)
-	target_compile_definitions(mcfp INTERFACE NOMINMAX=1)
-endif()
 
 # adding header sources just helps IDEs
 target_sources(mcfp PUBLIC
@@ -138,13 +104,7 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/mcfpConfig.cmake"
 	"${CMAKE_CURRENT_BINARY_DIR}/mcfpConfigVersion.cmake"
 	DESTINATION lib/cmake/mcfp)
 
-# Install old config file, for use in older code
-install(EXPORT mcfp
-	NAMESPACE libmcfp::
-	DESTINATION lib/cmake/libmcfp
-	FILE "libmcfpTargets.cmake")
-
-if(MCFP_BUILD_TESTING)
+if(BUILD_TESTING AND PROJECT_IS_TOP_LEVEL)
 	add_subdirectory(test)
 endif()
 

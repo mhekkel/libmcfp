@@ -107,7 +107,7 @@ constexpr inline bool is_detected_v = std::experimental::is_detected<Op, Args...
 template <typename T>
 struct my_charconv;
 
-template<>
+template <>
 struct my_charconv<float>
 {
 	static std::from_chars_result from_chars(const char *first, const char *last, float &value)
@@ -117,14 +117,14 @@ struct my_charconv<float>
 			value = std::stof(std::string(first, last));
 			return { last, std::errc{} };
 		}
-		catch(const std::exception& e)
+		catch (const std::exception &e)
 		{
 			return { first, std::errc::invalid_argument };
 		}
 	}
 };
 
-template<>
+template <>
 struct my_charconv<double>
 {
 	static std::from_chars_result from_chars(const char *first, const char *last, double &value)
@@ -134,7 +134,7 @@ struct my_charconv<double>
 			value = std::stod(std::string(first, last));
 			return { last, std::errc{} };
 		}
-		catch(const std::exception& e)
+		catch (const std::exception &e)
 		{
 			return { first, std::errc::invalid_argument };
 		}
