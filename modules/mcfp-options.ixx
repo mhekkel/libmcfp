@@ -24,14 +24,24 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+module;
 
+#include <any>
 #include <cassert>
+#include <charconv>
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <type_traits>
+#include <vector>
 
-namespace mcfp::detail
+export module mcfp : options;
+
+import :charconv;
+import :text;
+import :utilities;
+
+namespace mcfp
 {
 
 // --------------------------------------------------------------------
@@ -52,15 +62,9 @@ struct is_container_type : std::false_type
 {
 };
 
-
-
-
-
 /**
  * @brief Template to detect whether a type is a container
  */
-
-
 
 template <typename T>
 struct is_container_type<T,
@@ -73,7 +77,6 @@ struct is_container_type<T,
 
 template <typename T>
 inline constexpr bool is_container_type_v = is_container_type<T>::value;
-
 
 // --------------------------------------------------------------------
 // The options classes
@@ -258,7 +261,7 @@ struct option_base
 	}
 };
 
-template <typename T>
+export template <typename T>
 struct option : public option_base
 {
 	using traits_type = option_traits<T>;
@@ -303,7 +306,7 @@ struct option : public option_base
 	}
 };
 
-template <typename T>
+export template <typename T>
 struct multiple_option : public option_base
 {
 	using value_type = typename T::value_type;
@@ -331,7 +334,7 @@ struct multiple_option : public option_base
 	}
 };
 
-template <>
+export template <>
 struct option<void> : public option_base
 {
 	option(const option &rhs) = default;
@@ -342,4 +345,4 @@ struct option<void> : public option_base
 	}
 };
 
-} // namespace mcfp::detail
+} // namespace mcfp

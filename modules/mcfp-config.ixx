@@ -24,7 +24,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+module;
 
 /// \file
 /// This header-only library contains code to parse argc/argv and store the
@@ -44,10 +44,12 @@
 #include <type_traits>
 #include <vector>
 
-#include <mcfp/error.hpp>
-#include <mcfp/text.hpp>
-#include <mcfp/utilities.hpp>
-#include <mcfp/detail/options.hpp>
+export module mcfp : config;
+
+import :error;
+import :options;
+import :text;
+import :utilities;
 
 namespace mcfp
 {
@@ -59,10 +61,8 @@ namespace mcfp
  * 
  */
 
-class config
+export class config
 {
-	using option_base = detail::option_base;
-
   public:
 
 	/**
@@ -768,16 +768,16 @@ class config
  * @param description The help text for this option
  * @return auto The option object created
  */
-template <typename T = void, std::enable_if_t<not detail::is_container_type_v<T>, int> = 0>
+export template <typename T = void, std::enable_if_t<not is_container_type_v<T>, int> = 0>
 auto make_option(std::string_view name, std::string_view description)
 {
-	return detail::option<T>(name, description, false);
+	return option<T>(name, description, false);
 }
 
-template <typename T, std::enable_if_t<detail::is_container_type_v<T>, int> = 0>
+export template <typename T, std::enable_if_t<is_container_type_v<T>, int> = 0>
 auto make_option(std::string_view name, std::string_view description)
 {
-	return detail::multiple_option<T>(name, description, false);
+	return multiple_option<T>(name, description, false);
 }
 
 /**
@@ -796,10 +796,10 @@ auto make_option(std::string_view name, std::string_view description)
  * @param description The help text for this option
  * @return auto The option object created
  */
-template <typename T, std::enable_if_t<not detail::is_container_type_v<T>, int> = 0>
+export template <typename T, std::enable_if_t<not is_container_type_v<T>, int> = 0>
 auto make_option(std::string_view name, const T &v, std::string_view description)
 {
-	return detail::option<T>(name, v, description, false);
+	return option<T>(name, v, description, false);
 }
 
 /**
@@ -819,16 +819,16 @@ auto make_option(std::string_view name, const T &v, std::string_view description
  * @param description The help text for this option
  * @return auto The option object created
  */
-template <typename T = void, std::enable_if_t<not detail::is_container_type_v<T>, int> = 0>
+export template <typename T = void, std::enable_if_t<not is_container_type_v<T>, int> = 0>
 auto make_hidden_option(std::string_view name, std::string_view description)
 {
-	return detail::option<T>(name, description, true);
+	return option<T>(name, description, true);
 }
 
-template <typename T, std::enable_if_t<detail::is_container_type_v<T>, int> = 0>
+export template <typename T, std::enable_if_t<is_container_type_v<T>, int> = 0>
 auto make_hidden_option(std::string_view name, std::string_view description)
 {
-	return detail::multiple_option<T>(name, description, true);
+	return multiple_option<T>(name, description, true);
 }
 
 /**
@@ -849,10 +849,10 @@ auto make_hidden_option(std::string_view name, std::string_view description)
  * @param description The help text for this option
  * @return auto The option object created
  */
-template <typename T, std::enable_if_t<not detail::is_container_type_v<T>, int> = 0>
+export template <typename T, std::enable_if_t<not is_container_type_v<T>, int> = 0>
 auto make_hidden_option(std::string_view name, const T &v, std::string_view description)
 {
-	return detail::option<T>(name, v, description, true);
+	return option<T>(name, v, description, true);
 }
 
 } // namespace mcfp
@@ -860,7 +860,7 @@ auto make_hidden_option(std::string_view name, const T &v, std::string_view desc
 namespace std
 {
 
-template <>
+export template <>
 struct is_error_condition_enum<mcfp::config_error>
 	: public true_type
 {

@@ -24,13 +24,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import mcfp;
+
 #define CATCH_CONFIG_RUNNER
 
 #include <catch2/catch_all.hpp>
 
 #include <filesystem>
-
-#include <mcfp/mcfp.hpp>
 
 namespace fs = std::filesystem;
 

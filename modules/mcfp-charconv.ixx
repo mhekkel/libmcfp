@@ -24,7 +24,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+module;
 
 #include <algorithm>
 #include <charconv>
@@ -38,7 +38,9 @@
 # include <type_traits>
 #endif
 
-namespace mcfp::detail
+export module mcfp : charconv;
+
+namespace mcfp
 {
 
 #if (not defined(__cpp_lib_experimental_detect) or (__cpp_lib_experimental_detect < 201505)) and (not defined(_LIBCPP_VERSION) or _LIBCPP_VERSION < 5000)
@@ -164,4 +166,4 @@ constexpr auto from_chars(const char *s, const char *e, T &v)
 	return charconv<T>::from_chars(s, e, v);
 }
 
-} // namespace mcfp::detail
+} // namespace mcfp
