@@ -31,6 +31,8 @@ module;
 #include <string>
 #include <vector>
 
+#include <cstdint>
+
 /**
  * @file text.hpp
  * This file contains an implementation of charconv and of work wrapping code
