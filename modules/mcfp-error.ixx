@@ -37,7 +37,7 @@ module;
 #include <string>
 #include <system_error>
 
-export module mcfp : error;
+export module mcfp:error;
 
 namespace mcfp
 {
@@ -46,11 +46,10 @@ namespace mcfp
 
 /**
  * @enum config_error error.hpp mcfp/error.hpp
- * 
+ *
  * @brief A stronly typed class containing the error codes reported by @ref mcfp::config
  */
-export enum class config_error
-{
+export enum class config_error {
 	unknown_option = 1,              /**< The option requested does not exist, was not part of @ref mcfp::config::init. This error is returned by @ref mcfp::config::get */
 	option_does_not_accept_argument, /**< When parsing the command line arguments a value (argument) was specified for an option that should not have one */
 	missing_argument_for_option,     /**< A option without a required argument was found while parsing the command line arguments */

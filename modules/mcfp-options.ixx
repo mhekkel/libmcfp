@@ -35,7 +35,7 @@ module;
 #include <type_traits>
 #include <vector>
 
-export module mcfp : options;
+export module mcfp:options;
 
 import :charconv;
 import :text;

@@ -38,7 +38,7 @@ module;
  * This file contains an implementation of charconv and of work wrapping code
  */
 
-export module mcfp : text;
+export module mcfp:text;
 
 import :charconv;
 
@@ -58,7 +58,7 @@ export class word_wrapper : public std::vector<std::string_view>
 		: m_width(width)
 	{
 		std::string_view::size_type line_start = 0, line_end = text.find('\n');
-		
+
 		for (;;)
 		{
 			auto line = text.substr(line_start, line_end - line_start);
@@ -196,7 +196,7 @@ export class word_wrapper : public std::vector<std::string_view>
 		};
 
 		static const BreakAction brkTable[15][15] = {
-			//         OP   CL   CP   QU   EX   SY   IS   PR   PO   NU   AL   HY   BA   CM   WJ 
+			//         OP   CL   CP   QU   EX   SY   IS   PR   PO   NU   AL   HY   BA   CM   WJ
 			/* OP */ { PBK, PBK, PBK, PBK, PBK, PBK, PBK, PBK, PBK, PBK, PBK, PBK, PBK, CPB, PBK },
 			/* CL */ { DBK, PBK, PBK, IBK, PBK, PBK, PBK, IBK, IBK, DBK, DBK, IBK, IBK, CIB, PBK },
 			/* CP */ { DBK, PBK, PBK, IBK, PBK, PBK, PBK, IBK, IBK, IBK, IBK, IBK, IBK, CIB, PBK },

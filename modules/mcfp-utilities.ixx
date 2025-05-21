@@ -28,7 +28,7 @@ module;
 
 #include <cstdint>
 
-export module mcfp : utilities;
+export module mcfp:utilities;
 
 namespace mcfp
 {
