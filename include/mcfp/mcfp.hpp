@@ -130,7 +130,7 @@ class config
 	bool has(std::string_view name) const
 	{
 		auto opt = m_impl->get_option(name);
-		return opt != nullptr and (opt->m_seen > 0 or opt->m_has_default);
+		return opt != nullptr and (opt->m_seen > 0 or opt->m_default_value.has_value());
 	}
 
 	/**

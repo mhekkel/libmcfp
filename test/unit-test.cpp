@@ -618,3 +618,34 @@ TEST_CASE("casting-1")
 	config.parse(argc, argv, ec);
 	CHECK(ec != std::errc{});
 }
+
+// --------------------------------------------------------------------
+
+TEST_CASE("usage-1")
+{
+	auto &config = mcfp::config::instance();
+
+	config.init(
+		"test [options]",
+		mcfp::make_option<const char *>("aap", "option aap"),
+		mcfp::make_option<int>("noot", 1, "option noot"),
+		mcfp::make_option<std::string>("mies", "option mies"),
+		mcfp::make_option<float>("pi", 3.14f, "option pi"),
+		mcfp::make_option<std::string>("s", "option s"),
+		mcfp::make_option("verbose,v", "option verbose"));
+
+	std::ostringstream os;
+	os << config;
+
+	CHECK(os.str() == 
+
+R"(test [options]
+  --aap arg         option aap
+  --noot arg (=1)   option noot
+  --mies arg        option mies
+  --pi arg (=3.14)  option pi
+  -s arg            option s
+  -v [ --verbose ]  option verbose
+)");
+
+}

@@ -295,13 +295,13 @@ struct option_base
 	std::string m_desc;        ///< The description of the argument
 	char m_short_name;         ///< The single character name of the argument, can be zero
 	bool m_is_flag = true,     ///< When true, this option does not allow arguments
-		m_has_default = false, ///< When true, this option has a default value.
 		m_multi = false,       ///< When true, this option allows mulitple values.
 		m_hidden;              ///< When true, this option is hidden from the help text
 	int m_seen = 0;            ///< How often the option was seen on the command line
 
 	// We store the actual data in the argument list, i.e. strings
 	std::vector<std::string> m_value;
+	std::optional<std::string> m_default_value;
 
 	option_base(const option_base &rhs) = default;
 
@@ -345,11 +345,6 @@ struct option_base
 		return result;
 	}
 
-	virtual std::string get_default_value() const
-	{
-		return {};
-	}
-
 	size_t width() const
 	{
 		size_t result = m_name.length();
@@ -360,8 +355,8 @@ struct option_base
 		if (not m_is_flag)
 		{
 			result += 4;
-			if (m_has_default)
-				result += 4 + get_default_value().length();
+			if (m_default_value.has_value())
+				result += 4 + m_default_value->length();
 		}
 		return result + 6;
 	}
@@ -394,9 +389,9 @@ struct option_base
 			os << " arg";
 			w2 += 4;
 
-			if (m_has_default)
+			if (m_default_value.has_value())
 			{
-				auto default_value = get_default_value();
+				auto default_value = *m_default_value;
 				os << " (=" << default_value << ')';
 				w2 += 4 + default_value.length();
 			}
@@ -434,11 +429,12 @@ struct option : public option_base
 	option(string_view name_long, string_view name_short, const value_type &default_value, std::string_view desc, bool hidden)
 		: option(name_long, name_short, desc, hidden)
 	{
-		m_has_default = true;
 		if constexpr (std::is_same_v<value_type, std::string>)
-			m_value.emplace_back(default_value);
+			m_default_value = default_value;
 		else
-			m_value.emplace_back(traits_type::to_string(default_value));
+			m_default_value = traits_type::to_string(default_value);
+		
+		m_value.emplace_back(*m_default_value);
 	}
 
 	void set_value(std::string_view argument, std::error_code &ec) override
