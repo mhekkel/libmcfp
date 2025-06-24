@@ -52,15 +52,9 @@ struct is_container_type : std::false_type
 {
 };
 
-
-
-
-
 /**
  * @brief Template to detect whether a type is a container
  */
-
-
 
 template <typename T>
 struct is_container_type<T,
@@ -73,7 +67,6 @@ struct is_container_type<T,
 
 template <typename T>
 inline constexpr bool is_container_type_v = is_container_type<T>::value;
-
 
 // --------------------------------------------------------------------
 // The options classes

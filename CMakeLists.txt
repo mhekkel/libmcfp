@@ -37,7 +37,7 @@ option(BUILD_DOCUMENTATION "Build the documentation" OFF)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 	if("${CMAKE_CXX_COMPILER_VERSION}" LESS 9.4)
-		message(FATAL_ERROR "Your GNU g++ is too old, need at least 9.4")
+		message(FATAL_ERROR "mcfp: Your GNU g++ is too old, need at least 9.4")
 	endif()
 
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers")
@@ -75,15 +75,13 @@ file(GLOB OLD_CONFIG_FILES LIST_DIRECTORIES TRUE
 	${CMAKE_INSTALL_FULL_LIBDIR}/cmake/mcfp/mcfp-*.cmake)
 
 if(OLD_CONFIG_FILES)
-	message(
-		WARNING "Installation will remove old config files: ${OLD_CONFIG_FILES}")
+	message(WARNING "mcfp: Installation will remove old config files: ${OLD_CONFIG_FILES}")
 	install(CODE "file(REMOVE_RECURSE ${OLD_CONFIG_FILES})")
 endif()
 
 # And an old include file
 if(EXISTS ${CMAKE_INSTALL_FULL_INCLUDEDIR}/mcfp.hpp)
-	message(
-		WARNING "Installation will remove old header file: ${CMAKE_INSTALL_FULL_INCLUDEDIR}/mcfp.hpp")
+	message(WARNING "mcfp: Installation will remove old header file: ${CMAKE_INSTALL_FULL_INCLUDEDIR}/mcfp.hpp")
 	install(CODE "file(REMOVE ${CMAKE_INSTALL_FULL_INCLUDEDIR}/mcfp.hpp)")
 endif()
 
