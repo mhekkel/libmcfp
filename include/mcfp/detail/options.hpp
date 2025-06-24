@@ -193,7 +193,7 @@ constexpr void ostring::parse()
 		if (not is_alnum(m_str.front()))
 			report_error("Single character options should be alnum");
 
-		m_short = m_str;
+		m_long = m_short = m_str;
 	}
 	else
 	{
@@ -303,10 +303,10 @@ struct option_base
 
 	option_base(const option_base &rhs) = default;
 
-	constexpr option_base(ostring s, std::string_view desc, bool hidden)
-		: m_name(s.m_long.begin(), s.m_long.end())
+	constexpr option_base(string_view name_long, string_view name_short, std::string_view desc, bool hidden)
+		: m_name(name_long.begin(), name_long.end())
 		, m_desc(desc)
-		, m_short_name(s.m_short.size() > 0 ? s.m_short.front() : 0)
+		, m_short_name(name_short.size() > 0 ? name_short.front() : 0)
 		, m_hidden(hidden)
 	{
 	}
@@ -405,14 +405,14 @@ struct option : public option_base
 
 	option(const option &rhs) = default;
 
-	option(ostring name, std::string_view desc, bool hidden)
-		: option_base(name, desc, hidden)
+	option(string_view name_long, string_view name_short, std::string_view desc, bool hidden)
+		: option_base(name_long, name_short, desc, hidden)
 	{
 		m_is_flag = false;
 	}
 
-	option(ostring name, const value_type &default_value, std::string_view desc, bool hidden)
-		: option(name, desc, hidden)
+	option(string_view name_long, string_view name_short, const value_type &default_value, std::string_view desc, bool hidden)
+		: option(name_long, name_short, desc, hidden)
 	{
 		m_has_default = true;
 		m_value = default_value;
@@ -450,8 +450,8 @@ struct multiple_option : public option_base
 
 	multiple_option(const multiple_option &rhs) = default;
 
-	multiple_option(ostring name, std::string_view desc, bool hidden)
-		: option_base(name, desc, hidden)
+	multiple_option(string_view name_long, string_view name_short, std::string_view desc, bool hidden)
+		: option_base(name_long, name_short, desc, hidden)
 	{
 		m_is_flag = false;
 		m_multi = true;
@@ -473,8 +473,8 @@ struct option<void> : public option_base
 {
 	option(const option &rhs) = default;
 
-	option(ostring name, std::string_view desc, bool hidden)
-		: option_base(name, desc, hidden)
+	option(string_view name_long, string_view name_short, std::string_view desc, bool hidden)
+		: option_base(name_long, name_short, desc, hidden)
 	{
 	}
 };

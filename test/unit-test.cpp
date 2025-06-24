@@ -587,3 +587,23 @@ TEST_CASE("non-compiling")
 	);
 }
 
+// --------------------------------------------------------------------
+
+TEST_CASE("casting-1")
+{
+	auto &config = mcfp::config::instance();
+
+	config.init(
+		"test [options]",
+		mcfp::make_option<const char *>("aap", ""),
+		mcfp::make_option<int>("noot", ""),
+		mcfp::make_option<std::string>("mies", ""),
+		mcfp::make_option<float>("pi", ""),
+		mcfp::make_option<std::string>("s", ""),
+		mcfp::make_option("verbose,v", ""));
+
+	std::error_code ec;
+
+	CHECK_THROWS(config.get<int>("aap"));
+
+}
