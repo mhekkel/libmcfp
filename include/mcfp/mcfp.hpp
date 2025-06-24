@@ -275,7 +275,12 @@ class config
 		std::error_code ec;
 		parse(argc, argv, ec);
 		if (ec)
-			throw std::system_error(ec);
+		{
+			if (get_last_option().empty())
+				throw std::system_error(ec, "while parsing command line arguments: ");
+			else
+				throw std::system_error(ec, "while parsing command line arguments, last option was '" + get_last_option() + "' ");
+		}
 	}
 
 	/**
@@ -295,7 +300,12 @@ class config
 		std::error_code ec;
 		parse_config_file(config_option, config_file_name, search_dirs, ec);
 		if (ec)
-			throw std::system_error(ec);
+		{
+			if (get_last_option().empty())
+				throw std::system_error(ec, "while parsing config file '" + std::string { config_file_name } + "': ");
+			else
+				throw std::system_error(ec, "while parsing config file '" + std::string { config_file_name } + "', last option was '" + get_last_option() + "' ");
+		}
 	}
 
 	/**

@@ -586,7 +586,7 @@ TEST_CASE("non-compiling")
 		// mcfp::make_option("test,", "dit is fout"),
 		// mcfp::make_option("test,-", "dit is fout"),
 		// mcfp::make_option("test,tt", "dit is fout"),
-		mcfp::make_option("test,t", "dit is fout")
+		mcfp::make_option("test,t", "dit is goed")
 	);
 }
 
@@ -605,9 +605,16 @@ TEST_CASE("casting-1")
 		mcfp::make_option<std::string>("s", ""),
 		mcfp::make_option("verbose,v", ""));
 
-	std::error_code ec;
-
 	CHECK_THROWS(config.get<int>("aap"));
 	CHECK_NOTHROW(config.get<long>("noot"));
 
+	std::error_code ec;
+
+	const char *const argv[] = {
+		"", "--noot=3.14", nullptr
+	};
+	int argc = sizeof(argv) / sizeof(char *) - 1;
+
+	config.parse(argc, argv, ec);
+	CHECK(ec != std::errc{});
 }
