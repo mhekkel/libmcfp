@@ -91,24 +91,21 @@ class string_view_base
 	using value_type = char_type;
 	using iterator = const char_type *;
 
-	inline
-	constexpr string_view_base(const char *s) noexcept
+	inline constexpr string_view_base(const char *s) noexcept
 		: m_data(s)
 	{
 		while (m_data[m_size] != 0)
 			++m_size;
 	}
 
-	inline
-	constexpr string_view_base(const char *s, size_t N) noexcept
+	inline constexpr string_view_base(const char *s, size_t N) noexcept
 		: m_data(s)
 		, m_size(N)
 	{
 	}
 
 	template <size_t N>
-	inline
-	constexpr string_view_base(const char (&s)[N]) noexcept
+	inline constexpr string_view_base(const char (&s)[N]) noexcept
 		: m_data(s)
 		, m_size(N - 1)
 	{
@@ -120,7 +117,7 @@ class string_view_base
 	// constexpr string_view_base(nullptr_t) = delete;
 
 	template <typename StringType>
-		// requires(std::is_same_v<typename StringType::value_type, value_type>)
+	// requires(std::is_same_v<typename StringType::value_type, value_type>)
 	constexpr string_view_base(const StringType &s) noexcept
 		: m_data(s.data())
 		, m_size(s.size())
@@ -201,11 +198,11 @@ constexpr void ostring::parse()
 		{
 			if (not is_alnum(m_str.back()))
 				report_error("Short variant of option should be alnum");
-	
+
 			m_short = m_str.substr(m_str.size() - 1, 1);
 			len -= 2;
 		}
-	
+
 		for (size_t ix = 0; auto ch : m_str)
 		{
 			if (ix++ == len)
@@ -240,6 +237,8 @@ struct option_traits<T, typename std::enable_if_t<std::is_arithmetic_v<T>>>
 		auto r = from_chars(argument.data(), argument.data() + argument.length(), value);
 		if (r.ec != std::errc())
 			ec = std::make_error_code(r.ec);
+		else if (*r.ptr != 0)
+			ec = std::make_error_code(std::errc::invalid_argument);
 		return value;
 	}
 
@@ -301,6 +300,9 @@ struct option_base
 		m_hidden;              ///< When true, this option is hidden from the help text
 	int m_seen = 0;            ///< How often the option was seen on the command line
 
+	// We store the actual data in the argument list, i.e. strings
+	std::vector<std::string> m_value;
+
 	option_base(const option_base &rhs) = default;
 
 	constexpr option_base(string_view name_long, string_view name_short, std::string_view desc, bool hidden)
@@ -313,14 +315,34 @@ struct option_base
 
 	virtual ~option_base() = default;
 
-	virtual void set_value(std::string_view /*value*/, std::error_code & /*ec*/)
-	{
-		assert(false);
-	}
+	virtual void set_value(std::string_view /*value*/, std::error_code & /*ec*/) = 0;
 
-	virtual std::any get_value() const
+	template <typename T>
+	T get_value(std::error_code &ec) const
 	{
-		return {};
+		T result;
+
+		if (m_value.empty())
+			ec = make_error_code(config_error::option_not_specified);
+		else
+		{
+			if constexpr (is_container_type_v<T>)
+			{
+				for (auto &a : m_value)
+				{
+					result.emplace_back(option_traits<typename T::value_type>::set_value(a, ec));
+					if (ec)
+					{
+						result.clear();
+						break;
+					}
+				}
+			}
+			else
+				result = option_traits<T>::set_value(m_value.front(), ec);
+		}
+
+		return result;
 	}
 
 	virtual std::string get_default_value() const
@@ -401,8 +423,6 @@ struct option : public option_base
 	using traits_type = option_traits<T>;
 	using value_type = typename option_traits<T>::value_type;
 
-	std::optional<value_type> m_value;
-
 	option(const option &rhs) = default;
 
 	option(string_view name_long, string_view name_short, std::string_view desc, bool hidden)
@@ -415,28 +435,20 @@ struct option : public option_base
 		: option(name_long, name_short, desc, hidden)
 	{
 		m_has_default = true;
-		m_value = default_value;
+		if constexpr (std::is_same_v<value_type, std::string>)
+			m_value.emplace_back(default_value);
+		else
+			m_value.emplace_back(traits_type::to_string(default_value));
 	}
 
 	void set_value(std::string_view argument, std::error_code &ec) override
 	{
-		m_value = traits_type::set_value(argument, ec);
-	}
-
-	std::any get_value() const override
-	{
-		std::any result;
-		if (m_value)
-			result = *m_value;
-		return result;
-	}
-
-	std::string get_default_value() const override
-	{
-		if constexpr (std::is_same_v<value_type, std::string>)
-			return *m_value;
-		else
-			return traits_type::to_string(*m_value);
+		traits_type::set_value(argument, ec);
+		if (not ec)
+		{
+			m_value.clear();
+			m_value.emplace_back(argument);
+		}
 	}
 };
 
@@ -445,8 +457,6 @@ struct multiple_option : public option_base
 {
 	using value_type = typename T::value_type;
 	using traits_type = option_traits<value_type>;
-
-	std::vector<value_type> m_values;
 
 	multiple_option(const multiple_option &rhs) = default;
 
@@ -459,12 +469,9 @@ struct multiple_option : public option_base
 
 	void set_value(std::string_view argument, std::error_code &ec) override
 	{
-		m_values.emplace_back(traits_type::set_value(argument, ec));
-	}
-
-	std::any get_value() const override
-	{
-		return { m_values };
+		traits_type::set_value(argument, ec);
+		if (not ec)
+			m_value.emplace_back(argument);
 	}
 };
 
@@ -476,6 +483,12 @@ struct option<void> : public option_base
 	option(string_view name_long, string_view name_short, std::string_view desc, bool hidden)
 		: option_base(name_long, name_short, desc, hidden)
 	{
+	}
+
+	void set_value(std::string_view /*value*/, std::error_code & /*ec*/) override
+	{
+		assert(false);
+		throw std::logic_error("should never happen");
 	}
 };
 

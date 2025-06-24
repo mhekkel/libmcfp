@@ -30,12 +30,12 @@
 /// This header-only library contains code to parse argc/argv and store the
 /// values provided into a singleton object.
 
-#include <cassert>
-#include <cstring>
+#include "mcfp/error.hpp"
+#include "mcfp/text.hpp"
+#include "mcfp/utilities.hpp"
+#include "mcfp/detail/options.hpp"
 
 #include <algorithm>
-#include <any>
-#include <charconv>
 #include <deque>
 #include <filesystem>
 #include <fstream>
@@ -44,10 +44,8 @@
 #include <type_traits>
 #include <vector>
 
-#include <mcfp/error.hpp>
-#include <mcfp/text.hpp>
-#include <mcfp/utilities.hpp>
-#include <mcfp/detail/options.hpp>
+#include <cassert>
+#include <cstring>
 
 namespace mcfp
 {
@@ -160,12 +158,13 @@ class config
 	auto get(std::string_view name) const
 	{
 		using return_type = std::remove_cv_t<T>;
+		using std::operator "" s;
 
 		std::error_code ec;
 		return_type result = get<T>(name, ec);
 
 		if (ec)
-			throw std::system_error(ec, std::string{ name });
+			throw std::system_error(ec, "while getting option '"s + std::string { name } + '\'');
 
 		return result;
 	}
@@ -194,23 +193,7 @@ class config
 		if (opt == nullptr)
 			ec = make_error_code(config_error::unknown_option);
 		else
-		{
-			std::any value = opt->get_value();
-
-			if (not value.has_value())
-				ec = make_error_code(config_error::option_not_specified);
-			else
-			{
-				try
-				{
-					result = std::any_cast<T>(value);
-				}
-				catch (const std::bad_cast &)
-				{
-					ec = make_error_code(config_error::wrong_type_cast);
-				}
-			}
-		}
+			result = opt->get_value<T>(ec);
 
 		return result;
 	}

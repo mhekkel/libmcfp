@@ -84,7 +84,8 @@ TEST_CASE("t_1, * utf::tolerance(0.001)")
 	CHECK(not config.has("flag2"));
 
 	CHECK(config.get<int>("param_int_2") == 1);
-	CHECK_THROWS_AS(config.get<float>("param_int_2"), std::system_error);
+	// CHECK_THROWS_AS(config.get<float>("param_int_2"), std::system_error);
+	CHECK(config.get<float>("param_int_2") == 1.f);
 	CHECK_THROWS_AS(config.get<int>("param_int"), std::system_error);
 
 	CHECK(std::to_string(config.get<float>("param_float_2")) == std::to_string(3.14));
@@ -224,6 +225,8 @@ TEST_CASE("t_7")
 
 TEST_CASE("t_8")
 {
+	static_assert(std::is_same_v<std::string,  mcfp::detail::option_traits<const char *>::value_type>, "should be same");
+
 	const char *const argv[] = {
 		"test", "-i", "foo", "-jbar", nullptr
 	};
@@ -348,7 +351,7 @@ TEST_CASE("t_11")
 	CHECK(config.count("file") == 3);
 
 	std::vector<std::string> files = config.get<std::vector<std::string>>("file");
-	CHECK(files.size() == 3);
+	REQUIRE(files.size() == 3);
 	CHECK(files[0] == "aap");
 	CHECK(files[1] == "noot");
 	CHECK(files[2] == "mies");
@@ -596,7 +599,7 @@ TEST_CASE("casting-1")
 	config.init(
 		"test [options]",
 		mcfp::make_option<const char *>("aap", ""),
-		mcfp::make_option<int>("noot", ""),
+		mcfp::make_option<int>("noot", 1, ""),
 		mcfp::make_option<std::string>("mies", ""),
 		mcfp::make_option<float>("pi", ""),
 		mcfp::make_option<std::string>("s", ""),
@@ -605,5 +608,6 @@ TEST_CASE("casting-1")
 	std::error_code ec;
 
 	CHECK_THROWS(config.get<int>("aap"));
+	CHECK_NOTHROW(config.get<long>("noot"));
 
 }
