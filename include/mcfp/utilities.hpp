@@ -49,12 +49,9 @@ inline uint32_t get_terminal_width()
 {
 	uint32_t result = 80;
 
-	if (_isatty(_fileno(stdout)))
-	{
-		CONSOLE_SCREEN_BUFFER_INFO csbi;
-		::GetConsoleScreenBufferInfo(::GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+	CONSOLE_SCREEN_BUFFER_INFO csbi{};
+	if (::GetConsoleScreenBufferInfo(::GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
 		result = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-	}
 
 	return result;
 }
