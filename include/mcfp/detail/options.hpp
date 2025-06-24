@@ -69,6 +69,157 @@ template <typename T>
 inline constexpr bool is_container_type_v = is_container_type<T>::value;
 
 // --------------------------------------------------------------------
+// Some helper classes, to allow compile time checking of options strings
+
+// This error reporting function is not constexpr and thus when it is
+// called by the checking the format of options strings, it will cause
+// a compile time error.
+[[noreturn]] void report_error(const char *msg)
+{
+	fputs(msg, stderr);
+	exit(1);
+}
+
+// --------------------------------------------------------------------
+
+template <typename CharT>
+class string_view_base
+{
+  public:
+	using char_type = CharT;
+
+	using value_type = char_type;
+	using iterator = const char_type *;
+
+	inline
+	constexpr string_view_base(const char *s) noexcept
+		: m_data(s)
+	{
+		while (m_data[m_size] != 0)
+			++m_size;
+	}
+
+	inline
+	constexpr string_view_base(const char *s, size_t N) noexcept
+		: m_data(s)
+		, m_size(N)
+	{
+	}
+
+	template <size_t N>
+	inline
+	constexpr string_view_base(const char (&s)[N]) noexcept
+		: m_data(s)
+		, m_size(N - 1)
+	{
+	}
+
+	constexpr string_view_base() noexcept = default;
+	constexpr string_view_base(const string_view_base &) noexcept = default;
+	constexpr string_view_base &operator=(const string_view_base &) noexcept = default;
+	// constexpr string_view_base(nullptr_t) = delete;
+
+	template <typename StringType>
+		// requires(std::is_same_v<typename StringType::value_type, value_type>)
+	constexpr string_view_base(const StringType &s) noexcept
+		: m_data(s.data())
+		, m_size(s.size())
+	{
+	}
+
+	constexpr const char_type *data() const noexcept { return m_data; }
+	constexpr size_t size() const noexcept { return m_size; }
+
+	constexpr iterator begin() const noexcept { return m_data; }
+	constexpr iterator end() const noexcept { return m_data + m_size; }
+	constexpr char_type operator[](size_t ix) const noexcept { return m_data[ix]; }
+
+	constexpr char_type front() const noexcept { return m_data[0]; }
+	constexpr char_type back() const noexcept { return m_data[m_size - 1]; }
+
+	constexpr string_view_base substr(size_t pos, size_t len) const noexcept
+	{
+		return { m_data + pos, len };
+	}
+
+  private:
+	const char_type *m_data = nullptr;
+	size_t m_size = 0;
+};
+
+using string_view = string_view_base<char>;
+
+// --------------------------------------------------------------------
+// A parsed options string, that is, split out the short and long names
+
+struct ostring
+{
+	string_view m_str;
+	string_view m_long;
+	string_view m_short;
+
+	template <size_t N>
+	consteval inline ostring(const char (&s)[N])
+		: m_str(s, N - 1)
+	{
+		parse();
+	}
+
+	constexpr void parse();
+};
+
+constexpr inline bool is_alnum(int ch) noexcept
+{
+	return (ch >= '0' and ch <= '9') or (ch >= 'a' and ch <= 'z') or (ch >= 'A' and ch <= 'Z');
+}
+
+constexpr inline bool is_valid_option_char(char ch) noexcept
+{
+	return ch == '-' or ch == '_' or is_alnum(ch);
+}
+
+constexpr void ostring::parse()
+{
+	if (m_str.size() < 1)
+		report_error("Empty string is not allowed for an option");
+
+	if (m_str.front() == '-')
+		report_error("Option strings should not start with a hyphen");
+
+	auto len = m_str.size();
+
+	if (m_str.size() == 1)
+	{
+		if (not is_alnum(m_str.front()))
+			report_error("Single character options should be alnum");
+
+		m_short = m_str;
+	}
+	else
+	{
+		if (m_str.size() > 2 and m_str[m_str.size() - 2] == ',')
+		{
+			if (not is_alnum(m_str.back()))
+				report_error("Short variant of option should be alnum");
+	
+			m_short = m_str.substr(m_str.size() - 1, 1);
+			len -= 2;
+		}
+	
+		for (size_t ix = 0; auto ch : m_str)
+		{
+			if (ix++ == len)
+				break;
+
+			if (not is_valid_option_char(ch))
+				report_error("Short variant of option should be alnum");
+		}
+
+		m_long = m_str.substr(0, len);
+	}
+}
+
+// --------------------------------------------------------------------
 // The options classes
 
 // The option traits classes are used to convert from the string-based
@@ -152,19 +303,12 @@ struct option_base
 
 	option_base(const option_base &rhs) = default;
 
-	option_base(std::string_view name, std::string_view desc, bool hidden)
-		: m_name(name)
+	constexpr option_base(ostring s, std::string_view desc, bool hidden)
+		: m_name(s.m_long.begin(), s.m_long.end())
 		, m_desc(desc)
-		, m_short_name(0)
+		, m_short_name(s.m_short.size() > 0 ? s.m_short.front() : 0)
 		, m_hidden(hidden)
 	{
-		if (m_name.length() == 1)
-			m_short_name = m_name.front();
-		else if (m_name.length() > 2 and m_name[m_name.length() - 2] == ',')
-		{
-			m_short_name = m_name.back();
-			m_name.erase(m_name.end() - 2, m_name.end());
-		}
 	}
 
 	virtual ~option_base() = default;
@@ -261,13 +405,13 @@ struct option : public option_base
 
 	option(const option &rhs) = default;
 
-	option(std::string_view name, std::string_view desc, bool hidden)
+	option(ostring name, std::string_view desc, bool hidden)
 		: option_base(name, desc, hidden)
 	{
 		m_is_flag = false;
 	}
 
-	option(std::string_view name, const value_type &default_value, std::string_view desc, bool hidden)
+	option(ostring name, const value_type &default_value, std::string_view desc, bool hidden)
 		: option(name, desc, hidden)
 	{
 		m_has_default = true;
@@ -306,7 +450,7 @@ struct multiple_option : public option_base
 
 	multiple_option(const multiple_option &rhs) = default;
 
-	multiple_option(std::string_view name, std::string_view desc, bool hidden)
+	multiple_option(ostring name, std::string_view desc, bool hidden)
 		: option_base(name, desc, hidden)
 	{
 		m_is_flag = false;
@@ -329,7 +473,7 @@ struct option<void> : public option_base
 {
 	option(const option &rhs) = default;
 
-	option(std::string_view name, std::string_view desc, bool hidden)
+	option(ostring name, std::string_view desc, bool hidden)
 		: option_base(name, desc, hidden)
 	{
 	}

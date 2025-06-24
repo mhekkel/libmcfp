@@ -769,13 +769,13 @@ class config
  * @return auto The option object created
  */
 template <typename T = void, std::enable_if_t<not detail::is_container_type_v<T>, int> = 0>
-auto make_option(std::string_view name, std::string_view description)
+auto make_option(detail::ostring name, std::string_view description)
 {
 	return detail::option<T>(name, description, false);
 }
 
 template <typename T, std::enable_if_t<detail::is_container_type_v<T>, int> = 0>
-auto make_option(std::string_view name, std::string_view description)
+auto make_option(detail::ostring name, std::string_view description)
 {
 	return detail::multiple_option<T>(name, description, false);
 }
@@ -797,7 +797,7 @@ auto make_option(std::string_view name, std::string_view description)
  * @return auto The option object created
  */
 template <typename T, std::enable_if_t<not detail::is_container_type_v<T>, int> = 0>
-auto make_option(std::string_view name, const T &v, std::string_view description)
+auto make_option(detail::ostring name, const T &v, std::string_view description)
 {
 	return detail::option<T>(name, v, description, false);
 }
@@ -820,13 +820,13 @@ auto make_option(std::string_view name, const T &v, std::string_view description
  * @return auto The option object created
  */
 template <typename T = void, std::enable_if_t<not detail::is_container_type_v<T>, int> = 0>
-auto make_hidden_option(std::string_view name, std::string_view description)
+auto make_hidden_option(detail::ostring name, std::string_view description)
 {
 	return detail::option<T>(name, description, true);
 }
 
 template <typename T, std::enable_if_t<detail::is_container_type_v<T>, int> = 0>
-auto make_hidden_option(std::string_view name, std::string_view description)
+auto make_hidden_option(detail::ostring name, std::string_view description)
 {
 	return detail::multiple_option<T>(name, description, true);
 }
@@ -850,7 +850,7 @@ auto make_hidden_option(std::string_view name, std::string_view description)
  * @return auto The option object created
  */
 template <typename T, std::enable_if_t<not detail::is_container_type_v<T>, int> = 0>
-auto make_hidden_option(std::string_view name, const T &v, std::string_view description)
+auto make_hidden_option(detail::ostring name, const T &v, std::string_view description)
 {
 	return detail::option<T>(name, v, description, true);
 }

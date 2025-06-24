@@ -570,3 +570,20 @@ TEST_CASE("file_4")
 	CHECK(config.has("noot"));
 	CHECK(config.get<int>("noot") == 3);
 }
+
+// --------------------------------------------------------------------
+
+TEST_CASE("non-compiling")
+{
+	auto &config = mcfp::config::instance();
+
+	config.init("test",
+		// mcfp::make_option("", "dit is fout"),
+		// mcfp::make_option("-test,t", "dit is fout"),
+		// mcfp::make_option("test,", "dit is fout"),
+		// mcfp::make_option("test,-", "dit is fout"),
+		// mcfp::make_option("test,tt", "dit is fout"),
+		mcfp::make_option("test,t", "dit is fout")
+	);
+}
+
