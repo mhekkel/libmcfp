@@ -158,13 +158,12 @@ class config
 	auto get(std::string_view name) const
 	{
 		using return_type = std::remove_cv_t<T>;
-		using std::operator "" s;
 
 		std::error_code ec;
 		return_type result = get<T>(name, ec);
 
 		if (ec)
-			throw std::system_error(ec, "while getting option '"s + std::string { name } + '\'');
+			throw std::system_error(ec, "while getting option '" + std::string { name } + '\'');
 
 		return result;
 	}
