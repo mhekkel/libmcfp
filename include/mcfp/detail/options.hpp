@@ -320,7 +320,7 @@ struct option_base
 	template <typename T>
 	T get_value(std::error_code &ec) const
 	{
-		T result;
+		T result{};
 
 		if (m_value.empty())
 			ec = make_error_code(config_error::option_not_specified);

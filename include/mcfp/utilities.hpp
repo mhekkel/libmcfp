@@ -34,7 +34,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #elif defined(_WIN32)
-#include <windows.h>
+#include <Windows.h>
+#include <io.h>
+#include <cstdio>
 #endif
 
 namespace mcfp
@@ -45,9 +47,16 @@ namespace mcfp
 /// @return number of columns of the terminal
 inline uint32_t get_terminal_width()
 {
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    ::GetConsoleScreenBufferInfo(::GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
-    return csbi.srWindow.Right - csbi.srWindow.Left + 1;
+	uint32_t result = 80;
+
+	if (_isatty(_fileno(stdout)))
+	{
+		CONSOLE_SCREEN_BUFFER_INFO csbi;
+		::GetConsoleScreenBufferInfo(::GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+		result = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+	}
+
+	return result;
 }
 
 #elif __has_include(<sys/ioctl.h>)
