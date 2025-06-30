@@ -323,7 +323,17 @@ struct option_base
 		T result{};
 
 		if (m_value.empty())
-			ec = make_error_code(config_error::option_not_specified);
+		{
+			if (m_default_value)
+			{
+				if constexpr (is_container_type_v<T>)
+					result.emplace_back(option_traits<typename T::value_type>::set_value(*m_default_value, ec));
+				else
+					result = option_traits<T>::set_value(*m_default_value, ec);
+			}
+			else
+				ec = make_error_code(config_error::option_not_specified);
+		}
 		else
 		{
 			if constexpr (is_container_type_v<T>)
@@ -433,8 +443,6 @@ struct option : public option_base
 			m_default_value = default_value;
 		else
 			m_default_value = traits_type::to_string(default_value);
-		
-		m_value.emplace_back(*m_default_value);
 	}
 
 	void set_value(std::string_view argument, std::error_code &ec) override

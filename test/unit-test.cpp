@@ -601,22 +601,45 @@ TEST_CASE("casting-1")
 		mcfp::make_option<const char *>("aap", ""),
 		mcfp::make_option<int>("noot", 1, ""),
 		mcfp::make_option<std::string>("mies", ""),
-		mcfp::make_option<float>("pi", ""),
+		mcfp::make_option<float>("pi", 1.0f, ""),
 		mcfp::make_option<std::string>("s", ""),
 		mcfp::make_option("verbose,v", ""));
 
 	CHECK_THROWS(config.get<int>("aap"));
+	CHECK_NOTHROW(config.get<int>("noot"));
 	CHECK_NOTHROW(config.get<long>("noot"));
+	CHECK_NOTHROW(config.get<float>("noot"));
+
+	CHECK_NOTHROW(config.get<float>("pi"));
+	CHECK_THAT(config.get<float>("pi"), Catch::Matchers::WithinAbs(1.0f, 0.000001f));
 
 	std::error_code ec;
 
-	const char *const argv[] = {
-		"", "--noot=3.14", nullptr
-	};
-	int argc = sizeof(argv) / sizeof(char *) - 1;
+	SECTION("fout") {
+		const char *const argv[] = {
+			"", "--noot=3.14", "--pi=3.14", nullptr
+		};
+		int argc = sizeof(argv) / sizeof(char *) - 1;
+	
+		config.parse(argc, argv, ec);
+		CHECK(ec != std::errc{});
+	}
 
-	config.parse(argc, argv, ec);
-	CHECK(ec != std::errc{});
+	SECTION("goed") {
+
+		const char *const argv[] = {
+			"", "--pi=3.14", nullptr
+		};
+		int argc = sizeof(argv) / sizeof(char *) - 1;
+	
+		config.parse(argc, argv, ec);
+		CHECK(ec == std::errc{});
+	
+		CHECK_THAT(config.get<float>("pi"), Catch::Matchers::WithinAbs(3.14f, 0.000001f));
+		CHECK_THROWS(config.get<int>("pi"));
+	}
+
+
 }
 
 // --------------------------------------------------------------------
