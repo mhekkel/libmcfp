@@ -361,7 +361,7 @@ struct option_base
 		return result + 6;
 	}
 
-	void write(std::ostream &os, size_t width) const
+	void write(std::ostream &os, size_t indent, size_t output_width) const
 	{
 		if (m_hidden) // quick exit
 			return;
@@ -397,17 +397,29 @@ struct option_base
 			}
 		}
 
-		auto leading_spaces = width;
-		if (w2 + 2 > width)
-			os << std::endl;
-		else
-			leading_spaces = width - w2;
+		std::string indent_str(indent, ' ');
+		std::string text;
+		bool do_indent = false;
 
-		word_wrapper ww(m_desc, get_terminal_width() - width);
+		if (w2 + 2 > indent)
+		{
+			os << std::endl;
+			do_indent = true;
+			text = m_desc;
+		}
+		else
+			text = indent_str.substr(0, indent - w2) + m_desc;
+
+		word_wrapper ww(text, output_width - indent - 2);
 		for (auto line : ww)
 		{
-			os << std::string(leading_spaces, ' ') << line << std::endl;
-			leading_spaces = width;
+			if (std::exchange(do_indent, true))
+				os << indent_str;
+			
+			while (not line.empty() and std::isspace(line.back()))
+				line.remove_suffix(1);
+			
+			os << line << std::endl;
 		}
 	}
 };
