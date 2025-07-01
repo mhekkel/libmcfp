@@ -53,9 +53,8 @@ class section
 
 	void write(std::ostream &os, size_t indent, size_t output_width) const
 	{
-		if (m_name.empty())
-			os << '\n';
-		else
+		os << '\n';
+		if (not m_name.empty())
 			os << "section " << m_name << "\n\n";
 
 		m_impl->write(os, indent, output_width);

@@ -32,72 +32,71 @@ namespace fs = std::filesystem;
 
 // --------------------------------------------------------------------
 
-MCFP_DEFINE_LIB_OPTIONS(libcifpp,
-	mcfp::make_option<std::string>("config", "The libcifpp configuration file"),
-	mcfp::make_option("download-missing-ccd-files", "This option will allow your software to download missing CCD files"));
+MCFP_DEFINE_LIB_OPTIONS(libcifpp, "ccd",
+    mcfp::make_option("download-missing-files", "This option will allow your software to download missing CCD files"));
 
 TEST_CASE("suffixed-options")
 {
-	int argc = 3;
-	const char *const argv[] = {
-		"test", "-vvvv", "--verbose", nullptr
-	};
+    int argc = 3;
+    const char *const argv[] = {
+        "test", "-vvvv", "--verbose", nullptr
+    };
 
-	auto &config = mcfp::config::instance();
+    auto &config = mcfp::config::instance();
 
-	config.init(
-		"test [options]",
-		mcfp::make_option("verbose,v", ""));
+    config.init(
+        "test [options]",
+        mcfp::make_option("verbose,v", ""));
 
-	config.parse(argc, argv);
+    config.parse(argc, argv);
 
-	CHECK(config.count("verbose") == 5);
+    CHECK(config.count("verbose") == 5);
 
-	// --------------------------------------------------------------------
+    // --------------------------------------------------------------------
 
-	CHECK_NOTHROW(config.has("config"));
-	CHECK_FALSE(config.has("config"));
+    CHECK_NOTHROW(config.has("config"));
+    CHECK_FALSE(config.has("config"));
 
-	// --------------------------------------------------------------------
+    // --------------------------------------------------------------------
 
-	std::ostringstream os;
-	os.width(72);
-	os << config;
+    std::ostringstream os;
+    os.width(72);
+    os << config;
 
-	auto test_str = R"(test [options]
+    auto test_str = R"(test [options]
+
   -v [ --verbose ]
 
-  --config arg      The libcifpp configuration file
-  --download-missing-ccd-files
-                    This option will allow your software to download
-                    missing CCD files
+section ccd
+
+  --download-missing-files
+                        This option will allow your software to
+                        download missing CCD files
 )";
 
-	CHECK(os.str() == test_str);
+    CHECK(os.str() == test_str);
 }
 
 TEST_CASE("suffixed-options-2")
 {
-	auto &config = mcfp::config::instance();
+    auto &config = mcfp::config::instance();
 
-	config.init(
-		"test [options]",
-		mcfp::make_option("verbose,v", ""));
+    config.init(
+        "test [options]",
+        mcfp::make_option("verbose,v", ""));
 
-	int argc = 3;
+    int argc = 3;
 
-	const char *const argv[] = {
-		"test", "--config", "lib-test.conf", nullptr
-	};
+    const char *const argv[] = {
+        "test", nullptr
+    };
 
-	config.parse(argc, argv);
+    config.parse(argc, argv);
 
-	REQUIRE(config.has("config"));
+    std::error_code ec;
+    // This is a test of replacing the default config file too btw
+    config.parse_config_file(gTestDir / "lib-test.conf", ec);
+    REQUIRE(ec == std::errc{});
 
-	std::error_code ec;
-	// This is a test of replacing the default config file too btw
-    config.parse_config_file("config", "unit-test.conf", { gTestDir.string() });
-	REQUIRE(ec == std::errc{});
-
-	CHECK(config.has("download-missing-ccd-files"));
+    CHECK(config.has("ccd.download-missing-files"));
 }

@@ -75,18 +75,50 @@ class config
 
 	/**
 	 * @brief Initialise a config instance with a \a usage message and a set of \a options
-	 * in a so-called global section (no leading section name for the options when using get/has)
+	 * in a so-called global section (no leading section name for the options when using get or has)
+	 * 
+	 * This method also initialises all predefined (library) sections.
 	 *
 	 * @param usage The usage message
 	 * @param options Variadic list of options recognised by this config object, use mcfp::make_option and variants to create these
 	 */
 	template <typename... Options>
-		requires (std::is_base_of_v<option_base, Options> and ...)
-	void init(std::string_view usage, std::string_view section_name, Options... options)
+		requires(std::is_base_of_v<option_base, Options> and ...)
+	config &init(std::string_view usage, Options... options)
 	{
+		using std::operator""sv;
+
+		m_sections.clear();
+
 		m_usage = usage;
 		m_ignore_unknown = false;
 
+		add_section(""sv, std::forward<Options>(options)...);
+
+		for (auto &f : get_section_factories())
+		{
+			std::unique_ptr<detail::section> sp(f->create());
+
+			auto si = std::lower_bound(m_sections.begin(), m_sections.end(), sp->name(), [](const std::unique_ptr<detail::section> &s, std::string_view name)
+				{ return s->name().compare(name) < 0; });
+
+			if (si == m_sections.end())
+				m_sections.insert(si, std::move(sp));
+		}
+
+		return *this;
+	}
+
+	/**
+	 * @brief Extend a config instance with a set of \a options in a section called \a section_name
+	 *
+	 * @param section_name The name of the section to add to the config
+	 * @param options Variadic list of options recognised by this config object, use mcfp::make_option and variants to create these
+	 */
+	template <typename... Options>
+		requires(std::is_base_of_v<option_base, Options> and ...)
+	config &add_section(std::string_view section_name, Options... options)
+	{
 		std::unique_ptr<detail::section> section(new detail::section(section_name, std::forward<Options>(options)...));
 
 		auto si = std::lower_bound(m_sections.begin(), m_sections.end(), section_name, [](const std::unique_ptr<detail::section> &s, std::string_view name)
@@ -96,6 +128,8 @@ class config
 			si->reset(section.release());
 		else
 			m_sections.insert(si, std::move(section));
+		
+		return *this;
 	}
 
 	/**
@@ -106,12 +140,10 @@ class config
 	 * @param options Variadic list of options recognised by this config object, use mcfp::make_option and variants to create these
 	 */
 	template <typename... Options>
-		requires (std::is_base_of_v<option_base, Options> and ...)
-	void init(std::string_view usage, Options... options)
+		requires(std::is_base_of_v<option_base, Options> and ...)
+	static void init_lib(std::string_view section_name, Options... options)
 	{
-		using std::operator""sv;
-
-		init(usage, ""sv, std::forward<Options>(options)...);
+		get_section_factories().emplace_back(new section_factory(section_name, std::forward<Options>(options)...));
 	}
 
 	/**
@@ -491,7 +523,7 @@ class config
 					else
 						ec = make_error_code(config_error::invalid_config_file);
 					break;
-				
+
 				case State::SECTION_END:
 					if (is_eoln(ch))
 						state = State::NAME_START;
@@ -743,14 +775,13 @@ class config
 		{
 			if (s->name() != section_name)
 				continue;
-			
+
 			result = s->get_option(option_name);
 			break;
 		}
 
 		return result;
 	}
-
 
 	option_base *get_option(std::string_view name) const
 	{
@@ -782,9 +813,47 @@ class config
 			if (result < w)
 				result = w;
 		}
-		
+
 		return result;
 	}
+
+	// --------------------------------------------------------------------
+
+	class section_factory_base
+	{
+	  public:
+		virtual ~section_factory_base() = default;
+
+		virtual detail::section *create() const = 0;
+	};
+
+	template <typename... Options>
+	class section_factory : public section_factory_base
+	{
+	  public:
+		section_factory(std::string_view name, Options... options)
+			: m_name(name)
+			, m_options(std::forward<Options>(options)...)
+		{
+		}
+
+		virtual detail::section *create() const
+		{
+			return std::apply([this](Options const &...opts)
+				{ return new detail::section(m_name, opts...); }, m_options);
+		}
+
+		std::string m_name;
+		std::tuple<Options...> m_options;
+	};
+
+	static std::vector<std::unique_ptr<const section_factory_base>> &get_section_factories()
+	{
+		static std::vector<std::unique_ptr<const section_factory_base>> s_factories;
+		return s_factories;
+	}
+
+	// --------------------------------------------------------------------
 
 	bool m_ignore_unknown = false;
 	std::string m_usage;
@@ -904,13 +973,13 @@ auto make_hidden_option(detail::ostring name, const T &v, std::string_view descr
 // To extend all configuration parameter lists with a default set handled
 // by a library e.g.
 
-#define MCFP_DEFINE_LIB_OPTIONS(LIB, ...)              \
-	const struct mcfp_lib_options                      \
-	{                                                  \
-		mcfp_lib_options()                             \
-		{                                              \
-			mcfp::config::init_lib(#LIB, __VA_ARGS__); \
-		}                                              \
+#define MCFP_DEFINE_LIB_OPTIONS(LIB, SECTION, ...)        \
+	const struct mcfp_lib_options                         \
+	{                                                     \
+		mcfp_lib_options()                                \
+		{                                                 \
+			mcfp::config::init_lib(SECTION, __VA_ARGS__); \
+		}                                                 \
 	} s_lib_options_for_lib_##LIB;
 
 } // namespace mcfp
