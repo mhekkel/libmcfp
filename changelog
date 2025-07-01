@@ -1,3 +1,8 @@
+Version 2.0.0
+- Add support for global options added by a library
+- Changed the config file parsing for flag options, an argument is now required
+- Improved wrapping of config options, added support for std::ostream::width
+
 Version 1.4.2
 - Clean up makefile
 

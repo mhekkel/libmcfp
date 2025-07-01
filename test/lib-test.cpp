@@ -89,7 +89,7 @@ TEST_CASE("suffixed-options-2")
 	fs::path configFile = gTestDir / "lib-test.conf";
 
 	const char *const argv[] = {
-		"test", "--config", configFile.c_str(), nullptr
+		"test", "--config", reinterpret_cast<const char *>(configFile.c_str()), nullptr
 	};
 
 	config.parse(argc, argv);
@@ -101,5 +101,5 @@ TEST_CASE("suffixed-options-2")
     config.parse_config_file("config", "unit-test.conf", { gTestDir.string() });
 	REQUIRE(ec == std::errc{});
 
-
+	CHECK(config.has("download-missing-ccd-files"));
 }
