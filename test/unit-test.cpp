@@ -637,6 +637,7 @@ TEST_CASE("usage-1")
     os << config;
 
     auto test_string = R"(test [options]
+
   --aap arg               option aap
   --noot arg (=1)         option noot
   --mies arg              option mies
@@ -652,4 +653,51 @@ TEST_CASE("usage-1")
 )";
 
     CHECK(os.str() == test_string);
+}
+
+// --------------------------------------------------------------------
+
+TEST_CASE("sections-1")
+{
+    auto &config = mcfp::config::instance();
+
+	config.init("test [options]", "test-section",
+		mcfp::make_option<const char *>("aap", "option aap"),
+		mcfp::make_option<int>("noot", 1, "option noot"),
+		mcfp::make_option<std::string>("mies", "option mies"),
+		mcfp::make_option("verbose,v", "option verbose")
+	);
+
+    std::tuple<std::string_view, std::string_view, std::error_code> tests[] = {
+        { "[test-section]\naap !", "test-section.aap", make_error_code(mcfp::config_error::invalid_config_file) },
+        { "[test-section]\naap=aap", "test-section.aap", {} },
+        { "[test-section]\naap", "test-section.aap", make_error_code(mcfp::config_error::missing_argument_for_option) },
+        { "[test-section]\nverbose", "test-section.verbose", make_error_code(mcfp::config_error::missing_argument_for_option) },
+        { "[test-section]\nverbose=x", "test-section.verbose", make_error_code(mcfp::config_error::wrong_type_cast_flag) },
+    };
+
+    for (const auto &[config_file, option, err] : tests)
+    {
+        struct membuf : public std::streambuf
+        {
+            membuf(char *text, size_t length)
+            {
+                this->setg(text, text, text + length);
+            }
+        } buffer(const_cast<char *>(config_file.data()), config_file.length());
+
+        std::istream is(&buffer);
+
+        std::error_code ec;
+        config.parse_config_file(is, ec);
+        CHECK(ec == err);
+
+        if (ec == std::errc())
+            CHECK(config.has(option));
+
+		auto [sect_name, opt_name] = mcfp::config::split_name(option);
+
+		CHECK_FALSE(config.has(opt_name));
+    }
+
 }

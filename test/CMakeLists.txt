@@ -26,7 +26,7 @@ CPMFindPackage(NAME Catch2 GIT_REPOSITORY "https://github.com/catchorg/Catch2" V
 
 list(APPEND tests
 	unit-test
-	lib-test
+	# lib-test
 	)
 
 add_library(test-main OBJECT "${CMAKE_CURRENT_SOURCE_DIR}/test-main.cpp")

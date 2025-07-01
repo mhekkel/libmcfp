@@ -34,7 +34,7 @@
 #include "mcfp/text.hpp"
 #include "mcfp/utilities.hpp"
 
-#include "mcfp/detail/options.hpp"
+#include "mcfp/detail/sections.hpp"
 
 #include <algorithm>
 #include <deque>
@@ -75,31 +75,43 @@ class config
 
 	/**
 	 * @brief Initialise a config instance with a \a usage message and a set of \a options
+	 * in a so-called global section (no leading section name for the options when using get/has)
 	 *
 	 * @param usage The usage message
 	 * @param options Variadic list of options recognised by this config object, use mcfp::make_option and variants to create these
 	 */
 	template <typename... Options>
-	void init(std::string_view usage, Options... options)
+		requires (std::is_base_of_v<option_base, Options> and ...)
+	void init(std::string_view usage, std::string_view section_name, Options... options)
 	{
 		m_usage = usage;
 		m_ignore_unknown = false;
-		m_impl.reset(new config_impl(std::forward<Options>(options)...));
+
+		std::unique_ptr<detail::section> section(new detail::section(section_name, std::forward<Options>(options)...));
+
+		auto si = std::lower_bound(m_sections.begin(), m_sections.end(), section_name, [](const std::unique_ptr<detail::section> &s, std::string_view name)
+			{ return s->name().compare(name) < 0; });
+
+		if (si != m_sections.end())
+			si->reset(section.release());
+		else
+			m_sections.insert(si, std::move(section));
 	}
 
 	/**
-	 * @brief Initialise a default for options to be handled by a library
+	 * @brief Initialise a config instance with a \a usage message and a set of \a options
+	 * in a so-called global section (no leading section name for the options when using get/has)
 	 *
-	 * @param libname The library name
+	 * @param usage The usage message
 	 * @param options Variadic list of options recognised by this config object, use mcfp::make_option and variants to create these
 	 */
 	template <typename... Options>
-	static void init_lib(std::string_view libname, Options... options)
+		requires (std::is_base_of_v<option_base, Options> and ...)
+	void init(std::string_view usage, Options... options)
 	{
-		auto c = new lib_config_impl(libname, std::forward<Options>(options)...);
+		using std::operator""sv;
 
-		c->m_next = get_lib_config();
-		get_lib_config() = c;
+		init(usage, ""sv, std::forward<Options>(options)...);
 	}
 
 	/**
@@ -246,7 +258,7 @@ class config
 	 */
 	const std::vector<std::string> &operands() const
 	{
-		return m_impl->m_operands;
+		return m_operands;
 	}
 
 	/**
@@ -274,24 +286,19 @@ class config
 		if (not conf.m_usage.empty())
 			os << conf.m_usage << '\n';
 
-		size_t options_width = conf.m_impl->get_option_width();
+		size_t options_width = conf.get_option_width();
 
 		if (options_width > terminal_width / 3)
 			options_width = terminal_width / 3;
-		
+
 		if (options_width > 32)
 			options_width = 32;
-		
+
 		if (options_width < 16)
 			options_width = 16;
 
-		conf.m_impl->write(os, options_width, terminal_width);
-
-		for (auto lib_impl = config::get_lib_config(); lib_impl != nullptr; lib_impl = lib_impl->next())
-		{
-			os << '\n';
-			lib_impl->write(os, options_width, terminal_width);
-		}
+		for (auto &section : conf.m_sections)
+			section->write(os, options_width, terminal_width);
 
 		return os;
 	}
@@ -338,9 +345,7 @@ class config
 		{
 			std::string error_option = get_last_option();
 
-			std::string file = has(config_option) ?
-				get(config_option) :
-				std::string{ config_file_name };
+			std::string file = has(config_option) ? get(config_option) : std::string{ config_file_name };
 
 			if (get_last_option().empty())
 				throw std::system_error(ec, "while parsing config file '" + file);
@@ -430,10 +435,14 @@ class config
 			NAME,
 			ASSIGN,
 			VALUE_START,
-			VALUE
+			VALUE,
+			SECTION_START,
+			SECTION_NAME,
+			SECTION_NAME_END,
+			SECTION_END
 		} state = State::NAME_START;
 
-		std::string name, value;
+		std::string section, name, value;
 
 		for (;;)
 		{
@@ -450,6 +459,8 @@ class config
 					}
 					else if (ch == '#' or ch == ';')
 						state = State::COMMENT;
+					else if (ch == '[')
+						state = State::SECTION_START;
 					else if (ch != ' ' and ch != '\t' and not is_eoln(ch))
 						ec = make_error_code(config_error::invalid_config_file);
 					break;
@@ -457,6 +468,35 @@ class config
 				case State::COMMENT:
 					if (is_eoln(ch))
 						state = State::NAME_START;
+					break;
+
+				case State::SECTION_START:
+					if (is_name_char(ch))
+					{
+						section = std::string{ (char)ch };
+						state = State::SECTION_NAME;
+					}
+					else if (ch != ' ' and ch != '\t')
+						ec = make_error_code(config_error::invalid_config_file);
+					break;
+
+				case State::SECTION_NAME:
+				case State::SECTION_NAME_END:
+					if (is_name_char(ch) and state != State::SECTION_NAME_END)
+						section += char(ch);
+					else if (ch == ']')
+						state = State::SECTION_END;
+					else if (ch == ' ' or ch == '\t')
+						state = State::SECTION_NAME_END;
+					else
+						ec = make_error_code(config_error::invalid_config_file);
+					break;
+				
+				case State::SECTION_END:
+					if (is_eoln(ch))
+						state = State::NAME_START;
+					else
+						ec = make_error_code(config_error::invalid_config_file);
 					break;
 
 				case State::NAME:
@@ -467,7 +507,7 @@ class config
 						// store name for inspection later on
 						get_last_option_storage() = name;
 
-						auto opt = get_option(name);
+						auto opt = get_option(section, name);
 
 						if (opt == nullptr)
 						{
@@ -499,7 +539,7 @@ class config
 				case State::VALUE:
 					if (is_eoln(ch))
 					{
-						auto opt = get_option(name);
+						auto opt = get_option(section, name);
 
 						if (opt == nullptr)
 						{
@@ -543,6 +583,8 @@ class config
 	{
 		using namespace std::literals;
 
+		m_operands.clear();
+
 		enum class State
 		{
 			options,
@@ -561,7 +603,7 @@ class config
 				if (*arg != '-') // according to POSIX this is the end of options, start operands
 				                 // state = State::operands;
 				{                // however, people nowadays expect to be able to mix operands and options
-					m_impl->m_operands.emplace_back(arg);
+					m_operands.emplace_back(arg);
 					continue;
 				}
 				else if (arg[1] == '-' and arg[2] == 0)
@@ -573,7 +615,7 @@ class config
 
 			if (state == State::operands)
 			{
-				m_impl->m_operands.emplace_back(arg);
+				m_operands.emplace_back(arg);
 				continue;
 			}
 
@@ -666,6 +708,18 @@ class config
 		}
 	}
 
+	// --------------------------------------------------------------------
+
+	constexpr static std::tuple<std::string_view, std::string_view> split_name(std::string_view name) noexcept
+	{
+		using std::operator""sv;
+
+		auto p = name.find('.');
+		return p == std::string_view::npos ? std::make_tuple(""sv, name) : std::make_tuple(name.substr(0, p), name.substr(p + 1));
+	}
+
+	// --------------------------------------------------------------------
+
   private:
 	config() = default;
 	config(const config &) = delete;
@@ -680,36 +734,40 @@ class config
 	}
 
 	// --------------------------------------------------------------------
-	
-	option_base *get_option(std::string_view name) const
-	{
-		auto result = m_impl->get_option(name);
 
-		if (result == nullptr)
+	option_base *get_option(std::string_view section_name, std::string_view option_name) const
+	{
+		option_base *result = nullptr;
+
+		for (auto &s : m_sections)
 		{
-			for (auto next = get_lib_config(); next != nullptr; next = next->next())
-			{
-				result = next->get_option(name);
-				if (result)
-					break;
-			}
+			if (s->name() != section_name)
+				continue;
+			
+			result = s->get_option(option_name);
+			break;
 		}
 
 		return result;
 	}
 
+
+	option_base *get_option(std::string_view name) const
+	{
+		auto [section_name, option_name] = split_name(name);
+		return get_option(section_name, option_name);
+	}
+
 	option_base *get_option(char short_name) const
 	{
-		auto result = m_impl->get_option(short_name);
+		option_base *result = nullptr;
 
-		if (result == nullptr)
+		for (auto &s : m_sections)
 		{
-			for (auto next = get_lib_config(); next != nullptr; next = next->next())
-			{
-				result = next->get_option(short_name);
-				if (result)
-					break;
-			}
+			result = s->get_option(short_name);
+
+			if (result != nullptr)
+				break;
 		}
 
 		return result;
@@ -717,117 +775,22 @@ class config
 
 	size_t get_option_width() const
 	{
-		auto result = m_impl->get_option_width();
+		size_t result = 0;
+		for (auto &s : m_sections)
+		{
+			auto w = s->get_option_width();
+			if (result < w)
+				result = w;
+		}
 		
-		for (auto next = get_lib_config(); next != nullptr; next = next->next())
-			result = std::max(result, next->get_option_width());
-
 		return result;
 	}
 
-	// --------------------------------------------------------------------
-
-	struct config_impl_base
-	{
-		virtual ~config_impl_base() = default;
-
-		virtual option_base *get_option(std::string_view name) = 0;
-		virtual option_base *get_option(char short_name) = 0;
-
-		virtual size_t get_option_width() const = 0;
-		virtual void write(std::ostream &os, size_t wrap_width, size_t output_width) const = 0;
-
-		virtual config_impl_base *next() const noexcept { return nullptr; }
-
-		std::vector<std::string> m_operands;
-	};
-
-	template <typename... Options>
-	struct config_impl : public config_impl_base
-	{
-		static constexpr size_t N = sizeof...(Options);
-
-		config_impl(Options... options)
-			: m_options(std::forward<Options>(options)...)
-		{
-		}
-
-		option_base *get_option(std::string_view name) override
-		{
-			return get_option<0>(name);
-		}
-
-		template <size_t Ix>
-		option_base *get_option([[maybe_unused]] std::string_view name)
-		{
-			if constexpr (Ix == N)
-				return nullptr;
-			else
-			{
-				option_base &opt = std::get<Ix>(m_options);
-				return (opt.m_name == name) ? &opt : get_option<Ix + 1>(name);
-			}
-		}
-
-		option_base *get_option(char short_name) override
-		{
-			return get_option<0>(short_name);
-		}
-
-		template <size_t Ix>
-		option_base *get_option([[maybe_unused]] char short_name)
-		{
-			if constexpr (Ix == N)
-				return nullptr;
-			else
-			{
-				option_base &opt = std::get<Ix>(m_options);
-				return (opt.m_short_name == short_name) ? &opt : get_option<Ix + 1>(short_name);
-			}
-		}
-
-		virtual size_t get_option_width() const override
-		{
-			return std::apply([](Options const &...opts)
-				{
-				size_t width = 0;
-				((width = std::max(width, opts.width())), ...);
-				return width; }, m_options);
-		}
-
-		virtual void write(std::ostream &os, size_t wrap_width, size_t output_width) const override
-		{
-			std::apply([&os, wrap_width, output_width](Options const &...opts)
-				{ (opts.write(os, wrap_width, output_width), ...); }, m_options);
-		}
-
-		std::tuple<Options...> m_options;
-	};
-
-	template <typename... Options>
-	struct lib_config_impl : public config_impl<Options...>
-	{
-		lib_config_impl(std::string_view lib_name, Options... options)
-			: config_impl<Options...>(std::forward<Options>(options)...)
-			, m_lib_name(lib_name)
-		{
-		}
-
-		config_impl_base *next() const noexcept override { return m_next; }
-
-		std::string m_lib_name;
-		config_impl_base *m_next = nullptr;
-	};
-
-	static config_impl_base *&get_lib_config()
-	{
-		static config_impl_base *s_lib_config = nullptr;
-		return s_lib_config;
-	}
-
-	std::unique_ptr<config_impl_base> m_impl;
 	bool m_ignore_unknown = false;
 	std::string m_usage;
+
+	std::vector<std::string> m_operands;
+	std::vector<std::unique_ptr<detail::section>> m_sections;
 
 	/// @endcond
 };
@@ -937,9 +900,9 @@ auto make_hidden_option(detail::ostring name, const T &v, std::string_view descr
 	return detail::option<T>(name.m_long, name.m_short, v, description, true);
 }
 
-// // --------------------------------------------------------------------
-// // To extend all configuration parameter lists with a default set handled
-// // by a library e.g.
+// --------------------------------------------------------------------
+// To extend all configuration parameter lists with a default set handled
+// by a library e.g.
 
 #define MCFP_DEFINE_LIB_OPTIONS(LIB, ...)              \
 	const struct mcfp_lib_options                      \
