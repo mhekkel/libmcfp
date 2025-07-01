@@ -291,13 +291,13 @@ struct option_traits<T, typename std::enable_if_t<not std::is_arithmetic_v<T> an
 
 struct option_base
 {
-	std::string m_name;        ///< The long argument name
-	std::string m_desc;        ///< The description of the argument
-	char m_short_name;         ///< The single character name of the argument, can be zero
-	bool m_is_flag = true,     ///< When true, this option does not allow arguments
-		m_multi = false,       ///< When true, this option allows mulitple values.
-		m_hidden;              ///< When true, this option is hidden from the help text
-	int m_seen = 0;            ///< How often the option was seen on the command line
+	std::string m_name;    ///< The long argument name
+	std::string m_desc;    ///< The description of the argument
+	char m_short_name;     ///< The single character name of the argument, can be zero
+	bool m_is_flag = true, ///< When true, this option does not allow arguments
+		m_multi = false,   ///< When true, this option allows mulitple values.
+		m_hidden;          ///< When true, this option is hidden from the help text
+	int m_seen = 0;        ///< How often the option was seen on the command line
 
 	// We store the actual data in the argument list, i.e. strings
 	std::vector<std::string> m_value;
@@ -425,10 +425,10 @@ struct option_base
 		{
 			if (std::exchange(do_indent, true))
 				os << indent_str;
-			
+
 			while (not line.empty() and std::isspace(line.back()))
 				line.remove_suffix(1);
-			
+
 			os << line << '\n';
 		}
 	}
@@ -501,10 +501,14 @@ struct option<void> : public option_base
 	{
 	}
 
-	void set_value(std::string_view /*value*/, std::error_code & /*ec*/) override
+	void set_value(std::string_view value, std::error_code &ec) override
 	{
-		assert(false);
-		throw std::logic_error("should never happen");
+		if (value == "true")
+			m_seen = 1;
+		else if (value == "false")
+			m_seen = 0;
+		else if (auto [ptr, ec2] = mcfp::detail::from_chars(value.data(), value.data() + value.length(), m_seen); ec2 != std::errc{} or ptr != value.data() + value.length())
+			ec = make_error_code(config_error::wrong_type_cast_flag);
 	}
 };
 

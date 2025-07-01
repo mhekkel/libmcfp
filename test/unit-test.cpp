@@ -398,7 +398,7 @@ noot = 2
 mies = 	
 pi = 3.14
 s = hello, world!
-verbose
+verbose = true
     )" };
 
     struct membuf : public std::streambuf
@@ -451,8 +451,8 @@ TEST_CASE("file_2")
         { "aap !", "aap", make_error_code(mcfp::config_error::invalid_config_file) },
         { "aap=aap", "aap", {} },
         { "aap", "aap", make_error_code(mcfp::config_error::missing_argument_for_option) },
-        { "verbose=1", "verbose", make_error_code(mcfp::config_error::option_does_not_accept_argument) },
-
+        { "verbose", "verbose", make_error_code(mcfp::config_error::missing_argument_for_option) },
+        { "verbose=x", "verbose", make_error_code(mcfp::config_error::wrong_type_cast_flag) },
     };
 
     for (const auto &[config_file, option, err] : tests)
@@ -653,15 +653,3 @@ TEST_CASE("usage-1")
 
     CHECK(os.str() == test_string);
 }
-
-// // --------------------------------------------------------------------
-
-// MCFP_DEFINE_LIB_OPTIONS(libcifpp,
-// 	mcfp::make_option<std::string>("config", "The libcifpp configuration file"),
-// 	mcfp::make_option("download-missing-ccd-files", "This option will allow your software to download missing CCD files")
-// );
-
-// TEST_CASE("suffixed-options")
-// {
-
-// }

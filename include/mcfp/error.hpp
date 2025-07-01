@@ -55,6 +55,7 @@ enum class config_error
 	option_not_specified,            /**< There was not option found on the command line and no default argument was specified for the option passed in @ref mcfp::config::get */
 	invalid_config_file,             /**< The config file is not of the expected format */
 	wrong_type_cast,                 /**< An attempt was made to ask for an option in another type than used when registering this option in @ref mcfp::config::init */
+	wrong_type_cast_flag,            /**< The value assigned in a config file to a flag option was not 'true', 'false' or an integral numerical value */
 	config_file_not_found            /**< The specified config file was not found */
 };
 /**

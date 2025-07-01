@@ -144,7 +144,7 @@ class config
 	 */
 	bool has(std::string_view name) const
 	{
-		auto opt = m_impl->get_option(name);
+		auto opt = get_option(name);
 		return opt != nullptr and (opt->m_seen > 0 or opt->m_default_value.has_value());
 	}
 
@@ -157,7 +157,7 @@ class config
 	 */
 	int count(std::string_view name) const
 	{
-		auto opt = m_impl->get_option(name);
+		auto opt = get_option(name);
 		return opt ? opt->m_seen : 0;
 	}
 
@@ -202,7 +202,7 @@ class config
 		get_last_option_storage() = name;
 
 		return_type result{};
-		auto opt = m_impl->get_option(name);
+		auto opt = get_option(name);
 
 		if (opt == nullptr)
 			ec = make_error_code(config_error::unknown_option);
@@ -287,10 +287,10 @@ class config
 
 		conf.m_impl->write(os, options_width, terminal_width);
 
-		while (auto lib_impl = config::get_lib_config(); lib_impl != nullptr)
+		for (auto lib_impl = config::get_lib_config(); lib_impl != nullptr; lib_impl = lib_impl->next())
 		{
+			os << '\n';
 			lib_impl->write(os, options_width, terminal_width);
-			lib_impl = lib_impl->next();
 		}
 
 		return os;
@@ -312,9 +312,9 @@ class config
 		if (ec)
 		{
 			if (get_last_option().empty())
-				throw std::system_error(ec, "while parsing command line arguments: ");
+				throw std::system_error(ec, "while parsing command line arguments");
 			else
-				throw std::system_error(ec, "while parsing command line arguments, last option was '" + get_last_option() + "' ");
+				throw std::system_error(ec, "while parsing command line arguments, option '" + get_last_option() + "'");
 		}
 	}
 
@@ -336,10 +336,16 @@ class config
 		parse_config_file(config_option, config_file_name, search_dirs, ec);
 		if (ec)
 		{
+			std::string error_option = get_last_option();
+
+			std::string file = has(config_option) ?
+				get(config_option) :
+				std::string{ config_file_name };
+
 			if (get_last_option().empty())
-				throw std::system_error(ec, "while parsing config file '" + std::string{ config_file_name } + "': ");
+				throw std::system_error(ec, "while parsing config file '" + file);
 			else
-				throw std::system_error(ec, "while parsing config file '" + std::string{ config_file_name } + "', last option was '" + get_last_option() + "' ");
+				throw std::system_error(ec, "while parsing config file '" + file + "', option '" + error_option + "'");
 		}
 	}
 
@@ -461,17 +467,15 @@ class config
 						// store name for inspection later on
 						get_last_option_storage() = name;
 
-						auto opt = m_impl->get_option(name);
+						auto opt = get_option(name);
 
 						if (opt == nullptr)
 						{
 							if (not m_ignore_unknown)
 								ec = make_error_code(config_error::unknown_option);
 						}
-						else if (not opt->m_is_flag)
-							ec = make_error_code(config_error::missing_argument_for_option);
 						else
-							++opt->m_seen;
+							ec = make_error_code(config_error::missing_argument_for_option);
 
 						state = State::NAME_START;
 					}
@@ -486,24 +490,7 @@ class config
 					if (ch == '=')
 						state = State::VALUE_START;
 					else if (is_eoln(ch))
-					{
-						// store name for inspection later on
-						get_last_option_storage() = name;
-
-						auto opt = m_impl->get_option(name);
-
-						if (opt == nullptr)
-						{
-							if (not m_ignore_unknown)
-								ec = make_error_code(config_error::unknown_option);
-						}
-						else if (not opt->m_is_flag)
-							ec = make_error_code(config_error::missing_argument_for_option);
-						else
-							++opt->m_seen;
-
-						state = State::NAME_START;
-					}
+						ec = make_error_code(config_error::missing_argument_for_option);
 					else if (ch != ' ' and ch != '\t')
 						ec = make_error_code(config_error::invalid_config_file);
 					break;
@@ -512,10 +499,7 @@ class config
 				case State::VALUE:
 					if (is_eoln(ch))
 					{
-						// store name for inspection later on
-						get_last_option_storage() = name;
-
-						auto opt = m_impl->get_option(name);
+						auto opt = get_option(name);
 
 						if (opt == nullptr)
 						{
@@ -523,7 +507,7 @@ class config
 								ec = make_error_code(config_error::unknown_option);
 						}
 						else if (opt->m_is_flag)
-							ec = make_error_code(config_error::option_does_not_accept_argument);
+							opt->set_value(value, ec);
 						else if (not value.empty() and (opt->m_seen == 0 or opt->m_multi))
 						{
 							opt->set_value(value, ec);
@@ -617,7 +601,7 @@ class config
 				// store name for inspection later on
 				get_last_option_storage() = s_arg;
 
-				opt = m_impl->get_option(s_arg);
+				opt = get_option(s_arg);
 				if (opt == nullptr)
 				{
 					if (not m_ignore_unknown)
@@ -627,10 +611,13 @@ class config
 
 				if (opt->m_is_flag)
 				{
-					if (not opt_arg.empty())
+					if (opt_arg.empty() or opt_arg == "true")
+						++opt->m_seen;
+					else if (opt_arg == "false")
+						opt->m_seen = 0;
+					else
 						ec = make_error_code(config_error::option_does_not_accept_argument);
 
-					++opt->m_seen;
 					continue;
 				}
 
@@ -644,7 +631,7 @@ class config
 				{
 					// store name for inspection later on
 					get_last_option_storage() = *arg;
-					opt = m_impl->get_option(*arg++);
+					opt = get_option(*arg++);
 
 					if (opt == nullptr)
 					{
@@ -691,6 +678,54 @@ class config
 		thread_local static std::string s_last_option;
 		return s_last_option;
 	}
+
+	// --------------------------------------------------------------------
+	
+	option_base *get_option(std::string_view name) const
+	{
+		auto result = m_impl->get_option(name);
+
+		if (result == nullptr)
+		{
+			for (auto next = get_lib_config(); next != nullptr; next = next->next())
+			{
+				result = next->get_option(name);
+				if (result)
+					break;
+			}
+		}
+
+		return result;
+	}
+
+	option_base *get_option(char short_name) const
+	{
+		auto result = m_impl->get_option(short_name);
+
+		if (result == nullptr)
+		{
+			for (auto next = get_lib_config(); next != nullptr; next = next->next())
+			{
+				result = next->get_option(short_name);
+				if (result)
+					break;
+			}
+		}
+
+		return result;
+	}
+
+	size_t get_option_width() const
+	{
+		auto result = m_impl->get_option_width();
+		
+		for (auto next = get_lib_config(); next != nullptr; next = next->next())
+			result = std::max(result, next->get_option_width());
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------
 
 	struct config_impl_base
 	{
