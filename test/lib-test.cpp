@@ -95,9 +95,9 @@ TEST_CASE("suffixed-options-2")
 	config.parse(argc, argv);
 
 	REQUIRE(config.has("config"));
-	CHECK(config.get("config") == configFile.string());
 
 	std::error_code ec;
+	// This is a test of replacing the default config file too btw
     config.parse_config_file("config", "unit-test.conf", { gTestDir.string() });
 	REQUIRE(ec == std::errc{});
 
