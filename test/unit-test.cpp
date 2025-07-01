@@ -660,7 +660,7 @@ TEST_CASE("sections-1")
 	auto &config = mcfp::config::instance();
 
 	config.init("test [options]")
-		.add_section("test-section",
+		.section("test-section",
 			mcfp::make_option<const char *>("aap", "option aap"),
 			mcfp::make_option<int>("noot", 1, "option noot"),
 			mcfp::make_option<std::string>("mies", "option mies"),

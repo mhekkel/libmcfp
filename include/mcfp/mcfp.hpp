@@ -93,7 +93,7 @@ class config
 		m_usage = usage;
 		m_ignore_unknown = false;
 
-		add_section(""sv, std::forward<Options>(options)...);
+		section(""sv, std::forward<Options>(options)...);
 
 		for (auto &f : get_section_factories())
 		{
@@ -117,7 +117,7 @@ class config
 	 */
 	template <typename... Options>
 		requires(std::is_base_of_v<option_base, Options> and ...)
-	config &add_section(std::string_view section_name, Options... options)
+	config &section(std::string_view section_name, Options... options)
 	{
 		std::unique_ptr<detail::section> section(new detail::section(section_name, std::forward<Options>(options)...));
 
