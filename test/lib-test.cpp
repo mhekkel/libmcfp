@@ -86,10 +86,8 @@ TEST_CASE("suffixed-options-2")
 
 	int argc = 3;
 
-	fs::path configFile = gTestDir / "lib-test.conf";
-
 	const char *const argv[] = {
-		"test", "--config", reinterpret_cast<const char *>(configFile.c_str()), nullptr
+		"test", "--config", "lib-test.conf", nullptr
 	};
 
 	config.parse(argc, argv);
