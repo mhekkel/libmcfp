@@ -33,6 +33,7 @@
 #include "mcfp/error.hpp"
 #include "mcfp/text.hpp"
 #include "mcfp/utilities.hpp"
+
 #include "mcfp/detail/options.hpp"
 
 #include <algorithm>
@@ -54,7 +55,7 @@ namespace mcfp
 /**
  * @brief A singleton class. Use @ref mcfp::config::instance to create and/or
  * retrieve the single instance
- * 
+ *
  */
 
 class config
@@ -62,10 +63,9 @@ class config
 	using option_base = detail::option_base;
 
   public:
-
 	/**
 	 * @brief Set the 'usage' string
-	 * 
+	 *
 	 * @param usage The usage message
 	 */
 	void set_usage(std::string_view usage)
@@ -75,7 +75,7 @@ class config
 
 	/**
 	 * @brief Initialise a config instance with a \a usage message and a set of \a options
-	 * 
+	 *
 	 * @param usage The usage message
 	 * @param options Variadic list of options recognised by this config object, use mcfp::make_option and variants to create these
 	 */
@@ -88,8 +88,23 @@ class config
 	}
 
 	/**
+	 * @brief Initialise a default for options to be handled by a library
+	 *
+	 * @param libname The library name
+	 * @param options Variadic list of options recognised by this config object, use mcfp::make_option and variants to create these
+	 */
+	template <typename... Options>
+	static void init_lib(std::string_view libname, Options... options)
+	{
+		auto c = new lib_config_impl(libname, std::forward<Options>(options)...);
+
+		c->m_next = get_lib_config();
+		get_lib_config() = c;
+	}
+
+	/**
 	 * @brief Set the ignore unknown flag
-	 * 
+	 *
 	 * @param ignore_unknown When true, unknown options are simply ignored instead of
 	 * throwing an error
 	 */
@@ -100,7 +115,7 @@ class config
 
 	/**
 	 * @brief Use this to retrieve the single instance of this class
-	 * 
+	 *
 	 * @return config& The singleton instance
 	 */
 	static config &instance()
@@ -113,7 +128,7 @@ class config
 
 	/**
 	 * @brief Get the last option name, for use in error reporting
-	 * 
+	 *
 	 * @return std::string The last parsed or requested option
 	 */
 	std::string get_last_option() const
@@ -123,7 +138,7 @@ class config
 
 	/**
 	 * @brief Simply return true if the option with \a name has a value assigned
-	 * 
+	 *
 	 * @param name The name of the option
 	 * @return bool Returns true when the option has a value
 	 */
@@ -136,7 +151,7 @@ class config
 	/**
 	 * @brief Return how often an option with the name \a name was seen.
 	 * Use e.g. to increase verbosity level
-	 * 
+	 *
 	 * @param name The name of the option to check
 	 * @return int The count for the named option
 	 */
@@ -149,7 +164,7 @@ class config
 	/**
 	 * @brief Returns the value for the option with name \a name. Throws
 	 * an exception if the option has not value assigned
-	 * 
+	 *
 	 * @tparam T The type of the value requested.
 	 * @param name The name of the option requested
 	 * @return auto The value of the named option
@@ -163,7 +178,7 @@ class config
 		return_type result = get<T>(name, ec);
 
 		if (ec)
-			throw std::system_error(ec, "while getting option '" + std::string { name } + '\'');
+			throw std::system_error(ec, "while getting option '" + std::string{ name } + '\'');
 
 		return result;
 	}
@@ -172,7 +187,7 @@ class config
 	 * @brief Returns the value for the option with name \a name. If
 	 * the option has no value assigned or is of a wrong type,
 	 * ec is set to an appropriate error
-	 * 
+	 *
 	 * @tparam T The type of the value requested.
 	 * @param name The name of the option requested
 	 * @param ec The error status is returned in this variable
@@ -201,7 +216,7 @@ class config
 	 * @brief Return the std::string value of the option with name \a name
 	 * If no value was assigned, or the type of the option cannot be casted
 	 * to a string, an exception is thrown.
-	 * 
+	 *
 	 * @param name The name of the option value requested
 	 * @return std::string The value of the option
 	 */
@@ -214,7 +229,7 @@ class config
 	 * @brief Return the std::string value of the option with name \a name
 	 * If no value was assigned, or the type of the option cannot be casted
 	 * to a string, an error is returned in \a ec.
-	 * 
+	 *
 	 * @param name The name of the option value requested
 	 * @param ec The error status is returned in this variable
 	 * @return std::string The value of the option
@@ -226,7 +241,7 @@ class config
 
 	/**
 	 * @brief Return the list of operands.
-	 * 
+	 *
 	 * @return const std::vector<std::string>& The operand as a vector of strings
 	 */
 	const std::vector<std::string> &operands() const
@@ -239,24 +254,42 @@ class config
 	 * This will print the usage string and each of the configured
 	 * options along with their optional default value as well as
 	 * their help string
-	 * 
+	 *
 	 * @param os The std::ostream to write to, usually std::cout or std::cerr
 	 * @param conf The config object to write out
 	 * @return std::ostream& Returns the parameter \a os
 	 */
 	friend std::ostream &operator<<(std::ostream &os, const config &conf)
 	{
-		size_t terminal_width = get_terminal_width();
+		// Hack to be able to limit the width of the output (wrapping width)
+		size_t terminal_width;
+		if (auto sw = os.width(); sw != 0)
+		{
+			terminal_width = sw;
+			os.width(0);
+		}
+		else
+			terminal_width = get_terminal_width();
 
 		if (not conf.m_usage.empty())
 			os << conf.m_usage << std::endl;
 
 		size_t options_width = conf.m_impl->get_option_width();
 
-		if (options_width > terminal_width / 2)
-			options_width = terminal_width / 2;
+		if (options_width > terminal_width / 3)
+			options_width = terminal_width / 3;
+		
+		if (options_width > 32)
+			options_width = 32;
+		
+		if (options_width < 16)
+			options_width = 16;
 
-		conf.m_impl->write(os, options_width);
+		conf.m_impl->write(os, options_width, terminal_width);
+
+		// for (auto lib_impl = config::get_lib_config(); lib_impl != nullptr; lib_impl = lib_impl->m_next)
+		if (auto lib_impl = config::get_lib_config(); lib_impl != nullptr)
+			lib_impl->write(os, options_width, terminal_width);
 
 		return os;
 	}
@@ -266,7 +299,7 @@ class config
 	/**
 	 * @brief Parse the \a argv vector containing \a argc elements. Throws
 	 * an exception if any error was found
-	 * 
+	 *
 	 * @param argc The number of elements in \a argv
 	 * @param argv The vector of command line arguments
 	 */
@@ -288,7 +321,7 @@ class config
 	 * specified on the command line with option \a config_option
 	 * The file is searched for in each of the directories specified in \a search_dirs
 	 * This function throws an exception if an error was found during processing
-	 * 
+	 *
 	 * @param config_option The name of the option used to specify the config file
 	 * @param config_file_name The default name of the option file to use if the config
 	 * option was not specified on the command line
@@ -302,9 +335,9 @@ class config
 		if (ec)
 		{
 			if (get_last_option().empty())
-				throw std::system_error(ec, "while parsing config file '" + std::string { config_file_name } + "': ");
+				throw std::system_error(ec, "while parsing config file '" + std::string{ config_file_name } + "': ");
 			else
-				throw std::system_error(ec, "while parsing config file '" + std::string { config_file_name } + "', last option was '" + get_last_option() + "' ");
+				throw std::system_error(ec, "while parsing config file '" + std::string{ config_file_name } + "', last option was '" + get_last_option() + "' ");
 		}
 	}
 
@@ -313,7 +346,7 @@ class config
 	 * specified on the command line with option \a config_option
 	 * The file is searched for in each of the directories specified in \a search_dirs
 	 * If an error is found it is returned in the variable \a ec
-	 * 
+	 *
 	 * @param config_option The name of the option used to specify the config file
 	 * @param config_file_name The default name of the option file to use if the config
 	 * option was not specified on the command line
@@ -348,7 +381,7 @@ class config
 	/**
 	 * @brief Parse a configuration file specified by \a file
 	 * If an error is found it is returned in the variable \a ec
-	 * 
+	 *
 	 * @param file The path to the config file
 	 * @param ec The variable containing the error status
 	 */
@@ -360,7 +393,6 @@ class config
 	}
 
   private:
-
 	static bool is_name_char(int ch)
 	{
 		return std::isalnum(ch) or ch == '_' or ch == '-';
@@ -372,11 +404,10 @@ class config
 	}
 
   public:
-
 	/**
 	 * @brief Parse the configuration file in \a is
 	 * If an error is found it is returned in the variable \a ec
-	 * 
+	 *
 	 * @param is A std::istream for the contents of a config file
 	 * @param ec The variable containing the error status
 	 */
@@ -517,7 +548,7 @@ class config
 	/**
 	 * @brief Parse the \a argv vector containing \a argc elements.
 	 * In case of an error, the error is returned in \a ec
-	 * 
+	 *
 	 * @param argc The number of elements in \a argv
 	 * @param argv The vector of command line arguments
 	 * @param ec The variable receiving the error status
@@ -667,7 +698,7 @@ class config
 		virtual option_base *get_option(char short_name) = 0;
 
 		virtual size_t get_option_width() const = 0;
-		virtual void write(std::ostream &os, size_t width) const = 0;
+		virtual void write(std::ostream &os, size_t wrap_width, size_t output_width) const = 0;
 
 		std::vector<std::string> m_operands;
 	};
@@ -718,22 +749,40 @@ class config
 
 		virtual size_t get_option_width() const override
 		{
-			return std::apply([](Options const& ...opts) {
+			return std::apply([](Options const &...opts)
+				{
 				size_t width = 0;
 				((width = std::max(width, opts.width())), ...);
-				return width;
-			}, m_options);
+				return width; }, m_options);
 		}
 
-		virtual void write(std::ostream &os, size_t width) const override
+		virtual void write(std::ostream &os, size_t wrap_width, size_t output_width) const override
 		{
-			std::apply([&os,width](Options const& ...opts) {
-				(opts.write(os, width), ...);
-			}, m_options);
+			std::apply([&os, wrap_width, output_width](Options const &...opts)
+				{ (opts.write(os, wrap_width, output_width), ...); }, m_options);
 		}
 
 		std::tuple<Options...> m_options;
 	};
+
+	template <typename... Options>
+	struct lib_config_impl : public config_impl<Options...>
+	{
+		lib_config_impl(std::string_view lib_name, Options... options)
+			: config_impl<Options...>(std::forward<Options>(options)...)
+			, m_lib_name(lib_name)
+		{
+		}
+
+		std::string m_lib_name;
+		config_impl_base *m_next = nullptr;
+	};
+
+	static config_impl_base *&get_lib_config()
+	{
+		static config_impl_base *s_lib_config = nullptr;
+		return s_lib_config;
+	}
 
 	std::unique_ptr<config_impl_base> m_impl;
 	bool m_ignore_unknown = false;
@@ -746,15 +795,15 @@ class config
 
 /**
  * @brief Create an option with name \a name and without a default value.
- * If \a T is void the option does not expect a value and is in fact a flag. 
- * 
+ * If \a T is void the option does not expect a value and is in fact a flag.
+ *
  * If the type of \a T is a container (std::vector e.g.) the option can be
- * specified multiple times on the command line. 
- * 
+ * specified multiple times on the command line.
+ *
  * The name \a name may end with a comma and a single character. This last
  * character will then be the short version whereas the leading characters
  * make up the long version.
- * 
+ *
  * @tparam T The type of the option
  * @param name The name of the option
  * @param description The help text for this option
@@ -774,14 +823,14 @@ auto make_option(detail::ostring name, std::string_view description)
 
 /**
  * @brief Create an option with name \a name and with a default value \a v.
- * 
+ *
  * If the type of \a T is a container (std::vector e.g.) the option can be
- * specified multiple times on the command line. 
- * 
+ * specified multiple times on the command line.
+ *
  * The name \a name may end with a comma and a single character. This last
  * character will then be the short version whereas the leading characters
  * make up the long version.
- * 
+ *
  * @tparam T The type of the option
  * @param name The name of the option
  * @param v The default value to use
@@ -796,16 +845,16 @@ auto make_option(detail::ostring name, const T &v, std::string_view description)
 
 /**
  * @brief Create an option with name \a name and without a default value.
- * If \a T is void the option does not expect a value and is in fact a flag. 
+ * If \a T is void the option does not expect a value and is in fact a flag.
  * This option will not be shown in the help / usage output.
- * 
+ *
  * If the type of \a T is a container (std::vector e.g.) the option can be
- * specified multiple times on the command line. 
- * 
+ * specified multiple times on the command line.
+ *
  * The name \a name may end with a comma and a single character. This last
  * character will then be the short version whereas the leading characters
  * make up the long version.
- * 
+ *
  * @tparam T The type of the option
  * @param name The name of the option
  * @param description The help text for this option
@@ -825,16 +874,16 @@ auto make_hidden_option(detail::ostring name, std::string_view description)
 
 /**
  * @brief Create an option with name \a name and with default value \a v.
- * If \a T is void the option does not expect a value and is in fact a flag. 
+ * If \a T is void the option does not expect a value and is in fact a flag.
  * This option will not be shown in the help / usage output.
- * 
+ *
  * If the type of \a T is a container (std::vector e.g.) the option can be
- * specified multiple times on the command line. 
- * 
+ * specified multiple times on the command line.
+ *
  * The name \a name may end with a comma and a single character. This last
  * character will then be the short version whereas the leading characters
  * make up the long version.
- * 
+ *
  * @tparam T The type of the option
  * @param name The name of the option
  * @param v The default value to use
@@ -846,6 +895,19 @@ auto make_hidden_option(detail::ostring name, const T &v, std::string_view descr
 {
 	return detail::option<T>(name.m_long, name.m_short, v, description, true);
 }
+
+// // --------------------------------------------------------------------
+// // To extend all configuration parameter lists with a default set handled
+// // by a library e.g.
+
+#define MCFP_DEFINE_LIB_OPTIONS(LIB, ...)              \
+	const struct mcfp_lib_options                      \
+	{                                                  \
+		mcfp_lib_options()                             \
+		{                                              \
+			mcfp::config::init_lib(#LIB, __VA_ARGS__); \
+		}                                              \
+	} s_lib_options_for_lib_##LIB;
 
 } // namespace mcfp
 
