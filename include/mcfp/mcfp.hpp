@@ -272,7 +272,7 @@ class config
 			terminal_width = get_terminal_width();
 
 		if (not conf.m_usage.empty())
-			os << conf.m_usage << std::endl;
+			os << conf.m_usage << '\n';
 
 		size_t options_width = conf.m_impl->get_option_width();
 
@@ -287,9 +287,11 @@ class config
 
 		conf.m_impl->write(os, options_width, terminal_width);
 
-		// for (auto lib_impl = config::get_lib_config(); lib_impl != nullptr; lib_impl = lib_impl->m_next)
-		if (auto lib_impl = config::get_lib_config(); lib_impl != nullptr)
+		while (auto lib_impl = config::get_lib_config(); lib_impl != nullptr)
+		{
 			lib_impl->write(os, options_width, terminal_width);
+			lib_impl = lib_impl->next();
+		}
 
 		return os;
 	}
@@ -700,6 +702,8 @@ class config
 		virtual size_t get_option_width() const = 0;
 		virtual void write(std::ostream &os, size_t wrap_width, size_t output_width) const = 0;
 
+		virtual config_impl_base *next() const noexcept { return nullptr; }
+
 		std::vector<std::string> m_operands;
 	};
 
@@ -773,6 +777,8 @@ class config
 			, m_lib_name(lib_name)
 		{
 		}
+
+		config_impl_base *next() const noexcept override { return m_next; }
 
 		std::string m_lib_name;
 		config_impl_base *m_next = nullptr;

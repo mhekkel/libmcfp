@@ -24,41 +24,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define CATCH_CONFIG_RUNNER
-
-#include <catch2/catch_all.hpp>
-
-#include <filesystem>
-#include <iostream>
+#include "test-main.hpp"
 
 #include <mcfp/mcfp.hpp>
 
 namespace fs = std::filesystem;
-
-std::filesystem::path gTestDir = std::filesystem::current_path();
-
-int main(int argc, char *argv[])
-{
-    Catch::Session session; // There must be exactly one instance
-
-    // Build a new parser on top of Catch2's
-    using namespace Catch::Clara;
-
-    auto cli = session.cli();                        // Get Catch2's command line parser
-    cli |= Opt(gTestDir, "data-dir")                 // bind variable to a new option, with a hint string
-        ["-D"]["--data-dir"]                         // the option names it will respond to
-        ("The directory containing the data files"); // description string for the help output
-
-    // Now pass the new composite back to Catch2 so it uses that
-    session.cli(cli);
-
-    // Let Catch2 (using Clara) parse the command line
-    int returnCode = session.applyCommandLine(argc, argv);
-    if (returnCode != 0) // Indicates a command line error
-        return returnCode;
-
-    return session.run();
-}
 
 // --------------------------------------------------------------------
 
@@ -269,7 +239,7 @@ TEST_CASE("t_9")
     // 	int fd = open("/dev/null", O_RDWR);
     // 	dup2(fd, STDOUT_FILENO);
 
-    // 	ss << config << std::endl;
+    // 	ss << config << '\n';
 
     // 	const char kExpected[] = R"(usage: test [options]
     //   -i arg                                First option
@@ -280,8 +250,8 @@ TEST_CASE("t_9")
 
     // )";
 
-    // 	std::cerr << '>' << kExpected << '<' << std::endl;
-    // 	std::cerr << '>' << ss.str() << '<' << std::endl;
+    // 	std::cerr << '>' << kExpected << '<' << '\n';
+    // 	std::cerr << '>' << ss.str() << '<' << '\n';
 
     // 	CHECK_EQUAL(ss.str(), kExpected);
 }
@@ -305,7 +275,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
     std::ostringstream os;
 
     for (auto line : ww)
-        os << line << std::endl;
+        os << line << '\n';
 
     CHECK(os.str() == R"(SPDX-License-Identifier: BSD-2-Clause
 

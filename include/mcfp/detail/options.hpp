@@ -74,7 +74,7 @@ inline constexpr bool is_container_type_v = is_container_type<T>::value;
 // This error reporting function is not constexpr and thus when it is
 // called by the checking the format of options strings, it will cause
 // a compile time error.
-[[noreturn]] void report_error(const char *msg)
+[[noreturn]] inline void report_error(const char *msg)
 {
 	fputs(msg, stderr);
 	exit(1);
@@ -413,7 +413,7 @@ struct option_base
 
 		if (w2 + 2 > indent)
 		{
-			os << std::endl;
+			os << '\n';
 			do_indent = true;
 			text = m_desc;
 		}
@@ -429,7 +429,7 @@ struct option_base
 			while (not line.empty() and std::isspace(line.back()))
 				line.remove_suffix(1);
 			
-			os << line << std::endl;
+			os << line << '\n';
 		}
 	}
 };

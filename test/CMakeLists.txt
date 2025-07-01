@@ -1,16 +1,16 @@
 # SPDX-License-Identifier: BSD-2-Clause
-# 
+#
 # Copyright (c) 2025 Maarten L. Hekkelman
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
-# 
+#
 # 1. Redistributions of source code must retain the above copyright notice, this
 #    list of conditions and the following disclaimer
 # 2. Redistributions in binary form must reproduce the above copyright notice,
 #    this list of conditions and the following disclaimer in the documentation
 #    and/or other materials provided with the distribution.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 # ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -24,14 +24,24 @@
 
 CPMFindPackage(NAME Catch2 GIT_REPOSITORY "https://github.com/catchorg/Catch2" VERSION "3.4.0" EXCLUDE_FROM_ALL YES)
 
-add_executable(mcfp-unit-test ${CMAKE_CURRENT_SOURCE_DIR}/unit-test.cpp)
+list(APPEND tests
+	unit-test
+	lib-test
+	)
 
-target_link_libraries(mcfp-unit-test mcfp::mcfp Catch2::Catch2)
+add_library(test-main OBJECT "${CMAKE_CURRENT_SOURCE_DIR}/test-main.cpp")
 
-if(MSVC)
-	# Specify unwind semantics so that MSVC knowns how to handle exceptions
-	target_compile_options(mcfp-unit-test PRIVATE /EHsc)
-endif()
+target_link_libraries(test-main PUBLIC mcfp::mcfp Catch2::Catch2)
 
-add_test(NAME mcfp-unit-test
-	COMMAND $<TARGET_FILE:mcfp-unit-test> --data-dir ${CMAKE_CURRENT_SOURCE_DIR})
+foreach(mcfptest IN LISTS tests)
+	add_executable(${mcfptest} ${CMAKE_CURRENT_SOURCE_DIR}/${mcfptest}.cpp $<TARGET_OBJECTS:test-main>)
+	target_link_libraries(${mcfptest} PRIVATE mcfp::mcfp Catch2::Catch2)
+
+	if(MSVC)
+		# Specify unwind semantics so that MSVC knowns how to handle exceptions
+		target_compile_options(${mcfptest} PRIVATE /EHsc)
+	endif()
+
+	add_test(NAME ${mcfptest}
+		COMMAND $<TARGET_FILE:${mcfptest}> --data-dir ${CMAKE_CURRENT_SOURCE_DIR})
+endforeach()
