@@ -30,24 +30,19 @@
 /// This header-only library contains code to parse argc/argv and store the
 /// values provided into a singleton object.
 
-#include <cassert>
-#include <cstring>
+#include "mcfp/error.hpp"
+#include "mcfp/text.hpp"
+#include "mcfp/utilities.hpp"
+#include "mcfp/detail/options.hpp"
 
 #include <algorithm>
 #include <any>
-#include <charconv>
-#include <deque>
 #include <filesystem>
 #include <fstream>
-#include <memory>
-#include <optional>
-#include <type_traits>
 #include <vector>
 
-#include <mcfp/error.hpp>
-#include <mcfp/text.hpp>
-#include <mcfp/utilities.hpp>
-#include <mcfp/detail/options.hpp>
+#include <cassert>
+#include <cstring>
 
 namespace mcfp
 {
@@ -59,20 +54,27 @@ namespace mcfp
  * 
  */
 
-class config
+class config final
 {
 	using option_base = detail::option_base;
 
   public:
 
 	/**
-	 * @brief Set the 'usage' string
+	 * @brief Create a config instance with a \a usage message and a set of \a options
+	 *
+	 * Normally, you would use the config::instance() to fetch the global config
+	 * instance. But sometimes you need to parse yet another additional set of 
+	 * argc/argv settings without losing the global configuration. In that case
+	 * you can create a local config object using this constructor.
 	 * 
 	 * @param usage The usage message
+	 * @param options Variadic list of options recognised by this config object, use mcfp::make_option and variants to create these
 	 */
-	void set_usage(std::string_view usage)
+	template <typename... Options>
+	config(std::string_view usage, Options... options)
 	{
-		m_usage = usage;
+		init(usage, std::forward<Options>(options)...);
 	}
 
 	/**
@@ -87,6 +89,16 @@ class config
 		m_usage = usage;
 		m_ignore_unknown = false;
 		m_impl.reset(new config_impl(std::forward<Options>(options)...));
+	}
+
+	/**
+	 * @brief Set the 'usage' string
+	 * 
+	 * @param usage The usage message
+	 */
+	void set_usage(std::string_view usage)
+	{
+		m_usage = usage;
 	}
 
 	/**

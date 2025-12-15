@@ -1,3 +1,8 @@
+Version 1.5.0
+- It is now possible to have multiple config
+  instances by creating a local instance with the
+  new constructor.
+
 Version 1.4.2
 - Clean up makefile
 

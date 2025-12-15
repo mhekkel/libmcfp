@@ -1,4 +1,5 @@
-build
+.cache/
 .vscode
+build
 docs/api
 docs/conf.py

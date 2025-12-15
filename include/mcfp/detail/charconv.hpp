@@ -26,11 +26,9 @@
 
 #pragma once
 
-#include <algorithm>
 #include <charconv>
 #include <cmath>
 #include <string>
-#include <vector>
 
 #if __has_include(<experimental/type_traits>)
 # include <experimental/type_traits>
