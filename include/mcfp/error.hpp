@@ -44,7 +44,7 @@ namespace mcfp
 
 /**
  * @enum config_error error.hpp mcfp/error.hpp
- * 
+ *
  * @brief A stronly typed class containing the error codes reported by @ref mcfp::config
  */
 enum class config_error
@@ -70,7 +70,7 @@ class config_category_impl : public std::error_category
 	 * @return const char*
 	 */
 
-	const char *name() const noexcept override
+	[[nodiscard]] const char *name() const noexcept override
 	{
 		return "configuration";
 	}
@@ -82,7 +82,7 @@ class config_category_impl : public std::error_category
 	 * @return std::string
 	 */
 
-	std::string message(int ev) const override
+	[[nodiscard]] std::string message(int ev) const override
 	{
 		switch (static_cast<config_error>(ev))
 		{
@@ -111,7 +111,7 @@ class config_category_impl : public std::error_category
 	 *
 	 */
 
-	bool equivalent(const std::error_code & /*code*/, int /*condition*/) const noexcept override
+	[[nodiscard]] bool equivalent(const std::error_code & /*code*/, int /*condition*/) const noexcept override
 	{
 		return false;
 	}
@@ -130,12 +130,12 @@ inline std::error_category &config_category()
 
 inline std::error_code make_error_code(config_error e)
 {
-	return std::error_code(static_cast<int>(e), config_category());
+	return { static_cast<int>(e), config_category() };
 }
 
 inline std::error_condition make_error_condition(config_error e)
 {
-	return std::error_condition(static_cast<int>(e), config_category());
+	return { static_cast<int>(e), config_category() };
 }
 
 } // namespace mcfp

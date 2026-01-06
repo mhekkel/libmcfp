@@ -31,7 +31,11 @@
  * This file contains an implementation of charconv and of work wrapping code
  */
 
-#include <mcfp/detail/charconv.hpp>
+#include "mcfp/detail/charconv.hpp"
+
+#include <algorithm>
+#include <cstdint>
+#include <vector>
 
 namespace mcfp
 {
@@ -141,7 +145,7 @@ class word_wrapper : public std::vector<std::string_view>
 			j = i;
 		}
 
-		reverse(result.begin(), result.end());
+		std::ranges::reverse(result);
 
 		return result;
 	}

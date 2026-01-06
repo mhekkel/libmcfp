@@ -6,33 +6,40 @@
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer
+ * 1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #pragma once
 
+#include "mcfp/text.hpp"
+#include "mcfp/utilities.hpp"
+
 #include <any>
+#include <cassert>
+#include <charconv>
+#include <cstddef>
 #include <filesystem>
 #include <optional>
 #include <string>
-#include <type_traits>
-
-#include <cassert>
+#include <string_view>
+#include <system_error>
+#include <vector>
 
 namespace mcfp::detail
 {
@@ -55,28 +62,21 @@ struct is_container_type : std::false_type
 {
 };
 
-
-
-
-
 /**
  * @brief Template to detect whether a type is a container
  */
 
-
-
 template <typename T>
-struct is_container_type<T,
-	std::enable_if_t<
-		is_detected_v<value_type_t, T> and
-		is_detected_v<iterator_t, T> and
-		not is_detected_v<std_string_npos_t, T>>> : std::true_type
+struct is_container_type<
+	T, std::enable_if_t<is_detected_v<value_type_t, T> and
+						is_detected_v<iterator_t, T> and
+						not is_detected_v<std_string_npos_t, T>>>
+	: std::true_type
 {
 };
 
 template <typename T>
 inline constexpr bool is_container_type_v = is_container_type<T>::value;
-
 
 // --------------------------------------------------------------------
 // The options classes
@@ -96,7 +96,8 @@ struct option_traits<T, typename std::enable_if_t<std::is_arithmetic_v<T>>>
 	static value_type set_value(std::string_view argument, std::error_code &ec)
 	{
 		value_type value{};
-		auto r = from_chars(argument.data(), argument.data() + argument.length(), value);
+		auto r =
+			from_chars(argument.data(), argument.data() + argument.length(), value);
 		if (r.ec != std::errc())
 			ec = std::make_error_code(r.ec);
 		return value;
@@ -117,7 +118,8 @@ struct option_traits<std::filesystem::path>
 {
 	using value_type = std::filesystem::path;
 
-	static value_type set_value(std::string_view argument, std::error_code & /*ec*/)
+	static value_type set_value(std::string_view argument,
+		std::error_code & /*ec*/)
 	{
 		return value_type{ argument };
 	}
@@ -129,19 +131,19 @@ struct option_traits<std::filesystem::path>
 };
 
 template <typename T>
-struct option_traits<T, typename std::enable_if_t<not std::is_arithmetic_v<T> and std::is_assignable_v<std::string, T>>>
+struct option_traits<
+	T, typename std::enable_if_t<not std::is_arithmetic_v<T> and
+								 std::is_assignable_v<std::string, T>>>
 {
 	using value_type = std::string;
 
-	static value_type set_value(std::string_view argument, std::error_code & /*ec*/)
+	static value_type set_value(std::string_view argument,
+		std::error_code & /*ec*/)
 	{
 		return value_type{ argument };
 	}
 
-	static std::string to_string(const T &value)
-	{
-		return { value };
-	}
+	static std::string to_string(const T &value) { return { value }; }
 };
 
 // The Options. The reason to have this weird constructing of
@@ -153,7 +155,7 @@ struct option_base
 {
 	std::string m_name;        ///< The long argument name
 	std::string m_desc;        ///< The description of the argument
-	char m_short_name;         ///< The single character name of the argument, can be zero
+	char m_short_name = 0;     ///< The single character name of the argument, can be zero
 	bool m_is_flag = true,     ///< When true, this option does not allow arguments
 		m_has_default = false, ///< When true, this option has a default value.
 		m_multi = false,       ///< When true, this option allows mulitple values.
@@ -165,7 +167,6 @@ struct option_base
 	option_base(std::string_view name, std::string_view desc, bool hidden)
 		: m_name(name)
 		, m_desc(desc)
-		, m_short_name(0)
 		, m_hidden(hidden)
 	{
 		if (m_name.length() == 1)
@@ -184,17 +185,11 @@ struct option_base
 		assert(false);
 	}
 
-	virtual std::any get_value() const
-	{
-		return {};
-	}
+	[[nodiscard]] virtual std::any get_value() const { return {}; }
 
-	virtual std::string get_default_value() const
-	{
-		return {};
-	}
+	[[nodiscard]] virtual std::string get_default_value() const { return {}; }
 
-	size_t width() const
+	[[nodiscard]] size_t width() const
 	{
 		size_t result = m_name.length();
 		if (result <= 1)
@@ -277,7 +272,8 @@ struct option : public option_base
 		m_is_flag = false;
 	}
 
-	option(std::string_view name, const value_type &default_value, std::string_view desc, bool hidden)
+	option(std::string_view name, const value_type &default_value,
+		std::string_view desc, bool hidden)
 		: option(name, desc, hidden)
 	{
 		m_has_default = true;
@@ -289,7 +285,7 @@ struct option : public option_base
 		m_value = traits_type::set_value(argument, ec);
 	}
 
-	std::any get_value() const override
+	[[nodiscard]] std::any get_value() const override
 	{
 		std::any result;
 		if (m_value)
@@ -297,12 +293,14 @@ struct option : public option_base
 		return result;
 	}
 
-	std::string get_default_value() const override
+	[[nodiscard]] std::string get_default_value() const override
 	{
 		if constexpr (std::is_same_v<value_type, std::string>)
-			return *m_value;
-		else
+			return m_value.value_or("");
+		else if (m_value.has_value())
 			return traits_type::to_string(*m_value);
+		else
+		 	return {};
 	}
 };
 
@@ -328,10 +326,7 @@ struct multiple_option : public option_base
 		m_values.emplace_back(traits_type::set_value(argument, ec));
 	}
 
-	std::any get_value() const override
-	{
-		return { m_values };
-	}
+	[[nodiscard]] std::any get_value() const override { return { m_values }; }
 };
 
 template <>

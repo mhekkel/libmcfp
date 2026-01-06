@@ -26,18 +26,30 @@
 
 #define CATCH_CONFIG_RUNNER
 
-#include <catch2/catch_all.hpp>
+#include "mcfp/detail/charconv.hpp"
+#include "mcfp/error.hpp"
+#include "mcfp/text.hpp"
 
+#include <catch2/catch_session.hpp>
+#include <catch2/catch_test_macros.hpp>
+#include <cstddef>
 #include <filesystem>
-
 #include <mcfp/mcfp.hpp>
+#include <sstream>
+#include <string>
+#include <string_view>
+#include <system_error>
+#include <tuple>
+#include <vector>
 
 namespace fs = std::filesystem;
 
-std::filesystem::path gTestDir = std::filesystem::current_path();
+std::filesystem::path gTestDir;
 
 int main(int argc, char *argv[])
 {
+	gTestDir = std::filesystem::current_path();
+
 	Catch::Session session; // There must be exactly one instance
 
 	// Build a new parser on top of Catch2's

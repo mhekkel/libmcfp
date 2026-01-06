@@ -1,0 +1,14 @@
+Checks: '-*,
+         bugprone-*,
+         -bugprone-easily-swappable-parameters,
+         cert-*,
+         -cert-dcl58-cpp,
+         modernize*,
+         -modernize-use-trailing-return-type,
+         -modernize-avoid-c-arrays,
+         -modernize-use-designated-initializers,
+         performance-*
+         '
+
+HeaderFilterRegex: '.*'
+ExcludeHeaderFilterRegex: 'catch2/catch_all.hpp'

@@ -22,7 +22,11 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-CPMAddPackage("gh:catchorg/Catch2@3.4.0")
+CPMFindPackage(
+	NAME Catch2
+	GIT_REPOSITORY "https://github.com/catchorg/Catch2"
+	GIT_TAG "3.4.0"
+	EXCLUDE_FROM_ALL YES)
 
 add_executable(mcfp-unit-test ${CMAKE_CURRENT_SOURCE_DIR}/unit-test.cpp)
 
