@@ -27,11 +27,9 @@
 #pragma once
 
 #include "mcfp/detail/options.hpp"
-#include "mcfp/error.hpp"
-#include "mcfp/text.hpp"
-#include "mcfp/utilities.hpp"
 
 #include <type_traits>
+#include <utility>
 
 // --------------------------------------------------------------------
 
@@ -45,16 +43,16 @@ class section
 
 	template <typename... Options>
 		requires(not(std::is_reference_v<Options> and ...))
-	explicit section(std::string_view name, Options const &...options)
-		: m_name(name)
+	explicit section(std::string name, Options const &...options)
+		: m_name(std::move(name))
 		, m_impl(new config_impl<Options...>(options...))
 	{
 	}
 
 	template <typename... Options>
 		requires(std::is_rvalue_reference_v<Options> and ...)
-	explicit section(std::string_view name, Options &&...options)
-		: m_name(name)
+	explicit section(std::string name, Options &&...options)
+		: m_name(std::move(name))
 		, m_impl(new config_impl<Options...>(std::forward<Options>(options)...))
 	{
 	}
@@ -172,9 +170,9 @@ class section
 	template <typename... Options>
 	struct lib_config_impl : public config_impl<Options...>
 	{
-		explicit lib_config_impl(std::string_view lib_name, Options &&...options)
+		explicit lib_config_impl(std::string lib_name, Options &&...options)
 			: config_impl<Options...>(std::forward<Options>(options)...)
-			, m_lib_name(lib_name)
+			, m_lib_name(std::move(lib_name))
 		{
 		}
 

@@ -35,6 +35,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <vector>
 
 namespace mcfp
 {

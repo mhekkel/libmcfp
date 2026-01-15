@@ -26,11 +26,9 @@
 
 #pragma once
 
-#include <algorithm>
 #include <charconv>
 #include <cmath>
 #include <string>
-#include <vector>
 
 #if __has_include(<experimental/type_traits>)
 # include <experimental/type_traits>
@@ -40,8 +38,6 @@
 
 namespace mcfp::detail
 {
-
-
 
 // Unfortunately, the std library for clang does not support from_chars with float types
 // Now, this code is not very speed sensitive, so we work around this limitation using
@@ -60,7 +56,7 @@ struct my_charconv<float>
 			value = std::stof(std::string(first, last));
 			return { last, std::errc{} };
 		}
-		catch (const std::exception &/* e */)
+		catch (const std::exception & /* e */)
 		{
 			return { first, std::errc::invalid_argument };
 		}
@@ -77,7 +73,7 @@ struct my_charconv<double>
 			value = std::stod(std::string(first, last));
 			return { last, std::errc{} };
 		}
-		catch (const std::exception &/* e */)
+		catch (const std::exception & /* e */)
 		{
 			return { first, std::errc::invalid_argument };
 		}

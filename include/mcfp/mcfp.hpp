@@ -33,7 +33,6 @@
 #include "mcfp/detail/options.hpp"
 #include "mcfp/detail/sections.hpp"
 #include "mcfp/error.hpp"
-#include "mcfp/text.hpp"
 #include "mcfp/utilities.hpp"
 
 #include <algorithm>
@@ -44,6 +43,7 @@
 #include <memory>
 #include <optional>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace mcfp
@@ -66,9 +66,9 @@ class config
 	 *
 	 * @param usage The usage message
 	 */
-	void set_usage(std::string_view usage)
+	void set_usage(std::string usage)
 	{
-		m_usage = usage;
+		m_usage = std::move(usage);
 	}
 
 	/**
@@ -82,22 +82,23 @@ class config
 	 */
 	template <typename... Options>
 		requires(std::is_base_of_v<option_base, Options> and ...)
-	config &init(std::string_view usage, Options &&...options)
+	config &init(std::string usage, Options &&...options)
 	{
 		using std::operator""sv;
 
 		m_sections.clear();
 
-		m_usage = usage;
+		m_usage = std::move(usage);
 		m_ignore_unknown = false;
 
-		section(""sv, std::forward<Options>(options)...);
+		section("", std::forward<Options>(options)...);
 
 		for (auto &f : get_section_factories())
 		{
 			std::unique_ptr<detail::section> sp(f->create());
 
-			auto si = std::lower_bound(m_sections.begin(), m_sections.end(), sp->name(), [](const std::unique_ptr<detail::section> &s, std::string_view name)
+			auto si = std::lower_bound(m_sections.begin(), m_sections.end(), sp->name(),
+				[](const std::unique_ptr<detail::section> &s, std::string_view name)
 				{ return s->name().compare(name) < 0; });
 
 			if (si == m_sections.end())
@@ -115,12 +116,14 @@ class config
 	 */
 	template <typename... Options>
 		requires(std::is_base_of_v<option_base, Options> and ...)
-	config &section(std::string_view section_name, Options &&...options)
+	config &section(std::string section_name, Options &&...options)
 	{
-		std::unique_ptr<detail::section> section = std::make_unique<detail::section>(section_name, std::forward<Options>(options)...);
-
-		auto si = std::lower_bound(m_sections.begin(), m_sections.end(), section_name, [](const std::unique_ptr<detail::section> &s, std::string_view name)
+		auto si = std::lower_bound(m_sections.begin(), m_sections.end(), section_name,
+			[](const std::unique_ptr<detail::section> &s, std::string_view name)
 			{ return s->name().compare(name) < 0; });
+
+		std::unique_ptr<detail::section> section =
+			std::make_unique<detail::section>(std::move(section_name), std::forward<Options>(options)...);
 
 		if (si != m_sections.end())
 			*si = std::move(section);
@@ -139,9 +142,9 @@ class config
 	 */
 	template <typename... Options>
 		requires(std::is_base_of_v<option_base, Options> and ...)
-	static void init_lib(std::string_view section_name, Options &&...options)
+	static void init_lib(std::string section_name, Options &&...options)
 	{
-		get_section_factories().emplace_back(new section_factory(section_name, std::forward<Options>(options)...));
+		get_section_factories().emplace_back(new section_factory(std::move(section_name), std::forward<Options>(options)...));
 	}
 
 	/**
@@ -831,8 +834,8 @@ class config
 	class section_factory : public section_factory_base
 	{
 	  public:
-		explicit section_factory(std::string_view name, Options &&...options)
-			: m_name(name)
+		explicit section_factory(std::string name, Options &&...options)
+			: m_name(std::move(name))
 			, m_options(std::forward<Options>(options)...)
 		{
 		}
@@ -883,17 +886,17 @@ class config
  * @return auto The option object created
  */
 template <typename T = void>
-auto make_option(detail::ostring name, std::string_view description)
+auto make_option(detail::ostring name, std::string description)
 	requires(not detail::is_container_type_v<T>)
 {
-	return detail::option<T>(name.m_long, name.m_short, description, false);
+	return detail::option<T>(name.m_long, name.m_short, std::move(description), false);
 }
 
 template <typename T>
-auto make_option(detail::ostring name, std::string_view description)
+auto make_option(detail::ostring name, std::string description)
 	requires(detail::is_container_type_v<T>)
 {
-	return detail::multiple_option<T>(name.m_long, name.m_short, description, false);
+	return detail::multiple_option<T>(name.m_long, name.m_short, std::move(description), false);
 }
 
 /**
@@ -913,10 +916,10 @@ auto make_option(detail::ostring name, std::string_view description)
  * @return auto The option object created
  */
 template <typename T>
-auto make_option(detail::ostring name, const T &v, std::string_view description)
+auto make_option(detail::ostring name, const T &v, std::string description)
 	requires(not detail::is_container_type_v<T>)
 {
-	return detail::option<T>(name.m_long, name.m_short, v, description, false);
+	return detail::option<T>(name.m_long, name.m_short, v, std::move(description), false);
 }
 
 /**
@@ -937,14 +940,14 @@ auto make_option(detail::ostring name, const T &v, std::string_view description)
  * @return auto The option object created
  */
 template <typename T = void>
-auto make_hidden_option(detail::ostring name, std::string_view description)
+auto make_hidden_option(detail::ostring name, std::string description)
 	requires(not detail::is_container_type_v<T>)
 {
 	return detail::option<T>(name.m_long, name.m_short, description, true);
 }
 
 template <typename T>
-auto make_hidden_option(detail::ostring name, std::string_view description)
+auto make_hidden_option(detail::ostring name, std::string description)
 	requires(detail::is_container_type_v<T>)
 {
 	return detail::multiple_option<T>(name.m_long, name.m_short, description, true);
@@ -969,7 +972,7 @@ auto make_hidden_option(detail::ostring name, std::string_view description)
  * @return auto The option object created
  */
 template <typename T>
-auto make_hidden_option(detail::ostring name, const T &v, std::string_view description)
+auto make_hidden_option(detail::ostring name, const T &v, std::string description)
 	requires(not detail::is_container_type_v<T>)
 {
 	return detail::option<T>(name.m_long, name.m_short, v, description, true);
