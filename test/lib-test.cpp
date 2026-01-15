@@ -30,9 +30,25 @@
 
 // --------------------------------------------------------------------
 
-MCFP_DEFINE_LIB_OPTIONS(libcifpp,
-	mcfp::make_option<std::string>("config", "The libcifpp configuration file"),
-	mcfp::make_option("download-missing-ccd-files", "This option will allow your software to download missing CCD files"));
+// MCFP_DEFINE_LIB_OPTIONS(libcifpp, "ccd",
+//     mcfp::make_option("download-missing-files", "This option will allow your software to download missing CCD files"));
+
+#include <catch2/reporters/catch_reporter_event_listener.hpp>
+#include <catch2/reporters/catch_reporter_registrars.hpp>
+
+class testRunListener : public Catch::EventListenerBase
+{
+  public:
+	using Catch::EventListenerBase::EventListenerBase;
+
+	void testRunStarting(Catch::TestRunInfo const & /*testRunInfo*/) override
+	{
+		mcfp::config::init_lib("ccd",
+			mcfp::make_option("download-missing-files", "This option will allow your software to download missing CCD files"));
+	}
+};
+
+CATCH_REGISTER_LISTENER(testRunListener)
 
 TEST_CASE("suffixed-options")
 {
@@ -63,12 +79,14 @@ TEST_CASE("suffixed-options")
 	os << config;
 
 	auto test_str = R"(test [options]
+
   -v [ --verbose ]
 
-  --config arg      The libcifpp configuration file
-  --download-missing-ccd-files
-                    This option will allow your software to download
-                    missing CCD files
+section ccd
+
+  --download-missing-files
+                        This option will allow your software to
+                        download missing CCD files
 )";
 
 	CHECK(os.str() == test_str);
@@ -85,17 +103,15 @@ TEST_CASE("suffixed-options-2")
 	int argc = 3;
 
 	const char *const argv[] = {
-		"test", "--config", "lib-test.conf", nullptr
+		"test", nullptr
 	};
 
 	config.parse(argc, argv);
 
-	REQUIRE(config.has("config"));
-
 	std::error_code ec;
 	// This is a test of replacing the default config file too btw
-    config.parse_config_file("config", "unit-test.conf", { gTestDir.string() });
+	config.parse_config_file(gTestDir / "lib-test.conf", ec);
 	REQUIRE(ec == std::errc{});
 
-	CHECK(config.has("download-missing-ccd-files"));
+	CHECK(config.has("ccd.download-missing-files"));
 }
