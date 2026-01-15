@@ -30,23 +30,20 @@
 /// This header-only library contains code to parse argc/argv and store the
 /// values provided into a singleton object.
 
+#include "mcfp/detail/options.hpp"
 #include "mcfp/error.hpp"
 #include "mcfp/text.hpp"
 #include "mcfp/utilities.hpp"
 
-#include "mcfp/detail/options.hpp"
-
 #include <algorithm>
-#include <deque>
+#include <cassert>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <memory>
 #include <optional>
 #include <type_traits>
 #include <vector>
-
-#include <cassert>
-#include <cstring>
 
 namespace mcfp
 {
@@ -80,7 +77,7 @@ class config
 	 * @param options Variadic list of options recognised by this config object, use mcfp::make_option and variants to create these
 	 */
 	template <typename... Options>
-	void init(std::string_view usage, Options... options)
+	void init(std::string_view usage, Options &&... options)
 	{
 		m_usage = usage;
 		m_ignore_unknown = false;
@@ -94,7 +91,7 @@ class config
 	 * @param options Variadic list of options recognised by this config object, use mcfp::make_option and variants to create these
 	 */
 	template <typename... Options>
-	static void init_lib(std::string_view libname, Options... options)
+	static void init_lib(std::string_view libname, Options &&... options)
 	{
 		auto c = new lib_config_impl(libname, std::forward<Options>(options)...);
 
@@ -131,7 +128,7 @@ class config
 	 *
 	 * @return std::string The last parsed or requested option
 	 */
-	std::string get_last_option() const
+	[[nodiscard]] std::string get_last_option() const
 	{
 		return get_last_option_storage();
 	}
@@ -142,7 +139,7 @@ class config
 	 * @param name The name of the option
 	 * @return bool Returns true when the option has a value
 	 */
-	bool has(std::string_view name) const
+	[[nodiscard]] bool has(std::string_view name) const
 	{
 		auto opt = get_option(name);
 		return opt != nullptr and (opt->m_seen > 0 or opt->m_default_value.has_value());
@@ -155,7 +152,7 @@ class config
 	 * @param name The name of the option to check
 	 * @return int The count for the named option
 	 */
-	int count(std::string_view name) const
+	[[nodiscard]] int count(std::string_view name) const
 	{
 		auto opt = get_option(name);
 		return opt ? opt->m_seen : 0;
@@ -170,7 +167,7 @@ class config
 	 * @return auto The value of the named option
 	 */
 	template <typename T>
-	auto get(std::string_view name) const
+	[[nodiscard]] auto get(std::string_view name) const
 	{
 		using return_type = std::remove_cv_t<T>;
 
@@ -220,7 +217,7 @@ class config
 	 * @param name The name of the option value requested
 	 * @return std::string The value of the option
 	 */
-	std::string get(std::string_view name) const
+	[[nodiscard]] std::string get(std::string_view name) const
 	{
 		return get<std::string>(name);
 	}
@@ -234,7 +231,7 @@ class config
 	 * @param ec The error status is returned in this variable
 	 * @return std::string The value of the option
 	 */
-	std::string get(std::string_view name, std::error_code &ec) const
+	[[nodiscard]] std::string get(std::string_view name, std::error_code &ec) const
 	{
 		return get<std::string>(name, ec);
 	}
@@ -244,7 +241,7 @@ class config
 	 *
 	 * @return const std::vector<std::string>& The operand as a vector of strings
 	 */
-	const std::vector<std::string> &operands() const
+	[[nodiscard]] const std::vector<std::string> &operands() const
 	{
 		return m_impl->m_operands;
 	}
@@ -278,10 +275,10 @@ class config
 
 		if (options_width > terminal_width / 3)
 			options_width = terminal_width / 3;
-		
+
 		if (options_width > 32)
 			options_width = 32;
-		
+
 		if (options_width < 16)
 			options_width = 16;
 
@@ -338,9 +335,7 @@ class config
 		{
 			std::string error_option = get_last_option();
 
-			std::string file = has(config_option) ?
-				get(config_option) :
-				std::string{ config_file_name };
+			std::string file = has(config_option) ? get(config_option) : std::string{ config_file_name };
 
 			if (get_last_option().empty())
 				throw std::system_error(ec, "while parsing config file '" + file);
@@ -666,10 +661,12 @@ class config
 		}
 	}
 
-  private:
-	config() = default;
+  public:
 	config(const config &) = delete;
 	config &operator=(const config &) = delete;
+
+  private:
+	config() = default;
 
 	/// @cond
 
@@ -680,8 +677,8 @@ class config
 	}
 
 	// --------------------------------------------------------------------
-	
-	option_base *get_option(std::string_view name) const
+
+	[[nodiscard]] option_base *get_option(std::string_view name) const
 	{
 		auto result = m_impl->get_option(name);
 
@@ -698,7 +695,7 @@ class config
 		return result;
 	}
 
-	option_base *get_option(char short_name) const
+	[[nodiscard]] option_base *get_option(char short_name) const
 	{
 		auto result = m_impl->get_option(short_name);
 
@@ -715,10 +712,10 @@ class config
 		return result;
 	}
 
-	size_t get_option_width() const
+	[[nodiscard]] size_t get_option_width() const
 	{
 		auto result = m_impl->get_option_width();
-		
+
 		for (auto next = get_lib_config(); next != nullptr; next = next->next())
 			result = std::max(result, next->get_option_width());
 
@@ -731,13 +728,13 @@ class config
 	{
 		virtual ~config_impl_base() = default;
 
-		virtual option_base *get_option(std::string_view name) = 0;
-		virtual option_base *get_option(char short_name) = 0;
+		[[nodiscard]] virtual option_base *get_option(std::string_view name) = 0;
+		[[nodiscard]] virtual option_base *get_option(char short_name) = 0;
 
-		virtual size_t get_option_width() const = 0;
+		[[nodiscard]] virtual size_t get_option_width() const = 0;
 		virtual void write(std::ostream &os, size_t wrap_width, size_t output_width) const = 0;
 
-		virtual config_impl_base *next() const noexcept { return nullptr; }
+		[[nodiscard]] virtual config_impl_base *next() const noexcept { return nullptr; }
 
 		std::vector<std::string> m_operands;
 	};
@@ -747,46 +744,48 @@ class config
 	{
 		static constexpr size_t N = sizeof...(Options);
 
-		config_impl(Options... options)
+		explicit config_impl(Options &&... options)
 			: m_options(std::forward<Options>(options)...)
 		{
 		}
 
 		option_base *get_option(std::string_view name) override
 		{
-			return get_option<0>(name);
+			return get_option_by_nr<0>(name);
 		}
 
+		using config_impl_base::get_option;
+
 		template <size_t Ix>
-		option_base *get_option([[maybe_unused]] std::string_view name)
+		[[nodiscard]] option_base *get_option_by_nr([[maybe_unused]] std::string_view name)
 		{
 			if constexpr (Ix == N)
 				return nullptr;
 			else
 			{
 				option_base &opt = std::get<Ix>(m_options);
-				return (opt.m_name == name) ? &opt : get_option<Ix + 1>(name);
+				return (opt.m_name == name) ? &opt : get_option_by_nr<Ix + 1>(name);
 			}
 		}
 
 		option_base *get_option(char short_name) override
 		{
-			return get_option<0>(short_name);
+			return get_option_by_nr<0>(short_name);
 		}
 
 		template <size_t Ix>
-		option_base *get_option([[maybe_unused]] char short_name)
+		[[nodiscard]] option_base *get_option_by_nr([[maybe_unused]] char short_name)
 		{
 			if constexpr (Ix == N)
 				return nullptr;
 			else
 			{
 				option_base &opt = std::get<Ix>(m_options);
-				return (opt.m_short_name == short_name) ? &opt : get_option<Ix + 1>(short_name);
+				return (opt.m_short_name == short_name) ? &opt : get_option_by_nr<Ix + 1>(short_name);
 			}
 		}
 
-		virtual size_t get_option_width() const override
+		[[nodiscard]] size_t get_option_width() const override
 		{
 			return std::apply([](Options const &...opts)
 				{
@@ -795,7 +794,7 @@ class config
 				return width; }, m_options);
 		}
 
-		virtual void write(std::ostream &os, size_t wrap_width, size_t output_width) const override
+		void write(std::ostream &os, size_t wrap_width, size_t output_width) const override
 		{
 			std::apply([&os, wrap_width, output_width](Options const &...opts)
 				{ (opts.write(os, wrap_width, output_width), ...); }, m_options);
@@ -807,13 +806,13 @@ class config
 	template <typename... Options>
 	struct lib_config_impl : public config_impl<Options...>
 	{
-		lib_config_impl(std::string_view lib_name, Options... options)
+		explicit lib_config_impl(std::string_view lib_name, Options... options)
 			: config_impl<Options...>(std::forward<Options>(options)...)
 			, m_lib_name(lib_name)
 		{
 		}
 
-		config_impl_base *next() const noexcept override { return m_next; }
+		[[nodiscard]] config_impl_base *next() const noexcept override { return m_next; }
 
 		std::string m_lib_name;
 		config_impl_base *m_next = nullptr;
@@ -850,14 +849,16 @@ class config
  * @param description The help text for this option
  * @return auto The option object created
  */
-template <typename T = void, std::enable_if_t<not detail::is_container_type_v<T>, int> = 0>
+template <typename T = void>
 auto make_option(detail::ostring name, std::string_view description)
+	requires(not detail::is_container_type_v<T>)
 {
 	return detail::option<T>(name.m_long, name.m_short, description, false);
 }
 
-template <typename T, std::enable_if_t<detail::is_container_type_v<T>, int> = 0>
+template <typename T>
 auto make_option(detail::ostring name, std::string_view description)
+	requires(detail::is_container_type_v<T>)
 {
 	return detail::multiple_option<T>(name.m_long, name.m_short, description, false);
 }
@@ -878,8 +879,9 @@ auto make_option(detail::ostring name, std::string_view description)
  * @param description The help text for this option
  * @return auto The option object created
  */
-template <typename T, std::enable_if_t<not detail::is_container_type_v<T>, int> = 0>
+template <typename T>
 auto make_option(detail::ostring name, const T &v, std::string_view description)
+	requires(not detail::is_container_type_v<T>)
 {
 	return detail::option<T>(name.m_long, name.m_short, v, description, false);
 }
@@ -901,14 +903,16 @@ auto make_option(detail::ostring name, const T &v, std::string_view description)
  * @param description The help text for this option
  * @return auto The option object created
  */
-template <typename T = void, std::enable_if_t<not detail::is_container_type_v<T>, int> = 0>
+template <typename T = void>
 auto make_hidden_option(detail::ostring name, std::string_view description)
+	requires(not detail::is_container_type_v<T>)
 {
 	return detail::option<T>(name.m_long, name.m_short, description, true);
 }
 
-template <typename T, std::enable_if_t<detail::is_container_type_v<T>, int> = 0>
+template <typename T>
 auto make_hidden_option(detail::ostring name, std::string_view description)
+	requires(detail::is_container_type_v<T>)
 {
 	return detail::multiple_option<T>(name.m_long, name.m_short, description, true);
 }
@@ -931,15 +935,16 @@ auto make_hidden_option(detail::ostring name, std::string_view description)
  * @param description The help text for this option
  * @return auto The option object created
  */
-template <typename T, std::enable_if_t<not detail::is_container_type_v<T>, int> = 0>
+template <typename T>
 auto make_hidden_option(detail::ostring name, const T &v, std::string_view description)
+	requires(not detail::is_container_type_v<T>)
 {
 	return detail::option<T>(name.m_long, name.m_short, v, description, true);
 }
 
-// // --------------------------------------------------------------------
-// // To extend all configuration parameter lists with a default set handled
-// // by a library e.g.
+// --------------------------------------------------------------------
+// To extend all configuration parameter lists with a default set handled
+// by a library e.g.
 
 #define MCFP_DEFINE_LIB_OPTIONS(LIB, ...)              \
 	const struct mcfp_lib_options                      \

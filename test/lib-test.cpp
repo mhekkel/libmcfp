@@ -28,8 +28,6 @@
 
 #include <mcfp/mcfp.hpp>
 
-namespace fs = std::filesystem;
-
 // --------------------------------------------------------------------
 
 MCFP_DEFINE_LIB_OPTIONS(libcifpp,

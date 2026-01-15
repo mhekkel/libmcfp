@@ -6,30 +6,40 @@
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
- * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer
+ * 1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #pragma once
 
+#include "mcfp/error.hpp"
+#include "mcfp/text.hpp"
+
 #include <cassert>
+#include <charconv>
+#include <cstdio>
+#include <experimental/type_traits>
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <type_traits>
+#include <utility>
+#include <vector>
 
 namespace mcfp::detail
 {
@@ -57,11 +67,12 @@ struct is_container_type : std::false_type
  */
 
 template <typename T>
-struct is_container_type<T,
-	std::enable_if_t<
-		is_detected_v<value_type_t, T> and
-		is_detected_v<iterator_t, T> and
-		not is_detected_v<std_string_npos_t, T>>> : std::true_type
+struct is_container_type<
+	T, std::enable_if_t<
+		   std::experimental::is_detected_v<value_type_t, T> and
+		   std::experimental::is_detected_v<iterator_t, T> and
+		   not std::experimental::is_detected_v<std_string_npos_t, T>>>
+	: std::true_type
 {
 };
 
@@ -76,7 +87,7 @@ inline constexpr bool is_container_type_v = is_container_type<T>::value;
 // a compile time error.
 [[noreturn]] inline void report_error(const char *msg)
 {
-	fputs(msg, stderr);
+	(void)fputs(msg, stderr);
 	exit(1);
 }
 
@@ -91,21 +102,21 @@ class string_view_base
 	using value_type = char_type;
 	using iterator = const char_type *;
 
-	inline constexpr string_view_base(const char *s) noexcept
+	constexpr explicit string_view_base(const char *s) noexcept
 		: m_data(s)
 	{
 		while (m_data[m_size] != 0)
 			++m_size;
 	}
 
-	inline constexpr string_view_base(const char *s, size_t N) noexcept
+	constexpr string_view_base(const char *s, size_t N) noexcept
 		: m_data(s)
 		, m_size(N)
 	{
 	}
 
 	template <size_t N>
-	inline constexpr string_view_base(const char (&s)[N]) noexcept
+	constexpr explicit string_view_base(const char (&s)[N]) noexcept
 		: m_data(s)
 		, m_size(N - 1)
 	{
@@ -113,28 +124,32 @@ class string_view_base
 
 	constexpr string_view_base() noexcept = default;
 	constexpr string_view_base(const string_view_base &) noexcept = default;
-	constexpr string_view_base &operator=(const string_view_base &) noexcept = default;
+	constexpr string_view_base &
+	operator=(const string_view_base &) noexcept = default;
 	// constexpr string_view_base(nullptr_t) = delete;
 
 	template <typename StringType>
 	// requires(std::is_same_v<typename StringType::value_type, value_type>)
-	constexpr string_view_base(const StringType &s) noexcept
+	constexpr explicit string_view_base(const StringType &s) noexcept
 		: m_data(s.data())
 		, m_size(s.size())
 	{
 	}
 
-	constexpr const char_type *data() const noexcept { return m_data; }
-	constexpr size_t size() const noexcept { return m_size; }
+	[[nodiscard]] constexpr const char_type *data() const noexcept { return m_data; }
+	[[nodiscard]] constexpr size_t size() const noexcept { return m_size; }
 
-	constexpr iterator begin() const noexcept { return m_data; }
-	constexpr iterator end() const noexcept { return m_data + m_size; }
-	constexpr char_type operator[](size_t ix) const noexcept { return m_data[ix]; }
+	[[nodiscard]] constexpr iterator begin() const noexcept { return m_data; }
+	[[nodiscard]] constexpr iterator end() const noexcept { return m_data + m_size; }
+	[[nodiscard]] constexpr char_type operator[](size_t ix) const noexcept
+	{
+		return m_data[ix];
+	}
 
-	constexpr char_type front() const noexcept { return m_data[0]; }
-	constexpr char_type back() const noexcept { return m_data[m_size - 1]; }
+	[[nodiscard]] constexpr char_type front() const noexcept { return m_data[0]; }
+	[[nodiscard]] constexpr char_type back() const noexcept { return m_data[m_size - 1]; }
 
-	constexpr string_view_base substr(size_t pos, size_t len) const noexcept
+	[[nodiscard]] constexpr string_view_base substr(size_t pos, size_t len) const noexcept
 	{
 		return { m_data + pos, len };
 	}
@@ -156,7 +171,7 @@ struct ostring
 	string_view m_short;
 
 	template <size_t N>
-	consteval inline ostring(const char (&s)[N])
+	consteval inline ostring(const char (&s)[N]) // NOLINT(hicpp-explicit-conversions)
 		: m_str(s, N - 1)
 	{
 		parse();
@@ -167,7 +182,8 @@ struct ostring
 
 constexpr inline bool is_alnum(int ch) noexcept
 {
-	return (ch >= '0' and ch <= '9') or (ch >= 'a' and ch <= 'z') or (ch >= 'A' and ch <= 'Z');
+	return (ch >= '0' and ch <= '9') or (ch >= 'a' and ch <= 'z') or
+	       (ch >= 'A' and ch <= 'Z');
 }
 
 constexpr inline bool is_valid_option_char(char ch) noexcept
@@ -234,7 +250,8 @@ struct option_traits<T, typename std::enable_if_t<std::is_arithmetic_v<T>>>
 	static value_type set_value(std::string_view argument, std::error_code &ec)
 	{
 		value_type value{};
-		auto r = from_chars(argument.data(), argument.data() + argument.length(), value);
+		auto r =
+			from_chars(argument.data(), argument.data() + argument.length(), value);
 		if (r.ec != std::errc())
 			ec = std::make_error_code(r.ec);
 		else if (*r.ptr != 0)
@@ -257,7 +274,8 @@ struct option_traits<std::filesystem::path>
 {
 	using value_type = std::filesystem::path;
 
-	static value_type set_value(std::string_view argument, std::error_code & /*ec*/)
+	static value_type set_value(std::string_view argument,
+		std::error_code & /*ec*/)
 	{
 		return value_type{ argument };
 	}
@@ -269,19 +287,19 @@ struct option_traits<std::filesystem::path>
 };
 
 template <typename T>
-struct option_traits<T, typename std::enable_if_t<not std::is_arithmetic_v<T> and std::is_assignable_v<std::string, T>>>
+struct option_traits<
+	T, typename std::enable_if_t<not std::is_arithmetic_v<T> and
+								 std::is_assignable_v<std::string, T>>>
 {
 	using value_type = std::string;
 
-	static value_type set_value(std::string_view argument, std::error_code & /*ec*/)
+	static value_type set_value(std::string_view argument,
+		std::error_code & /*ec*/)
 	{
 		return value_type{ argument };
 	}
 
-	static std::string to_string(const T &value)
-	{
-		return { value };
-	}
+	static std::string to_string(const T &value) { return { value }; }
 };
 
 // The Options. The reason to have this weird constructing of
@@ -305,7 +323,8 @@ struct option_base
 
 	option_base(const option_base &rhs) = default;
 
-	constexpr option_base(string_view name_long, string_view name_short, std::string_view desc, bool hidden)
+	constexpr option_base(string_view name_long, string_view name_short,
+		std::string_view desc, bool hidden)
 		: m_name(name_long.begin(), name_long.end())
 		, m_desc(desc)
 		, m_short_name(name_short.size() > 0 ? name_short.front() : 0)
@@ -315,7 +334,8 @@ struct option_base
 
 	virtual ~option_base() = default;
 
-	virtual void set_value(std::string_view /*value*/, std::error_code & /*ec*/) = 0;
+	virtual void set_value(std::string_view /*value*/,
+		std::error_code & /*ec*/) = 0;
 
 	template <typename T>
 	T get_value(std::error_code &ec) const
@@ -327,7 +347,8 @@ struct option_base
 			if (m_default_value)
 			{
 				if constexpr (is_container_type_v<T>)
-					result.emplace_back(option_traits<typename T::value_type>::set_value(*m_default_value, ec));
+					result.emplace_back(option_traits<typename T::value_type>::set_value(
+						*m_default_value, ec));
 				else
 					result = option_traits<T>::set_value(*m_default_value, ec);
 			}
@@ -340,7 +361,8 @@ struct option_base
 			{
 				for (auto &a : m_value)
 				{
-					result.emplace_back(option_traits<typename T::value_type>::set_value(a, ec));
+					result.emplace_back(
+						option_traits<typename T::value_type>::set_value(a, ec));
 					if (ec)
 					{
 						result.clear();
@@ -355,7 +377,7 @@ struct option_base
 		return result;
 	}
 
-	size_t width() const
+	[[nodiscard]] size_t width() const
 	{
 		size_t result = m_name.length();
 		if (result <= 1)
@@ -442,13 +464,15 @@ struct option : public option_base
 
 	option(const option &rhs) = default;
 
-	option(string_view name_long, string_view name_short, std::string_view desc, bool hidden)
+	option(string_view name_long, string_view name_short, std::string_view desc,
+		bool hidden)
 		: option_base(name_long, name_short, desc, hidden)
 	{
 		m_is_flag = false;
 	}
 
-	option(string_view name_long, string_view name_short, const value_type &default_value, std::string_view desc, bool hidden)
+	option(string_view name_long, string_view name_short,
+		const value_type &default_value, std::string_view desc, bool hidden)
 		: option(name_long, name_short, desc, hidden)
 	{
 		if constexpr (std::is_same_v<value_type, std::string>)
@@ -476,7 +500,8 @@ struct multiple_option : public option_base
 
 	multiple_option(const multiple_option &rhs) = default;
 
-	multiple_option(string_view name_long, string_view name_short, std::string_view desc, bool hidden)
+	multiple_option(string_view name_long, string_view name_short,
+		std::string_view desc, bool hidden)
 		: option_base(name_long, name_short, desc, hidden)
 	{
 		m_is_flag = false;
@@ -496,7 +521,8 @@ struct option<void> : public option_base
 {
 	option(const option &rhs) = default;
 
-	option(string_view name_long, string_view name_short, std::string_view desc, bool hidden)
+	option(string_view name_long, string_view name_short, std::string_view desc,
+		bool hidden)
 		: option_base(name_long, name_short, desc, hidden)
 	{
 	}
@@ -507,7 +533,9 @@ struct option<void> : public option_base
 			m_seen = 1;
 		else if (value == "false")
 			m_seen = 0;
-		else if (auto [ptr, ec2] = mcfp::detail::from_chars(value.data(), value.data() + value.length(), m_seen); ec2 != std::errc{} or ptr != value.data() + value.length())
+		else if (auto [ptr, ec2] = mcfp::detail::from_chars(
+					 value.data(), value.data() + value.length(), m_seen);
+			ec2 != std::errc{} or ptr != value.data() + value.length())
 			ec = make_error_code(config_error::wrong_type_cast_flag);
 	}
 };

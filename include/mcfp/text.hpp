@@ -31,7 +31,10 @@
  * This file contains an implementation of charconv and of work wrapping code
  */
 
-#include <mcfp/detail/charconv.hpp>
+#include "mcfp/detail/charconv.hpp"
+
+#include <algorithm>
+#include <cstdint>
 
 namespace mcfp
 {
@@ -39,7 +42,7 @@ namespace mcfp
 /**	Import of the private implementation of charconv which maybe
  * resolved to the std::charconv implementation or a private one
  * defined in the detail namespace.
-*/
+ */
 
 template <typename T>
 using charconv = typename detail::charconv<T>;
@@ -48,8 +51,8 @@ using charconv = typename detail::charconv<T>;
  * resolved to the std::is_detected_v template when available
  */
 
-template <template<class...> class Op, class... Args>
-constexpr inline bool is_detected_v = detail::is_detected_v<Op,Args...>;
+// template <template<class...> class Op, class... Args>
+// constexpr inline bool is_detected_v = std::experimental::is_detected_v<Op,Args...>;
 
 // --------------------------------------------------------------------
 /// Simplified line breaking code taken from a decent text editor.
@@ -64,7 +67,7 @@ class word_wrapper : public std::vector<std::string_view>
 		: m_width(width)
 	{
 		std::string_view::size_type line_start = 0, line_end = text.find('\n');
-		
+
 		for (;;)
 		{
 			auto line = text.substr(line_start, line_end - line_start);
@@ -141,7 +144,7 @@ class word_wrapper : public std::vector<std::string_view>
 			j = i;
 		}
 
-		reverse(result.begin(), result.end());
+		std::ranges::reverse(result);
 
 		return result;
 	}
@@ -202,7 +205,7 @@ class word_wrapper : public std::vector<std::string_view>
 		};
 
 		static const BreakAction brkTable[15][15] = {
-			//         OP   CL   CP   QU   EX   SY   IS   PR   PO   NU   AL   HY   BA   CM   WJ 
+			//         OP   CL   CP   QU   EX   SY   IS   PR   PO   NU   AL   HY   BA   CM   WJ
 			/* OP */ { PBK, PBK, PBK, PBK, PBK, PBK, PBK, PBK, PBK, PBK, PBK, PBK, PBK, CPB, PBK },
 			/* CL */ { DBK, PBK, PBK, IBK, PBK, PBK, PBK, IBK, IBK, DBK, DBK, IBK, IBK, CIB, PBK },
 			/* CP */ { DBK, PBK, PBK, IBK, PBK, PBK, PBK, IBK, IBK, IBK, IBK, IBK, IBK, CIB, PBK },
