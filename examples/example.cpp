@@ -1,9 +1,10 @@
 // Example of using libmcfp
 
+#include <iomanip>
 #include <iostream>
-#include <filesystem>
+#include <vector>
 
-#include <mcfp/mcfp.hpp>
+import mcfp;
 
 int main(int argc, char * const argv[])
 {

@@ -9,6 +9,8 @@ There's a config file parser as well.
 
 > **_NOTE:_** The naming of libmcfp has changed again in version 1.3.4 reverting the rename of 1.3.3. To use libmcfp you should use find_package(mcfp) and link to mcfp::mcfp
 
+> **_NOTE:_** This library is now a cpp20 module library instead of a header only library.
+
 ## Synopsis
 
 ```cpp
@@ -17,7 +19,7 @@ There's a config file parser as well.
 #include <iostream>
 #include <filesystem>
 
-#include <mcfp/mcfp.hpp>
+import mcfp;
 
 int main(int argc, char * const argv[])
 {
@@ -123,12 +125,13 @@ int main(int argc, char * const argv[])
 
 ## Installation
 
-Use [cmake](https://cmake.org/) to install _libmcfp_.
+Use [cmake](https://cmake.org/) to install _libmcfp_. You will also need a very
+recent compiler.
 
 ```bash
 git clone https://github.com/mhekkel/libmcfp.git
 cd libmcfp
-cmake -S . -B build
+cmake -B build -G Ninja
 cmake --build build
 cmake --install build
 ```

@@ -129,6 +129,7 @@ endif()
 
 if(BUILD_TESTING AND PROJECT_IS_TOP_LEVEL)
 	add_subdirectory(test)
+	add_subdirectory(examples)
 endif()
 
 if(BUILD_DOCUMENTATION)

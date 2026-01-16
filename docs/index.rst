@@ -25,6 +25,28 @@ The syntax for configuration files is the usual format of *name* followed by an 
 
 The *name* here should be the long name of the option, not the short name.
 
+As of version 2.0, mcfp supports more *.ini* file syntax rules. Like comments that can start with either a hash (#) or a semicolon (;) character. And there is support for sections. If your config file contains:
+
+.. code-block::
+
+   [one]
+   name = value1
+
+   [second]
+   name = value2
+
+Then you can access these values like this:
+
+.. code-block:: cpp
+
+   auto &config = mcfp::config::instance();
+
+   ...
+
+   config.get("one.name"); // returns "value1"
+
+
+
 The function :cpp:func:`~mcfp::config::parse_config_file` can be used to parse these files. The first variant of this function is noteworthy, it takes an *option* name and uses its *option-argument* if specified as replacement for the second parameter which holds the default configuration file name. This file is then searched in the list of directories in the third parameter and when found, the file is parsed and the options in the file are appended to the config instance. Options provided on the command line take precedence.
 
 For flag options (ones that do not take an argument on the command line) an argument is required in the config file. This value can be either *true*, *false* or an integral numerical value. So, the equivalent of passing `-vvv` on the command line is `verbose = 3` in a config file if the option was inited with `mcfp::make_option("verbose,v")`.
