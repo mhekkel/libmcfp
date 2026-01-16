@@ -24,22 +24,30 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+module;
 
-#include "mcfp/detail/options.hpp"
-
+#include <iostream>
+#include <memory>
+#include <string>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 
+export module mcfp:sections;
+
+import :options;
+
 // --------------------------------------------------------------------
 
-namespace mcfp::detail
+namespace mcfp
 {
 
-class section
+class foo;
+
+export class section
 {
   public:
-	using option_base = detail::option_base;
+	using option_base = option_base;
 
 	template <typename... Options>
 		requires(not(std::is_reference_v<Options> and ...))
@@ -186,4 +194,4 @@ class section
 	std::unique_ptr<config_impl_base> m_impl;
 };
 
-} // namespace mcfp::detail
+} // namespace mcfp

@@ -22,7 +22,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.28)
 
 # set the project name
 project(mcfp VERSION 2.0.0 LANGUAGES CXX)
@@ -30,82 +30,97 @@ project(mcfp VERSION 2.0.0 LANGUAGES CXX)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 include(CMakePackageConfigHelpers)
-include(CPM)
 include(CTest)
+
+if(CMAKE_GENERATOR STREQUAL "Ninja Multi-Config")
+	set(CMAKE_CROSS_CONFIGS "Debug;Release")
+	set(CMAKE_DEFAULT_CONFIGS "Debug;Release")
+elseif(NOT(CMAKE_GENERATOR STREQUAL "Ninja"))
+	message(FATAL_ERROR "Ninja is required as generator")
+endif()
 
 option(BUILD_DOCUMENTATION "Build the documentation" OFF)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-	if("${CMAKE_CXX_COMPILER_VERSION}" LESS 9.4)
-		message(FATAL_ERROR "mcfp: Your GNU g++ is too old, need at least 9.4")
-	endif()
-
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers")
 elseif(MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
 endif()
 
-add_library(mcfp INTERFACE)
+try_compile(STD_CHARCONV_COMPILING
+	SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/test-charconv.cpp)
+
+if(NOT STD_CHARCONV_COMPILING)
+	message(NOTICE "mcfp: Using fast_float for std::from_chars")
+	CPMFindPackage(
+		NAME fast_float
+		GIT_REPOSITORY "https://github.com/fastfloat/fast_float"
+		GIT_TAG v8.0.2
+		EXCLUDE_FROM_ALL YES)
+endif()
+
+file(GLOB_RECURSE mcfp_cppm modules/*.cppm)
+file(GLOB_RECURSE mcfp_cpp src/*.cpp)
+
+if(STD_CHARCONV_COMPILING)
+	list(FILTER mcfp_cpp EXCLUDE REGEX src/charconv-fast_float\.cpp)
+endif()
+
+add_library(mcfp STATIC ${mcfp_cpp})
 add_library(mcfp::mcfp ALIAS mcfp)
 
-target_compile_features(mcfp INTERFACE cxx_std_20)
+target_compile_features(mcfp PUBLIC cxx_std_20)
 
-# My god... why?
 if(MSVC)
 	target_compile_definitions(mcfp INTERFACE NOMINMAX=1)
 endif()
 
-# adding header sources just helps IDEs
-target_sources(mcfp PUBLIC
-	FILE_SET mcfp_headers TYPE HEADERS
-	BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+target_sources(mcfp
+	PUBLIC
+	FILE_SET mcfp_module TYPE CXX_MODULES
 	FILES
-	include/mcfp/detail/charconv.hpp
-	include/mcfp/detail/options.hpp
-	include/mcfp/error.hpp
-	include/mcfp/mcfp.hpp
-	include/mcfp/text.hpp
-	include/mcfp/utilities.hpp
-)
+	${mcfp_cppm})
 
 # installation
 
-# Clean up old config files (with old names)
-file(GLOB OLD_CONFIG_FILES LIST_DIRECTORIES TRUE
-	${CMAKE_INSTALL_FULL_LIBDIR}/cmake/mcfp/mcfp-*.cmake)
-
-if(OLD_CONFIG_FILES)
-	message(WARNING "mcfp: Installation will remove old config files: ${OLD_CONFIG_FILES}")
-	install(CODE "file(REMOVE_RECURSE ${OLD_CONFIG_FILES})")
-endif()
-
-# And an old include file
-if(EXISTS ${CMAKE_INSTALL_FULL_INCLUDEDIR}/mcfp.hpp)
-	message(WARNING "mcfp: Installation will remove old header file: ${CMAKE_INSTALL_FULL_INCLUDEDIR}/mcfp.hpp")
-	install(CODE "file(REMOVE ${CMAKE_INSTALL_FULL_INCLUDEDIR}/mcfp.hpp)")
-endif()
+set(mcfp_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
+set_target_properties(mcfp PROPERTIES
+	VERSION ${PROJECT_VERSION}
+	SOVERSION ${PROJECT_VERSION_MAJOR}
+	INTERFACE_mcfp_MAJOR_VERSION ${PROJECT_VERSION_MAJOR}
+	COMPATIBLE_INTERFACE_STRING mcfp_MAJOR_VERSION)
 
 install(TARGETS mcfp
 	EXPORT mcfp
-	FILE_SET mcfp_headers
-	DESTINATION include/)
+	CXX_MODULES_BMI DESTINATION "lib/cxx/bmi"
+	FILE_SET mcfp_module DESTINATION "lib/cxx/miu")
 
 install(EXPORT mcfp
 	NAMESPACE mcfp::
 	DESTINATION lib/cmake/mcfp
-	FILE "mcfpTargets.cmake")
+	FILE "mcfp-targets.cmake")
 
-configure_package_config_file(${PROJECT_SOURCE_DIR}/cmake/mcfpConfig.cmake.in
-	${CMAKE_CURRENT_BINARY_DIR}/mcfpConfig.cmake
+configure_package_config_file(${PROJECT_SOURCE_DIR}/cmake/mcfp-config.cmake.in
+	${CMAKE_CURRENT_BINARY_DIR}/mcfp-config.cmake
 	INSTALL_DESTINATION lib/cmake/mcfp)
 write_basic_package_version_file(
-	${CMAKE_CURRENT_BINARY_DIR}/mcfpConfigVersion.cmake
+	${CMAKE_CURRENT_BINARY_DIR}/mcfp-config-version.cmake
 	VERSION ${PROJECT_VERSION}
 	COMPATIBILITY AnyNewerVersion)
 
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/mcfpConfig.cmake"
-	"${CMAKE_CURRENT_BINARY_DIR}/mcfpConfigVersion.cmake"
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/mcfp-config.cmake"
+	"${CMAKE_CURRENT_BINARY_DIR}/mcfp-config-version.cmake"
 	DESTINATION lib/cmake/mcfp)
+
+set(generator -G "${CMAKE_GENERATOR}")
+
+if(CMAKE_GENERATOR_TOOLSET)
+	list(APPEND generator -T "${CMAKE_GENERATOR_TOOLSET}")
+endif()
+
+if(CMAKE_GENERATOR_PLATFORM)
+	list(APPEND generator -A "${CMAKE_GENERATOR_PLATFORM}")
+endif()
 
 if(BUILD_TESTING AND PROJECT_IS_TOP_LEVEL)
 	add_subdirectory(test)

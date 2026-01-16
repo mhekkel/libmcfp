@@ -1,17 +1,17 @@
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
- *
- * Copyright (c) 2022-2025 Maarten L. hekkelman
- *
+ * 
+ * Copyright (c) 2026 Maarten L. Hekkelman
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- *
+ * 
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -24,16 +24,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
-
-/// \file
-/// This header-only library contains code to parse argc/argv and store the
-/// values provided into a singleton object.
-
-#include "mcfp/detail/options.hpp"
-#include "mcfp/detail/sections.hpp"
-#include "mcfp/error.hpp"
-#include "mcfp/utilities.hpp"
+module;
 
 #include <algorithm>
 #include <cassert>
@@ -46,8 +37,20 @@
 #include <utility>
 #include <vector>
 
+export module mcfp:config;
+
+import :charconv;
+import :error;
+import :options;
+import :sections;
+import :text;
+
 namespace mcfp
 {
+
+// For printing:
+
+uint32_t get_terminal_width();
 
 // --------------------------------------------------------------------
 /**
@@ -56,10 +59,8 @@ namespace mcfp
  *
  */
 
-class config
+export class config
 {
-	using option_base = detail::option_base;
-
   public:
 	/**
 	 * @brief Set the 'usage' string
@@ -91,14 +92,14 @@ class config
 		m_usage = std::move(usage);
 		m_ignore_unknown = false;
 
-		section("", std::forward<Options>(options)...);
+		add_section("", std::forward<Options>(options)...);
 
 		for (auto &f : get_section_factories())
 		{
-			std::unique_ptr<detail::section> sp(f->create());
+			std::unique_ptr<section> sp(f->create());
 
 			auto si = std::lower_bound(m_sections.begin(), m_sections.end(), sp->name(),
-				[](const std::unique_ptr<detail::section> &s, std::string_view name)
+				[](const std::unique_ptr<section> &s, std::string_view name)
 				{ return s->name().compare(name) < 0; });
 
 			if (si == m_sections.end())
@@ -116,19 +117,18 @@ class config
 	 */
 	template <typename... Options>
 		requires(std::is_base_of_v<option_base, Options> and ...)
-	config &section(std::string section_name, Options &&...options)
+	config &add_section(const std::string &section_name, Options &&...options)
 	{
 		auto si = std::lower_bound(m_sections.begin(), m_sections.end(), section_name,
-			[](const std::unique_ptr<detail::section> &s, std::string_view name)
+			[](const std::unique_ptr<section> &s, std::string_view name)
 			{ return s->name().compare(name) < 0; });
 
-		std::unique_ptr<detail::section> section =
-			std::make_unique<detail::section>(std::move(section_name), std::forward<Options>(options)...);
+		auto s = std::make_unique<section>(section_name, std::forward<Options>(options)...);
 
 		if (si != m_sections.end())
-			*si = std::move(section);
+			*si = std::move(s);
 		else
-			m_sections.insert(si, std::move(section));
+			m_sections.insert(si, std::move(s));
 
 		return *this;
 	}
@@ -827,7 +827,7 @@ class config
 	  public:
 		virtual ~section_factory_base() = default;
 
-		[[nodiscard]] virtual detail::section *create() const = 0;
+		[[nodiscard]] virtual section *create() const = 0;
 	};
 
 	template <typename... Options>
@@ -840,10 +840,10 @@ class config
 		{
 		}
 
-		[[nodiscard]] detail::section *create() const override
+		[[nodiscard]] section *create() const override
 		{
 			return std::apply([this](Options const &...opts)
-				{ return new detail::section(m_name, opts...); }, m_options);
+				{ return new section(m_name, opts...); }, m_options);
 		}
 
 		std::string m_name;
@@ -862,7 +862,7 @@ class config
 	std::string m_usage;
 
 	std::vector<std::string> m_operands;
-	std::vector<std::unique_ptr<detail::section>> m_sections;
+	std::vector<std::unique_ptr<section>> m_sections;
 
 	/// @endcond
 };
@@ -885,18 +885,18 @@ class config
  * @param description The help text for this option
  * @return auto The option object created
  */
-template <typename T = void>
-auto make_option(detail::ostring name, std::string description)
-	requires(not detail::is_container_type_v<T>)
+export template <typename T = void>
+auto make_option(ostring name, std::string description)
+	requires(not is_container_type_v<T>)
 {
-	return detail::option<T>(name.m_long, name.m_short, std::move(description), false);
+	return option<T>(name.m_long, name.m_short, std::move(description), false);
 }
 
-template <typename T>
-auto make_option(detail::ostring name, std::string description)
-	requires(detail::is_container_type_v<T>)
+export template <typename T>
+auto make_option(ostring name, std::string description)
+	requires(is_container_type_v<T>)
 {
-	return detail::multiple_option<T>(name.m_long, name.m_short, std::move(description), false);
+	return multiple_option<T>(name.m_long, name.m_short, std::move(description), false);
 }
 
 /**
@@ -915,11 +915,11 @@ auto make_option(detail::ostring name, std::string description)
  * @param description The help text for this option
  * @return auto The option object created
  */
-template <typename T>
-auto make_option(detail::ostring name, const T &v, std::string description)
-	requires(not detail::is_container_type_v<T>)
+export template <typename T>
+auto make_option(ostring name, const T &v, std::string description)
+	requires(not is_container_type_v<T>)
 {
-	return detail::option<T>(name.m_long, name.m_short, v, std::move(description), false);
+	return option<T>(name.m_long, name.m_short, v, std::move(description), false);
 }
 
 /**
@@ -939,18 +939,18 @@ auto make_option(detail::ostring name, const T &v, std::string description)
  * @param description The help text for this option
  * @return auto The option object created
  */
-template <typename T = void>
-auto make_hidden_option(detail::ostring name, std::string description)
-	requires(not detail::is_container_type_v<T>)
+export template <typename T = void>
+auto make_hidden_option(ostring name, std::string description)
+	requires(not is_container_type_v<T>)
 {
-	return detail::option<T>(name.m_long, name.m_short, description, true);
+	return option<T>(name.m_long, name.m_short, description, true);
 }
 
-template <typename T>
-auto make_hidden_option(detail::ostring name, std::string description)
-	requires(detail::is_container_type_v<T>)
+export template <typename T>
+auto make_hidden_option(ostring name, std::string description)
+	requires(is_container_type_v<T>)
 {
-	return detail::multiple_option<T>(name.m_long, name.m_short, description, true);
+	return multiple_option<T>(name.m_long, name.m_short, description, true);
 }
 
 /**
@@ -971,35 +971,22 @@ auto make_hidden_option(detail::ostring name, std::string description)
  * @param description The help text for this option
  * @return auto The option object created
  */
-template <typename T>
-auto make_hidden_option(detail::ostring name, const T &v, std::string description)
-	requires(not detail::is_container_type_v<T>)
+export template <typename T>
+auto make_hidden_option(ostring name, const T &v, std::string description)
+	requires(not is_container_type_v<T>)
 {
-	return detail::option<T>(name.m_long, name.m_short, v, description, true);
+	return option<T>(name.m_long, name.m_short, v, description, true);
 }
 
-// --------------------------------------------------------------------
-// To extend all configuration parameter lists with a default set handled
-// by a library e.g.
+// namespace std
+// {
 
-#define MCFP_DEFINE_LIB_OPTIONS(LIB, SECTION, ...)        \
-	const struct mcfp_lib_options                         \
-	{                                                     \
-		mcfp_lib_options()                                \
-		{                                                 \
-			mcfp::config::init_lib(SECTION, __VA_ARGS__); \
-		}                                                 \
-	} s_lib_options_for_lib_##LIB;
+// template <>
+// struct is_error_condition_enum<mcfp::config_error>
+// 	: public true_type
+// {
+// };
+
+// } // namespace std
 
 } // namespace mcfp
-
-namespace std
-{
-
-template <>
-struct is_error_condition_enum<mcfp::config_error>
-	: public true_type
-{
-};
-
-} // namespace std

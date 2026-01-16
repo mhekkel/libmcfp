@@ -25,10 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
-
-#include "mcfp/error.hpp"
-#include "mcfp/text.hpp"
+module;
 
 #include <cassert>
 #include <charconv>
@@ -41,7 +38,13 @@
 #include <utility>
 #include <vector>
 
-namespace mcfp::detail
+export module mcfp:options;
+
+import :charconv;
+import :error;
+import :text;
+
+namespace mcfp
 {
 
 // --------------------------------------------------------------------
@@ -239,7 +242,7 @@ constexpr void ostring::parse()
 // command line argument to the type that should be stored.
 // In fact, here is where the command line arguments are checked for
 // proper formatting.
-template <typename T, typename = void>
+export template <typename T, typename = void>
 struct option_traits;
 
 template <typename T>
@@ -456,7 +459,7 @@ struct option_base
 	}
 };
 
-template <typename T>
+export template <typename T>
 struct option : public option_base
 {
 	using traits_type = option_traits<T>;
@@ -492,7 +495,7 @@ struct option : public option_base
 	}
 };
 
-template <typename T>
+export template <typename T>
 struct multiple_option : public option_base
 {
 	using value_type = typename T::value_type;
@@ -533,11 +536,11 @@ struct option<void> : public option_base
 			m_seen = 1;
 		else if (value == "false")
 			m_seen = 0;
-		else if (auto [ptr, ec2] = mcfp::detail::from_chars(
+		else if (auto [ptr, ec2] = mcfp::from_chars(
 					 value.data(), value.data() + value.length(), m_seen);
 			ec2 != std::errc{} or ptr != value.data() + value.length())
 			ec = make_error_code(config_error::wrong_type_cast_flag);
 	}
 };
 
-} // namespace mcfp::detail
+} // namespace mcfp

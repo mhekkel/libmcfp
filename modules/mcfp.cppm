@@ -24,59 +24,16 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+module;
 
-#include <climits>
-#include <cstdint>
+/// \file
+/// This header-only library contains code to parse argc/argv and store the
+/// values provided into a singleton object.
 
-#if __has_include(<sys/ioctl.h>)
-#include <sys/ioctl.h>
-#include <fcntl.h>
-#include <unistd.h>
-#elif defined(_WIN32)
-#include <Windows.h>
-#include <io.h>
-#include <cstdio>
-#endif
+export module mcfp;
 
-namespace mcfp
-{
-
-#if defined(_WIN32)
-/// @brief Get the width in columns of the current terminal
-/// @return number of columns of the terminal
-inline uint32_t get_terminal_width()
-{
-	uint32_t result = 80;
-
-	CONSOLE_SCREEN_BUFFER_INFO csbi{};
-	if (::GetConsoleScreenBufferInfo(::GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
-		result = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-
-	return result;
-}
-
-#elif __has_include(<sys/ioctl.h>)
-/// @brief Get the width in columns of the current terminal
-/// @return number of columns of the terminal
-inline uint32_t get_terminal_width()
-{
-	uint32_t result = 80;
-
-	if (::isatty(STDOUT_FILENO))
-	{
-		struct winsize w{};
-		::ioctl(0, TIOCGWINSZ, &w); // NOLINT(hicpp-vararg)
-		result = w.ws_col;
-	}
-	return result;
-}
-#else
-#warning "Could not find the terminal width, falling back to default"
-inline uint32_t get_terminal_width()
-{
-	return 80;
-}
-#endif
-
-} // namespace mcfp
+export import :config;
+export import :error;
+export import :options;
+export import :sections;
+export import :text;

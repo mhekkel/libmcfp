@@ -26,7 +26,7 @@
 
 #include "test-main.hpp"
 
-#include <mcfp/mcfp.hpp>
+import mcfp;
 
 // --------------------------------------------------------------------
 

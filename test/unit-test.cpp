@@ -26,7 +26,7 @@
 
 #include "test-main.hpp"
 
-#include <mcfp/mcfp.hpp>
+import mcfp;
 
 // --------------------------------------------------------------------
 
@@ -194,7 +194,7 @@ TEST_CASE("t_7")
 
 TEST_CASE("t_8")
 {
-	static_assert(std::is_same_v<std::string, mcfp::detail::option_traits<const char *>::value_type>, "should be same");
+	static_assert(std::is_same_v<std::string, mcfp::option_traits<const char *>::value_type>, "should be same");
 
 	const char *const argv[] = {
 		"test", "-i", "foo", "-jbar", nullptr
@@ -341,7 +341,7 @@ TEST_CASE("t_12")
 
 	std::error_code ec;
 	config.parse(argc, argv, ec);
-	CHECK(ec == mcfp::config_error::unknown_option);
+	CHECK(ec == mcfp::make_error_code(mcfp::config_error::unknown_option));
 
 	config.set_ignore_unknown(true);
 	ec = {};
@@ -658,7 +658,7 @@ TEST_CASE("sections-1")
 	auto &config = mcfp::config::instance();
 
 	config.init("test [options]")
-		.section("test-section",
+		.add_section("test-section",
 			mcfp::make_option<const char *>("aap", "option aap"),
 			mcfp::make_option<int>("noot", 1, "option noot"),
 			mcfp::make_option<std::string>("mies", "option mies"),

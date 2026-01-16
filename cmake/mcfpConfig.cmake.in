@@ -1,5 +1,0 @@
-@PACKAGE_INIT@
-
-INCLUDE("${CMAKE_CURRENT_LIST_DIR}/mcfpTargets.cmake")
-
-check_required_components(mcfp)
