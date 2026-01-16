@@ -53,7 +53,10 @@ int main(int argc, char *const argv[])
 			  // This option is not shown when printing out the options
 			  mcfp::make_hidden_option("d", "Debug mode"))
 		.add_section("section-1",
-			mcfp::make_option<std::string>("text", "Another text option, now part of section-1"));
+			mcfp::make_option<std::string>("text", "Another text option, now part of section-1"),
+
+			mcfp::make_option<std::string>("an-option-with-a-long-name",
+				"Shows that the output of help ends up correctly and wrapped as well if you have a small terminal"));
 
 	// There are two flavors of calls, ones that take an error_code
 	// and return the error in that code in case something is wrong.
@@ -74,8 +77,13 @@ int main(int argc, char *const argv[])
 
 	if (config.has("help") or config.operands().size() != 1)
 	{
+		// Tell user what was wrong
 		// This will print out the 'usage' message with all the visible options
 		std::cerr << config << '\n';
+
+		if (config.operands().size() != 1)
+			std::cerr << "Invalid number of operands, should be exactly one\n\n";
+
 		exit(config.has("help") ? 0 : 1);
 	}
 
@@ -107,30 +115,32 @@ int main(int argc, char *const argv[])
 		exit(1);
 	}
 
-	std::cout << "Text option is " << text << '\n';
+	std::cout << "Text option is " << std::quoted(text) << '\n';
 
-	// Likewise for numeric options
+	// Alternative, using get_optional
 
-	int a = config.get<int>("a");
-	float b = config.get<float>("b");
+	if (auto t1 = config.get_optional("text"))
+		std::cout << "Text option still is " << std::quoted(*t1) << '\n';
 
-	std::cout << "a (" << a << ") * b (" << b << ") = " << a * b << '\n';
+	// getting values for numeric options
+
+	if (config.has("a") and config.has("b"))
+	{
+		int a = config.get<int>("a");
+		float b = config.get<float>("b");
+
+		std::cout << "a (" << a << ") * b (" << b << ") = " << a * b << '\n';
+	}
 
 	// And multiple strings
 
-	for (std::string s : config.get<std::vector<std::string>>("c"))
+	for (const std::string& s : config.get<std::vector<std::string>>("c"))
 		std::cout << "c: " << s << '\n';
 
 	// Section support
 
-	text = config.get<std::string>("section-1.text", ec);
-	if (ec)
-	{
-		std::cerr << "Error getting option text: " << ec.message() << '\n';
-		exit(1);
-	}
-
-	std::cout << "Text option for 'section-1' is " << text << '\n';
+	if (auto t = config.get_optional("section-1.text"); t.has_value())
+		std::cout << "Text option for 'section-1' is " << std::quoted(*t) << '\n';
 
 	return 0;
 }
@@ -141,18 +151,21 @@ Running the program without any options, or `--help` results in:
 ```console
 usage: example [options] file
 
-  -h [ --help ]     Print this help text
-  -v [ --verbose ]  Verbose level, can be specified more than once to increase level
-  --config arg      Config file to use
-  --text arg        The text string to echo
-  -a arg (=1)       first parameter for multiplication
-  -b arg (=2)       second parameter for multiplication
-  -c arg            Option c, can be specified more than once
+  -h [ --help ]                 Print this help text
+  -v [ --verbose ]              Verbose level, can be specified more than
+                                once to increase level
+  --config arg                  Config file to use
+  --text arg                    The text string to echo
+  -a arg (=1)                   first parameter for multiplication
+  -b arg (=2)                   second parameter for multiplication
+  -c arg                        Option c, can be specified more than once
 
-section section-1
+section "section-1"
 
-  --text arg        Another text option, now part of section-1
-
+  --section-1.text arg          Another text option, now part of section-1
+  --section-1.an-option-with-a-long-name arg
+                                Shows that the output of help ends up correctly and
+                                wrapped as well if you have a small terminal
 ```
 
 

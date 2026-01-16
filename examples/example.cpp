@@ -65,7 +65,7 @@ int main(int argc, char *const argv[])
 		// This will print out the 'usage' message with all the visible options
 		std::cerr << config << '\n';
 
-		if (config.operands().size() != 1)
+		if (not config.has("help") and config.operands().size() != 1)
 			std::cerr << "Invalid number of operands, should be exactly one\n\n";
 
 		exit(config.has("help") ? 0 : 1);
