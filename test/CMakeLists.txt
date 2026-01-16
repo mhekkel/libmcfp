@@ -22,8 +22,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-include(CPM)
-
 CPMFindPackage(NAME Catch2 GIT_REPOSITORY "https://github.com/catchorg/Catch2" VERSION "3.4.0" EXCLUDE_FROM_ALL YES)
 
 list(APPEND tests
@@ -32,7 +30,7 @@ list(APPEND tests
 	)
 
 add_library(test-main OBJECT "${CMAKE_CURRENT_SOURCE_DIR}/test-main.cpp")
-
+target_compile_features(test-main PUBLIC cxx_std_20)
 target_link_libraries(test-main PUBLIC Catch2::Catch2)
 
 foreach(mcfptest IN LISTS tests)

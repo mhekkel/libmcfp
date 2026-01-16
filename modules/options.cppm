@@ -30,7 +30,6 @@ module;
 #include <cassert>
 #include <charconv>
 #include <cstdio>
-#include <experimental/type_traits>
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -72,9 +71,9 @@ struct is_container_type : std::false_type
 template <typename T>
 struct is_container_type<
 	T, std::enable_if_t<
-		   std::experimental::is_detected_v<value_type_t, T> and
-		   std::experimental::is_detected_v<iterator_t, T> and
-		   not std::experimental::is_detected_v<std_string_npos_t, T>>>
+		   is_detected_v<value_type_t, T> and
+		   is_detected_v<iterator_t, T> and
+		   not is_detected_v<std_string_npos_t, T>>>
 	: std::true_type
 {
 };

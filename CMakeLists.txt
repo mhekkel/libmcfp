@@ -29,6 +29,7 @@ project(mcfp VERSION 2.0.0 LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
+include(CPM)
 include(CMakePackageConfigHelpers)
 include(CTest)
 

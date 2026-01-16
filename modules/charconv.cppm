@@ -72,11 +72,23 @@ struct nonesuch
 	void operator=(nonesuch const &) = delete;
 };
 
-export template <template <class...> class Op, class... Args>
-using is_detected = typename detector<nonesuch, void, Op, Args...>::value_t;
+	export template <template <class...> class Op, class... Args>
+	using is_detected = typename detail::detector<nonesuch, void, Op, Args...>::value_t;
 
-export template <template <class...> class Op, class... Args>
-constexpr inline bool is_detected_v = is_detected<Op, Args...>::value;
+	export template <template <class...> class Op, class... Args>
+	constexpr inline bool is_detected_v = is_detected<Op, Args...>::value;
+
+	export template <template <class...> class Op, class... Args>
+	using detected_t = typename detail::detector<nonesuch, void, Op, Args...>::type;
+
+	export template <class Default, template <class...> class Op, class... Args>
+	using detected_or = detail::detector<Default, void, Op, Args...>;
+
+	export template <class Expected, template <class...> class Op, class... Args>
+	using is_detected_exact = std::is_same<Expected, detected_t<Op, Args...>>;
+
+	export template <class Expected, template <class...> class Op, class... Args>
+	constexpr inline bool is_detected_exact_v = is_detected_exact<Expected, Op, Args...>::value;
 #else
 
 export template <template <class...> class Op, class... Args>
