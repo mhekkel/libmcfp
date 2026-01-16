@@ -106,16 +106,19 @@ int main(int argc, char *const argv[])
 	if (auto t1 = config.get_optional("text"))
 		std::cout << "Text option still is " << std::quoted(*t1) << '\n';
 
-	// Likewise for numeric options
+	// getting values for numeric options
 
-	int a = config.get<int>("a");
-	float b = config.get<float>("b");
+	if (config.has("a") and config.has("b"))
+	{
+		int a = config.get<int>("a");
+		float b = config.get<float>("b");
 
-	std::cout << "a (" << a << ") * b (" << b << ") = " << a * b << '\n';
+		std::cout << "a (" << a << ") * b (" << b << ") = " << a * b << '\n';
+	}
 
 	// And multiple strings
 
-	for (std::string s : config.get<std::vector<std::string>>("c"))
+	for (const std::string& s : config.get<std::vector<std::string>>("c"))
 		std::cout << "c: " << s << '\n';
 
 	// Section support
