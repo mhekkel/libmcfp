@@ -341,7 +341,7 @@ TEST_CASE("t_12")
 
 	std::error_code ec;
 	config.parse(argc, argv, ec);
-	CHECK(ec == mcfp::make_error_code(mcfp::config_error::unknown_option));
+	CHECK(ec == mcfp::config_error::unknown_option);
 
 	config.set_ignore_unknown(true);
 	ec = {};

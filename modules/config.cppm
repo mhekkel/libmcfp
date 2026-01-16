@@ -978,15 +978,5 @@ auto make_hidden_option(ostring name, const T &v, std::string description)
 	return option<T>(name.m_long, name.m_short, v, description, true);
 }
 
-// namespace std
-// {
-
-// template <>
-// struct is_error_condition_enum<mcfp::config_error>
-// 	: public true_type
-// {
-// };
-
-// } // namespace std
-
 } // namespace mcfp
+
