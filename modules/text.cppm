@@ -31,7 +31,7 @@ module;
  * This file contains word wrapping code
  */
 
-#include <cctype>
+#include <cstddef>
 #include <string_view>
 #include <vector>
 

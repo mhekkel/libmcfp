@@ -42,8 +42,6 @@ import :options;
 namespace mcfp
 {
 
-class foo;
-
 export class section
 {
   public:

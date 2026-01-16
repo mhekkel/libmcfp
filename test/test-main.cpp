@@ -26,8 +26,7 @@
 
 #define CATCH_CONFIG_RUNNER
 
-#include <catch2/catch_all.hpp>
-
+#include <catch2/catch_session.hpp>
 #include <filesystem>
 
 std::filesystem::path gTestDir;

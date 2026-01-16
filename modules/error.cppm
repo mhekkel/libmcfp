@@ -35,6 +35,7 @@ module;
 
 #include <string>
 #include <system_error>
+#include <type_traits>
 
 export module mcfp:error;
 
