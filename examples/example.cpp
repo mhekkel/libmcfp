@@ -6,9 +6,9 @@
 
 import mcfp;
 
-int main(int argc, char * const argv[])
+int main(int argc, char *const argv[])
 {
-    // config is a singleton
+	// config is a singleton
 	auto &config = mcfp::config::instance();
 
 	// Initialise the config object. This can be done more than once,
@@ -16,27 +16,28 @@ int main(int argc, char * const argv[])
 	// first operand.
 
 	config.init(
-		// The first parameter is the 'usage' line, used when printing out the options
-		"usage: example [options] file",
+			  // The first parameter is the 'usage' line, used when printing out the options
+			  "usage: example [options] file",
 
-		// Flag options (not taking a parameter)
-		mcfp::make_option("help,h", "Print this help text"),
-		mcfp::make_option("verbose,v", "Verbose level, can be specified more than once to increase level"),
+			  // Flag options (not taking a parameter)
+			  mcfp::make_option("help,h", "Print this help text"),
+			  mcfp::make_option("verbose,v", "Verbose level, can be specified more than once to increase level"),
 
-		// A couple of options with parameter
-		mcfp::make_option<std::string>("config", "Config file to use"),
-		mcfp::make_option<std::string>("text", "The text string to echo"),
+			  // A couple of options with parameter
+			  mcfp::make_option<std::string>("config", "Config file to use"),
+			  mcfp::make_option<std::string>("text", "The text string to echo"),
 
-		// And options with a default parameter
-		mcfp::make_option<int>("a", 1, "first parameter for multiplication"),
-		mcfp::make_option<float>("b", 2.0f, "second parameter for multiplication"),
+			  // And options with a default parameter
+			  mcfp::make_option<int>("a", 1, "first parameter for multiplication"),
+			  mcfp::make_option<float>("b", 2.0f, "second parameter for multiplication"),
 
-		// You can also allow multiple values
-		mcfp::make_option<std::vector<std::string>>("c", "Option c, can be specified more than once"),
+			  // You can also allow multiple values
+			  mcfp::make_option<std::vector<std::string>>("c", "Option c, can be specified more than once"),
 
-		// This option is not shown when printing out the options
-		mcfp::make_hidden_option("d", "Debug mode")
-	);
+			  // This option is not shown when printing out the options
+			  mcfp::make_hidden_option("d", "Debug mode"))
+		.add_section("section-1",
+			mcfp::make_option<std::string>("text", "Another text option, now part of section-1"));
 
 	// There are two flavors of calls, ones that take an error_code
 	// and return the error in that code in case something is wrong.
@@ -49,7 +50,7 @@ int main(int argc, char * const argv[])
 	config.parse(argc, argv, ec);
 	if (ec)
 	{
-        std::cerr << "Error parsing argument " << std::quoted(config.get_last_option()) << ": " << ec.message() << '\n';
+		std::cerr << "Error parsing argument " << std::quoted(config.get_last_option()) << ": " << ec.message() << '\n';
 		exit(1);
 	}
 
@@ -69,11 +70,11 @@ int main(int argc, char * const argv[])
 	config.parse_config_file("config", "example.conf", { "." }, ec);
 	if (ec)
 	{
-        std::cerr << "Error parsing config file, option " << std::quoted(config.get_last_option()) << ": " << ec.message() << '\n';
+		std::cerr << "Error parsing config file, option " << std::quoted(config.get_last_option()) << ": " << ec.message() << '\n';
 		exit(1);
 	}
 
-	// If options are specified more than once, you can get the count 
+	// If options are specified more than once, you can get the count
 
 	int VERBOSE = config.count("verbose");
 
@@ -103,6 +104,17 @@ int main(int argc, char * const argv[])
 
 	for (std::string s : config.get<std::vector<std::string>>("c"))
 		std::cout << "c: " << s << '\n';
+
+	// Section support
+
+	text = config.get<std::string>("section-1.text", ec);
+	if (ec)
+	{
+		std::cerr << "Error getting option text: " << ec.message() << '\n';
+		exit(1);
+	}
+
+	std::cout << "Text option for 'section-1' is " << text << '\n';
 
 	return 0;
 }

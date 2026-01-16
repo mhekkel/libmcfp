@@ -41,3 +41,8 @@ add_custom_target("Sphinx-${PROJECT_NAME}" ALL
 	COMMENT "Generating documentation with Sphinx")
 
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/sphinx/ DESTINATION share/doc/mcfp PATTERN .doctrees EXCLUDE)
+
+set_property(
+  TARGET "Sphinx-${PROJECT_NAME}"
+  APPEND
+  PROPERTY ADDITIONAL_CLEAN_FILES ${DOXYGEN_OUTPUT_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/api)

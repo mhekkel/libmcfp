@@ -103,8 +103,8 @@ export class config_category_impl : public std::error_category
 				return "the implementation contains a type cast error";
 			case config_error::config_file_not_found:
 				return "the specified config file was not found";
-			default:
-				return "unknown error code";
+			case config_error::wrong_type_cast_flag:
+				return "the value assigned in a config file to a flag option was not 'true', 'false' or an integral numerical value";
 		}
 	}
 

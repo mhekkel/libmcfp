@@ -59,21 +59,20 @@ using value_type_t = typename T::value_type;
 template <typename T>
 using std_string_npos_t = decltype(T::npos);
 
+/**
+ * @brief Template to detect whether a type is a container
+ */
+
 template <typename T, typename = void>
 struct is_container_type : std::false_type
 {
 };
 
-/**
- * @brief Template to detect whether a type is a container
- */
-
 template <typename T>
-struct is_container_type<
-	T, std::enable_if_t<
-		   is_detected_v<value_type_t, T> and
-		   is_detected_v<iterator_t, T> and
-		   not is_detected_v<std_string_npos_t, T>>>
+	requires(is_detected_v<value_type_t, T> and
+			 is_detected_v<iterator_t, T> and
+			 not is_detected_v<std_string_npos_t, T>)
+struct is_container_type<T>
 	: std::true_type
 {
 };
@@ -248,7 +247,8 @@ export template <typename T, typename = void>
 struct option_traits;
 
 template <typename T>
-struct option_traits<T, typename std::enable_if_t<std::is_arithmetic_v<T>>>
+	requires(std::is_arithmetic_v<T>)
+struct option_traits<T>
 {
 	using value_type = T;
 
@@ -292,9 +292,8 @@ struct option_traits<std::filesystem::path>
 };
 
 template <typename T>
-struct option_traits<
-	T, typename std::enable_if_t<not std::is_arithmetic_v<T> and
-								 std::is_assignable_v<std::string, T>>>
+	requires(not std::is_arithmetic_v<T> and std::is_assignable_v<std::string, T>)
+struct option_traits<T>
 {
 	using value_type = std::string;
 
@@ -357,7 +356,7 @@ struct option_base
 				else
 					result = option_traits<T>::set_value(*m_default_value, ec);
 			}
-			else if constexpr (not is_container_type_v<T>)	// Return an empty list if not specified
+			else if constexpr (not is_container_type_v<T>) // Return an empty list if not specified
 				ec = make_error_code(config_error::option_not_specified);
 		}
 		else
@@ -382,86 +381,11 @@ struct option_base
 		return result;
 	}
 
-	[[nodiscard]] size_t width() const
-	{
-		size_t result = m_name.length();
-		if (result <= 1)
-			result = 2;
-		else if (m_short_name != 0)
-			result += 7;
-		if (not m_is_flag)
-		{
-			result += 4;
-			if (m_default_value.has_value())
-				result += 4 + m_default_value->length();
-		}
-		return result + 6;
-	}
-
-	void write(std::ostream &os, size_t indent, size_t output_width) const
-	{
-		if (m_hidden) // quick exit
-			return;
-
-		size_t w2 = 2;
-		os << "  ";
-		if (m_short_name)
-		{
-			os << '-' << m_short_name;
-			w2 += 2;
-			if (m_name.length() > 1)
-			{
-				os << " [ --" << m_name << " ]";
-				w2 += 7 + m_name.length();
-			}
-		}
-		else
-		{
-			os << "--" << m_name;
-			w2 += 2 + m_name.length();
-		}
-
-		if (not m_is_flag)
-		{
-			os << " arg";
-			w2 += 4;
-
-			if (m_default_value.has_value())
-			{
-				auto default_value = *m_default_value;
-				os << " (=" << default_value << ')';
-				w2 += 4 + default_value.length();
-			}
-		}
-
-		std::string indent_str(indent, ' ');
-		std::string text;
-		bool do_indent = false;
-
-		if (w2 + 2 > indent)
-		{
-			os << '\n';
-			do_indent = true;
-			text = m_desc;
-		}
-		else
-			text = indent_str.substr(0, indent - w2) + m_desc;
-
-		word_wrapper ww(text, output_width - indent - 2);
-		for (auto line : ww)
-		{
-			if (std::exchange(do_indent, true))
-				os << indent_str;
-
-			while (not line.empty() and std::isspace(line.back()))
-				line.remove_suffix(1);
-
-			os << line << '\n';
-		}
-	}
+	[[nodiscard]] size_t width() const;
+	void write(std::ostream &os, size_t indent, size_t output_width) const;
 };
 
-export template <typename T>
+template <typename T>
 struct option : public option_base
 {
 	using traits_type = option_traits<T>;
@@ -497,7 +421,7 @@ struct option : public option_base
 	}
 };
 
-export template <typename T>
+template <typename T>
 struct multiple_option : public option_base
 {
 	using value_type = typename T::value_type;
