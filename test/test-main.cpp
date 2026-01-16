@@ -30,8 +30,6 @@
 
 #include <filesystem>
 
-#include <mcfp/mcfp.hpp>
-
 std::filesystem::path gTestDir;
 
 int main(int argc, char *argv[])

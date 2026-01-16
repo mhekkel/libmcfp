@@ -33,7 +33,6 @@ module;
  *
  */
 
-#include <cassert>
 #include <string>
 #include <system_error>
 
@@ -104,7 +103,6 @@ export class config_category_impl : public std::error_category
 			case config_error::config_file_not_found:
 				return "the specified config file was not found";
 			default:
-				assert(false);
 				return "unknown error code";
 		}
 	}
@@ -142,6 +140,8 @@ export std::error_condition make_error_condition(config_error e)
 }
 
 } // namespace mcfp
+
+// Make our error_codes implicitly convertible
 
 namespace std
 {
