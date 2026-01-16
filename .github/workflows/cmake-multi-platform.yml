@@ -19,9 +19,9 @@ jobs:
           - os: windows-latest
             cpp_compiler: cl
           - os: ubuntu-latest
-            cpp_compiler: g++
+            cpp_compiler: [ g++-15, clang++ ]
           - os: macos-latest
-            cpp_compiler: clang++
+            cpp_compiler: [ g++-15, clang++ ]
 
     steps:
     - uses: actions/checkout@v3
