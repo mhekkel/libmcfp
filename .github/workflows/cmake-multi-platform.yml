@@ -31,6 +31,12 @@ jobs:
       shell: bash
       run: echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
+    - name: Install compiler
+      id: install_cc
+      uses: rlalik/setup-cpp-compiler@master
+      with:
+        compiler: latest
+
     - name: Install Catch2 Ubuntu
       if: matrix.os == 'ubuntu-latest'
       run: >
