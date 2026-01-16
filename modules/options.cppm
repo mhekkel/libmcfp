@@ -381,8 +381,8 @@ struct option_base
 		return result;
 	}
 
-	[[nodiscard]] size_t width() const;
-	void write(std::ostream &os, size_t indent, size_t output_width) const;
+	[[nodiscard]] size_t width(std::string_view section_name) const;
+	void write(std::ostream &os, std::string_view section_name, size_t indent, size_t output_width) const;
 };
 
 template <typename T>

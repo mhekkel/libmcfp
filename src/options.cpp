@@ -35,12 +35,14 @@ module mcfp;
 namespace mcfp
 {
 
-size_t option_base::width() const
+size_t option_base::width(std::string_view section_name) const
 {
 	size_t result = m_name.length();
+	if (not section_name.empty())
+		result += section_name.length() + 1;
 	if (result <= 1)
 		result = 2;
-	else if (m_short_name != 0)
+	else if (m_short_name != 0 and section_name.empty())
 		result += 7;
 	if (not m_is_flag)
 	{
@@ -51,27 +53,36 @@ size_t option_base::width() const
 	return result + 6;
 }
 
-void option_base::write(std::ostream &os, size_t indent, size_t output_width) const
+void option_base::write(std::ostream &os, std::string_view section_name, size_t indent, size_t output_width) const
 {
 	if (m_hidden) // quick exit
 		return;
 
 	size_t w2 = 2;
-	os << "  ";
-	if (m_short_name)
+	if (section_name.empty())
 	{
-		os << '-' << m_short_name;
-		w2 += 2;
-		if (m_name.length() > 1)
+		os << "  ";
+		if (m_short_name)
 		{
-			os << " [ --" << m_name << " ]";
-			w2 += 7 + m_name.length();
+			os << '-' << m_short_name;
+			w2 += 2;
+			if (m_name.length() > 1)
+			{
+				os << " [ --" << m_name << " ]";
+				w2 += 7 + m_name.length();
+			}
+		}
+		else
+		{
+			os << "--" << m_name;
+			w2 += 2 + m_name.length();
 		}
 	}
 	else
 	{
-		os << "--" << m_name;
-		w2 += 2 + m_name.length();
+		os << "  ";
+		os << "--" << section_name << "." << m_name;
+		w2 += 2 + section_name.length() + 1 + m_name.length();
 	}
 
 	if (not m_is_flag)

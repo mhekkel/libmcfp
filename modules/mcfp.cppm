@@ -271,6 +271,37 @@ export class config
 	}
 
 	/**
+	 * @brief Returns the value for the option with name \a name
+	 * wrapped in a std::optional<T> type.
+	 *
+	 * @tparam T The type of the value requested.
+	 * @param name The name of the option requested
+	 * @return std::optional<T> The value of the named option
+	 */
+	template <typename T>
+	[[nodiscard]] auto get_optional(std::string_view name) const
+	{
+		using return_type = std::optional<std::remove_cv_t<T>>;
+
+		std::error_code ec;
+		return_type result = get<T>(name, ec);
+
+		return result;
+	}
+
+	/**
+	 * @brief Returns the value for the option with name \a name
+	 * wrapped in a std::optional<std::string> type.
+	 *
+	 * @param name The name of the option requested
+	 * @return std::optional<std::string> The value of the named option
+	 */
+	[[nodiscard]] auto get_optional(std::string_view name) const
+	{
+		return get_optional<std::string>(name);
+	}
+
+	/**
 	 * @brief Return the std::string value of the option with name \a name
 	 * If no value was assigned, or the type of the option cannot be casted
 	 * to a string, an error is returned in \a ec.

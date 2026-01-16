@@ -37,7 +37,10 @@ int main(int argc, char *const argv[])
 			  // This option is not shown when printing out the options
 			  mcfp::make_hidden_option("d", "Debug mode"))
 		.add_section("section-1",
-			mcfp::make_option<std::string>("text", "Another text option, now part of section-1"));
+			mcfp::make_option<std::string>("text", "Another text option, now part of section-1"),
+
+			mcfp::make_option<std::string>("an-option-with-a-long-name",
+				"Shows that the output of help ends up correctly and wrapped as well if you have a small terminal"));
 
 	// There are two flavors of calls, ones that take an error_code
 	// and return the error in that code in case something is wrong.
@@ -107,14 +110,8 @@ int main(int argc, char *const argv[])
 
 	// Section support
 
-	text = config.get<std::string>("section-1.text", ec);
-	if (ec)
-	{
-		std::cerr << "Error getting option text: " << ec.message() << '\n';
-		exit(1);
-	}
-
-	std::cout << "Text option for 'section-1' is " << text << '\n';
+	if (auto t = config.get_optional("section-1.text"); t.has_value())
+		std::cout << "Text option for 'section-1' is " << *t << '\n';
 
 	return 0;
 }

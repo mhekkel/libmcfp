@@ -27,6 +27,7 @@
 module;
 
 #include <iostream>
+#include <iomanip>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -67,9 +68,9 @@ export class section
 	{
 		os << '\n';
 		if (not m_name.empty())
-			os << "section " << m_name << "\n\n";
+			os << "section " << std::quoted(m_name) << "\n\n";
 
-		m_impl->write(os, indent, output_width);
+		m_impl->write(os, m_name, indent, output_width);
 	}
 
 	[[nodiscard]] option_base *get_option(std::string_view name) const
@@ -84,7 +85,7 @@ export class section
 
 	[[nodiscard]] size_t get_option_width() const
 	{
-		return m_impl->get_option_width();
+		return m_impl->get_option_width(m_name);
 	}
 
   private:
@@ -97,8 +98,8 @@ export class section
 		[[nodiscard]] virtual option_base *get_option(std::string_view name) = 0;
 		[[nodiscard]] virtual option_base *get_option(char short_name) = 0;
 
-		[[nodiscard]] virtual size_t get_option_width() const = 0;
-		virtual void write(std::ostream &os, size_t wrap_width, size_t output_width) const = 0;
+		[[nodiscard]] virtual size_t get_option_width(std::string_view section_name) const = 0;
+		virtual void write(std::ostream &os, std::string_view section_name, size_t wrap_width, size_t output_width) const = 0;
 
 		[[nodiscard]] virtual config_impl_base *next() const noexcept { return nullptr; }
 	};
@@ -153,19 +154,19 @@ export class section
 			}
 		}
 
-		[[nodiscard]] size_t get_option_width() const override
+		[[nodiscard]] size_t get_option_width(std::string_view section_name) const override
 		{
-			return std::apply([](Options const &...opts)
+			return std::apply([section_name](Options const &...opts)
 				{
 				size_t width = 0;
-				((width = std::max(width, opts.width())), ...);
+				((width = std::max(width, opts.width(section_name))), ...);
 				return width; }, m_options);
 		}
 
-		void write(std::ostream &os, size_t wrap_width, size_t output_width) const override
+		void write(std::ostream &os, std::string_view section_name, size_t wrap_width, size_t output_width) const override
 		{
-			std::apply([&os, wrap_width, output_width](auto &&...opts)
-				{ (opts.write(os, wrap_width, output_width), ...); }, m_options);
+			std::apply([&os, section_name, wrap_width, output_width](auto &&...opts)
+				{ (opts.write(os, section_name, wrap_width, output_width), ...); }, m_options);
 		}
 
 		std::tuple<Options...> m_options;

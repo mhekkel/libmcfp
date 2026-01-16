@@ -82,9 +82,9 @@ TEST_CASE("suffixed-options")
 
   -v [ --verbose ]
 
-section ccd
+section "ccd"
 
-  --download-missing-files
+  --ccd.download-missing-files
                         This option will allow your software to
                         download missing CCD files
 )";
