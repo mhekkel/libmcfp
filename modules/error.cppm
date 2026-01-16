@@ -147,7 +147,7 @@ export std::error_condition make_error_condition(config_error e)
 namespace std
 {
 
-export template <> // NOLINT(bugprone-std-namespace-modification,cert-dcl58-cpp)
+template <> // NOLINT(bugprone-std-namespace-modification,cert-dcl58-cpp)
 struct is_error_condition_enum<mcfp::config_error>
 	: public true_type
 {
