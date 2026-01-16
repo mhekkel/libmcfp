@@ -19,7 +19,7 @@ jobs:
           - os: windows-latest
             cpp_compiler: cl
           - os: ubuntu-latest
-            cpp_compiler: g++
+            cpp_compiler: clang++
           - os: macos-latest
             cpp_compiler: clang++
 
@@ -30,12 +30,6 @@ jobs:
       id: strings
       shell: bash
       run: echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
-
-    - name: Install compiler
-      id: install_cc
-      uses: rlalik/setup-cpp-compiler@master
-      with:
-        compiler: latest
 
     - name: Install Catch2 Ubuntu
       if: matrix.os == 'ubuntu-latest'
