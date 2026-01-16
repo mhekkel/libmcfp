@@ -81,6 +81,9 @@ struct is_container_type<
 template <typename T>
 inline constexpr bool is_container_type_v = is_container_type<T>::value;
 
+static_assert(is_container_type_v<std::vector<int>>);
+static_assert(is_container_type_v<std::vector<std::string>>);
+
 // --------------------------------------------------------------------
 // Some helper classes, to allow compile time checking of options strings
 
@@ -354,7 +357,7 @@ struct option_base
 				else
 					result = option_traits<T>::set_value(*m_default_value, ec);
 			}
-			else
+			else if constexpr (not is_container_type_v<T>)	// Return an empty list if not specified
 				ec = make_error_code(config_error::option_not_specified);
 		}
 		else
