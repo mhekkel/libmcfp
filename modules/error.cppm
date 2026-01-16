@@ -27,7 +27,7 @@
 module;
 
 /**
- * @file error.hpp
+ * @file error.cppm
  *
  * Header file containing the error codes used by libmcfp
  *
@@ -61,7 +61,7 @@ export enum class config_error
 	config_file_not_found            /**< The specified config file was not found */
 };
 /**
- * @brief The implementation for @ref config_category error messages
+ * @brief The implementation for config_category error messages
  *
  */
 export class config_category_impl : public std::error_category
@@ -130,11 +130,23 @@ export std::error_category &config_category()
 	return instance;
 }
 
+/**
+ * @brief Create an std::error_code for our config_error enum
+ *
+ * @param e A config_error enum
+ * @return std::error_code
+ */
 export std::error_code make_error_code(config_error e)
 {
 	return { static_cast<int>(e), config_category() };
 }
 
+/**
+ * @brief Create an std::error_condition for our config_error enum
+ *
+ * @param e A config_error enum
+ * @return std::error_condition
+ */
 export std::error_condition make_error_condition(config_error e)
 {
 	return { static_cast<int>(e), config_category() };

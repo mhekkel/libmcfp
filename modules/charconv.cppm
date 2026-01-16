@@ -38,6 +38,8 @@ export module mcfp:charconv;
 namespace mcfp
 {
 
+/// @cond
+
 #if (not defined(__cpp_lib_experimental_detect) or (__cpp_lib_experimental_detect < 201505)) and (not defined(_LIBCPP_VERSION) or _LIBCPP_VERSION < 5000)
 // This code is copied from:
 // https://ld2015.scusa.lsu.edu/cppreference/en/cpp/experimental/is_detected.html
@@ -72,27 +74,27 @@ struct nonesuch
 	void operator=(nonesuch const &) = delete;
 };
 
-	export template <template <class...> class Op, class... Args>
-	using is_detected = typename detail::detector<nonesuch, void, Op, Args...>::value_t;
+export template <template <class...> class Op, class... Args>
+using is_detected = typename detail::detector<nonesuch, void, Op, Args...>::value_t;
 
-	export template <template <class...> class Op, class... Args>
-	constexpr inline bool is_detected_v = is_detected<Op, Args...>::value;
+export template <template <class...> class Op, class... Args>
+constexpr bool is_detected_v = is_detected<Op, Args...>::value;
 
-	export template <template <class...> class Op, class... Args>
-	using detected_t = typename detail::detector<nonesuch, void, Op, Args...>::type;
+export template <template <class...> class Op, class... Args>
+using detected_t = typename detail::detector<nonesuch, void, Op, Args...>::type;
 
-	export template <class Default, template <class...> class Op, class... Args>
-	using detected_or = detail::detector<Default, void, Op, Args...>;
+export template <class Default, template <class...> class Op, class... Args>
+using detected_or = detail::detector<Default, void, Op, Args...>;
 
-	export template <class Expected, template <class...> class Op, class... Args>
-	using is_detected_exact = std::is_same<Expected, detected_t<Op, Args...>>;
+export template <class Expected, template <class...> class Op, class... Args>
+using is_detected_exact = std::is_same<Expected, detected_t<Op, Args...>>;
 
-	export template <class Expected, template <class...> class Op, class... Args>
-	constexpr inline bool is_detected_exact_v = is_detected_exact<Expected, Op, Args...>::value;
+export template <class Expected, template <class...> class Op, class... Args>
+constexpr bool is_detected_exact_v = is_detected_exact<Expected, Op, Args...>::value;
 #else
 
 export template <template <class...> class Op, class... Args>
-constexpr inline bool is_detected_v = std::experimental::is_detected<Op, Args...>::value;
+constexpr bool is_detected_v = std::experimental::is_detected<Op, Args...>::value;
 
 #endif
 
@@ -126,5 +128,7 @@ constexpr auto from_chars(const char *s, const char *e, T &v)
 {
 	return charconv<T>::from_chars(s, e, v);
 }
+
+/// @endcond
 
 } // namespace mcfp

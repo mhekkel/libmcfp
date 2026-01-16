@@ -26,7 +26,7 @@
 
 module;
 
-/// \file
+/// \file mcfp.cppm
 /// This module library contains code to parse argc/argv and store the
 /// values provided into a singleton object.
 
@@ -54,8 +54,9 @@ namespace mcfp
 
 // --------------------------------------------------------------------
 /**
- * @brief A singleton class. Use @ref mcfp::config::instance to create and/or
- * retrieve the single instance
+ * @brief This is the main interface to mcfp. It is a singleton class.
+ * Use @ref mcfp::config::instance to create and/or
+ * retrieve the single instance.
  *
  */
 
@@ -74,7 +75,7 @@ export class config
 
 	/**
 	 * @brief Initialise a config instance with a \a usage message and a set of \a options
-	 * in a so-called global section (no leading section name for the options when using get or has)
+	 * in the global section (no leading section name for the options when using get or has)
 	 *
 	 * This method also initialises all predefined (library) sections.
 	 *
@@ -135,9 +136,13 @@ export class config
 
 	/**
 	 * @brief Initialise a config instance with a \a usage message and a set of \a options
-	 * in a so-called global section (no leading section name for the options when using get/has)
+	 * in a secondary section named \a section_name. This configuration will be appended
+	 * to the configuration specified in config::init.
 	 *
-	 * @param usage The usage message
+	 * The reason for this functionality is to add configuration options to a program
+	 * from e.g. a library, options the program itself is not aware of.
+	 *
+	 * @param section_name The name for the section/library
 	 * @param options Variadic list of options recognised by this config object, use mcfp::make_option and variants to create these
 	 */
 	template <typename... Options>
@@ -172,7 +177,7 @@ export class config
 	}
 
 	/**
-	 * @brief Get the last option name, for use in error reporting
+	 * @brief Get the last parsed option name, for use in error reporting
 	 *
 	 * @return std::string The last parsed or requested option
 	 */
@@ -249,6 +254,8 @@ export class config
 		return_type result{};
 		auto opt = get_option(name);
 
+		// if opt is null, the programmer has made an error requesting
+		// an option that was not specified in the config::init call.
 		if (opt == nullptr)
 			ec = make_error_code(config_error::unknown_option);
 		else

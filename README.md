@@ -151,23 +151,24 @@ Running the program without any options, or `--help` results in:
 ```console
 usage: example [options] file
 
-  -h [ --help ]                 Print this help text
-  -v [ --verbose ]              Verbose level, can be specified more than
-                                once to increase level
-  --config arg                  Config file to use
-  --text arg                    The text string to echo
-  -a arg (=1)                   first parameter for multiplication
-  -b arg (=2)                   second parameter for multiplication
-  -c arg                        Option c, can be specified more than once
+  -h [ --help ]           Print this help text
+  -v [ --verbose ]        Verbose level, can be specified more than once to
+                          increase level.
+  --config arg            Config file to use
+  --text arg              The text string to echo
+  -a arg (=1)             first parameter for multiplication
+  -b arg (=2)             second parameter for multiplication
+  -c arg                  Option c, can be specified more than once
 
 section "section-1"
 
-  --section-1.text arg          Another text option, now part of section-1
+  --section-1.text arg    Another text option, now part of section-1
   --section-1.an-option-with-a-long-name arg
-                                Shows that the output of help ends up correctly and
-                                wrapped as well if you have a small terminal
-```
+                          Shows that the output of help ends up correctly and
+                          wrapped as well if you have a small terminal.
 
+Invalid number of operands, should be exactly one
+```
 
 ## Installation
 

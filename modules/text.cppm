@@ -27,7 +27,7 @@
 module;
 
 /**
- * @file text.hpp
+ * @file text.cppm
  * This file contains word wrapping code
  */
 
@@ -39,6 +39,8 @@ export module mcfp:text;
 
 namespace mcfp
 {
+
+/// @cond
 
 // --------------------------------------------------------------------
 /// Simplified line breaking code taken from a decent text editor.
@@ -57,5 +59,7 @@ export class word_wrapper : public std::vector<std::string_view>
 	std::string_view::const_iterator next_line_break(std::string_view::const_iterator text,
 		std::string_view::const_iterator end);
 };
+
+/// @endcond
 
 } // namespace mcfp

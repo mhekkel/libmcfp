@@ -46,6 +46,7 @@ import :text;
 namespace mcfp
 {
 
+/// @cond
 // --------------------------------------------------------------------
 // Some template wizardry to detect containers, needed to have special
 // handling of options that can be repeated.
@@ -468,5 +469,8 @@ struct option<void> : public option_base
 			ec = make_error_code(config_error::wrong_type_cast_flag);
 	}
 };
+
+/// @endcond
+
 
 } // namespace mcfp

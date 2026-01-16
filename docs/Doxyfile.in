@@ -1,4 +1,4 @@
-EXCLUDE_SYMBOLS        = mcfp::*, mcfp::config_*, mcfp::config::ig_*, mcfp::config_category*, mcfp::make_error_*, std*
+EXCLUDE_SYMBOLS        = std*
 FILE_PATTERNS          = *.cppm
 GENERATE_XML           = YES
 GENERATE_HTML          = NO

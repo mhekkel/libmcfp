@@ -40,6 +40,8 @@ import :options;
 
 // --------------------------------------------------------------------
 
+/// @cond
+
 namespace mcfp
 {
 
@@ -192,3 +194,6 @@ export class section
 };
 
 } // namespace mcfp
+
+/// @endcond
+
