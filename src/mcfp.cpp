@@ -87,6 +87,8 @@ inline uint32_t get_terminal_width()
 
 // --------------------------------------------------------------------
 
+thread_local std::string config::s_last_option;
+
 void config::parse(int argc, const char *const argv[])
 {
 	std::error_code ec;
@@ -99,8 +101,6 @@ void config::parse(int argc, const char *const argv[])
 			throw std::system_error(ec, "while parsing command line arguments, option '" + get_last_option() + "'");
 	}
 }
-
-
 
 void config::parse(int argc, const char *const argv[], std::error_code &ec)
 {
@@ -164,7 +164,7 @@ void config::parse(int argc, const char *const argv[], std::error_code &ec)
 			}
 
 			// store name for inspection later on
-			get_last_option_storage() = s_arg;
+			s_last_option = s_arg;
 
 			opt = get_option(s_arg);
 			if (opt == nullptr)
@@ -195,7 +195,7 @@ void config::parse(int argc, const char *const argv[], std::error_code &ec)
 			while (*arg != 0 and not ec)
 			{
 				// store name for inspection later on
-				get_last_option_storage() = *arg;
+				s_last_option = *arg;
 				opt = get_option(*arg++);
 
 				if (opt == nullptr)
@@ -362,7 +362,7 @@ void config::parse_config_file(std::istream &is, std::error_code &ec)
 				else if (is_eoln(ch))
 				{
 					// store name for inspection later on
-					get_last_option_storage() = name;
+					s_last_option = name;
 
 					auto opt = get_option(section, name);
 

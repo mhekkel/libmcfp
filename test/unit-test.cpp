@@ -641,8 +641,8 @@ TEST_CASE("usage-1")
   -s arg                  option s
   -v [ --verbose ]        option verbose
   -o [ --long-option ] arg
-                          This is a very long option description in the
-                          hope it will wrap nicely
+                          This is a very long option description in the hope
+                          it will wrap nicely
   -O [ --even-longer-option ] arg (=averyverylongdefaultstring)
                           This is an even longer option description in the
                           hope it will wrap nicely

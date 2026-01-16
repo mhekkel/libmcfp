@@ -178,7 +178,7 @@ export class config
 	 */
 	[[nodiscard]] std::string get_last_option() const
 	{
-		return get_last_option_storage();
+		return s_last_option;
 	}
 
 	/**
@@ -244,7 +244,7 @@ export class config
 		using return_type = std::remove_cv_t<T>;
 
 		// store name for inspection later on
-		get_last_option_storage() = name;
+		s_last_option = name;
 
 		return_type result{};
 		auto opt = get_option(name);
@@ -420,6 +420,7 @@ export class config
 	void parse(int argc, const char *const argv[], std::error_code &ec);
 
 	// --------------------------------------------------------------------
+	/// @cond
 
 	constexpr static std::tuple<std::string_view, std::string_view> split_name(std::string_view name) noexcept
 	{
@@ -437,14 +438,6 @@ export class config
 
   private:
 	config() = default;
-
-	/// @cond
-
-	static std::string &get_last_option_storage()
-	{
-		thread_local static std::string s_last_option;
-		return s_last_option;
-	}
 
 	// --------------------------------------------------------------------
 
@@ -541,6 +534,8 @@ export class config
 
 	std::vector<std::string> m_operands;
 	std::vector<std::unique_ptr<section>> m_sections;
+
+	static thread_local std::string s_last_option;
 
 	/// @endcond
 };

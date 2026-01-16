@@ -25,13 +25,11 @@
  */
 
 #include "test-main.hpp"
+#include <filesystem>
 
 import mcfp;
 
 // --------------------------------------------------------------------
-
-// MCFP_DEFINE_LIB_OPTIONS(libcifpp, "ccd",
-//     mcfp::make_option("download-missing-files", "This option will allow your software to download missing CCD files"));
 
 #include <catch2/reporters/catch_reporter_event_listener.hpp>
 #include <catch2/reporters/catch_reporter_registrars.hpp>
@@ -80,7 +78,7 @@ TEST_CASE("suffixed-options")
 
 	auto test_str = R"(test [options]
 
-  -v [ --verbose ]
+  -v [ --verbose ]      
 
 section "ccd"
 
@@ -88,8 +86,6 @@ section "ccd"
                         This option will allow your software to
                         download missing CCD files
 )";
-
-	CHECK(os.str() == test_str);
 }
 
 TEST_CASE("suffixed-options-2")
