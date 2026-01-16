@@ -34,9 +34,9 @@ module;
 #include <cassert>
 #include <cstring>
 #include <filesystem>
-#include <fstream>
 #include <memory>
 #include <optional>
+#include <system_error>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -285,6 +285,8 @@ export class config
 
 		std::error_code ec;
 		return_type result = get<T>(name, ec);
+		if (ec and ec != config_error::option_not_specified)
+			throw std::system_error(ec, "while getting option '" + std::string{ name } + '\'');
 
 		return result;
 	}

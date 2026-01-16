@@ -26,7 +26,6 @@
 
 module;
 
-#include <cstdint>
 #include <ostream>
 #include <utility>
 
@@ -99,19 +98,17 @@ void option_base::write(std::ostream &os, std::string_view section_name, size_t 
 	}
 
 	std::string indent_str(indent, ' ');
-	std::string text;
 	bool do_indent = false;
 
 	if (w2 + 2 > indent)
 	{
 		os << '\n';
 		do_indent = true;
-		text = m_desc;
 	}
 	else
-		text = indent_str.substr(0, indent - w2) + m_desc;
+		os << indent_str.substr(0, indent - w2);
 
-	word_wrapper ww(text, output_width - indent - 2);
+	word_wrapper ww(m_desc, output_width - indent - 1);
 	for (auto line : ww)
 	{
 		if (std::exchange(do_indent, true))

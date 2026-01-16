@@ -21,7 +21,7 @@ int main(int argc, char *const argv[])
 
 			  // Flag options (not taking a parameter)
 			  mcfp::make_option("help,h", "Print this help text"),
-			  mcfp::make_option("verbose,v", "Verbose level, can be specified more than once to increase level"),
+			  mcfp::make_option("verbose,v", "Verbose level, can be specified more than once to increase level."),
 
 			  // A couple of options with parameter
 			  mcfp::make_option<std::string>("config", "Config file to use"),
@@ -40,7 +40,7 @@ int main(int argc, char *const argv[])
 			mcfp::make_option<std::string>("text", "Another text option, now part of section-1"),
 
 			mcfp::make_option<std::string>("an-option-with-a-long-name",
-				"Shows that the output of help ends up correctly and wrapped as well if you have a small terminal"));
+				"Shows that the output of help ends up correctly and wrapped as well if you have a small terminal."));
 
 	// There are two flavors of calls, ones that take an error_code
 	// and return the error in that code in case something is wrong.

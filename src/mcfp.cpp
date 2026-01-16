@@ -30,6 +30,7 @@ module;
 #include <climits>
 #include <cstdint>
 #include <filesystem>
+#include <fstream>
 #include <ostream>
 
 #if __has_include(<sys/ioctl.h>)
