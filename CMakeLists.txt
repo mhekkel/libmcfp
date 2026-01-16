@@ -71,6 +71,10 @@ add_library(mcfp::mcfp ALIAS mcfp)
 
 target_compile_features(mcfp PUBLIC cxx_std_20)
 
+if(NOT STD_CHARCONV_COMPILING)
+	target_include_directories(mcfp PRIVATE $<TARGET_PROPERTY:FastFloat::fast_float,INTERFACE_INCLUDE_DIRECTORIES>)
+endif()
+
 if(MSVC)
 	target_compile_definitions(mcfp INTERFACE NOMINMAX=1)
 endif()
