@@ -61,8 +61,13 @@ int main(int argc, char *const argv[])
 
 	if (config.has("help") or config.operands().size() != 1)
 	{
+		// Tell user what was wrong
 		// This will print out the 'usage' message with all the visible options
 		std::cerr << config << '\n';
+
+		if (config.operands().size() != 1)
+			std::cerr << "Invalid number of operands, should be exactly one\n\n";
+
 		exit(config.has("help") ? 0 : 1);
 	}
 
@@ -94,7 +99,12 @@ int main(int argc, char *const argv[])
 		exit(1);
 	}
 
-	std::cout << "Text option is " << text << '\n';
+	std::cout << "Text option is " << std::quoted(text) << '\n';
+
+	// Alternative, using get_optional
+
+	if (auto t1 = config.get_optional("text"))
+		std::cout << "Text option still is " << std::quoted(*t1) << '\n';
 
 	// Likewise for numeric options
 
@@ -111,7 +121,7 @@ int main(int argc, char *const argv[])
 	// Section support
 
 	if (auto t = config.get_optional("section-1.text"); t.has_value())
-		std::cout << "Text option for 'section-1' is " << *t << '\n';
+		std::cout << "Text option for 'section-1' is " << std::quoted(*t) << '\n';
 
 	return 0;
 }
