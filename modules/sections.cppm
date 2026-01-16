@@ -45,8 +45,6 @@ namespace mcfp
 export class section
 {
   public:
-	using option_base = option_base;
-
 	template <typename... Options>
 		requires(not(std::is_reference_v<Options> and ...))
 	explicit section(std::string name, Options const &...options)
