@@ -21,7 +21,7 @@ jobs:
       #
       # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         build_type: [Release]
         cpp_compiler: [g++, clang++, cl]
         include:
@@ -31,12 +31,18 @@ jobs:
             cpp_compiler: g++
           - os: ubuntu-latest
             cpp_compiler: clang++
+          - os: macos-latest
+            cpp_compiler: clang++
+          - os: macos-latest
+            cpp_compiler: g++
         exclude:
           - os: windows-latest
             cpp_compiler: g++
           - os: windows-latest
             cpp_compiler: clang++
           - os: ubuntu-latest
+            cpp_compiler: cl
+          - os: macos-latest
             cpp_compiler: cl
 
     steps:
@@ -59,6 +65,7 @@ jobs:
         brew install catch2
 
     - name: Setup MSBuild
+      if: matrix.os == 'windows-latest'
       uses: microsoft/setup-msbuild@v1.1
 
     - name: Configure CMake
