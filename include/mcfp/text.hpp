@@ -27,7 +27,7 @@
 #pragma once
 
 /**
- * @file text.cppm
+ * @file text.hpp
  * This file contains word wrapping code
  */
 

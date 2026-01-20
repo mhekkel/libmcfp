@@ -1,5 +1,5 @@
 project = 'mcfp'
-copyright = '2023, Maarten L. Hekkelman'
+copyright = '2026, Maarten L. Hekkelman'
 author = 'Maarten L. Hekkelman'
 release = '@PROJECT_VERSION@'
 
@@ -23,7 +23,7 @@ exhale_args = {
     # These arguments are required
     "containmentFolder":     "./api",
     "rootFileName":          "library_root.rst",
-    "doxygenStripFromPath":  "../modules/",
+    "doxygenStripFromPath":  "../include/",
     # Heavily encouraged optional argument (see docs)
     "rootFileTitle":         "API Reference",
     # Suggested optional arguments

@@ -27,7 +27,7 @@
 #pragma once
 
 /**
- * @file error.cppm
+ * @file error.hpp
  *
  * Header file containing the error codes used by libmcfp
  *

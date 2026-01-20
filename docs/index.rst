@@ -71,15 +71,15 @@ Suppose you have a library that would like to have configurable options. This li
 Installation
 ------------
 
-Since **mcfp** is a so-called cpp20-module library, you will need a very recent compiler. This code has been tested with GCC 15 and CLang 22 as well as the compiler that comes with Visual Studio version 2026.
+To build **mcfp** you will need a very recent compiler. This code has been tested with GCC 14 and CLang 22 as well as the compiler that comes with Visual Studio version 2026.
 
-Other requirements are `CMake <https://cmake.org/>`_ version 3.28 or higher. And you will have to have `ninja <https://ninja-build.org/>`_.
+Other requirements are `CMake <https://cmake.org/>`_ version 3.28 or higher.
 
 .. code-block:: console
 
    git clone https://github.com/mhekkel/libmcfp.git
    cd libmcfp
-   cmake -B build -G Ninja
+   cmake -B build
    cmake --build build
    cmake --install build
 

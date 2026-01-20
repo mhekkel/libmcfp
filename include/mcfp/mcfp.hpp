@@ -26,7 +26,7 @@
 
 #pragma once
 
-/// \file mcfp.cppm
+/// \file mcfp.hpp
 /// This module library contains code to parse argc/argv and store the
 /// values provided into a singleton object.
 

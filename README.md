@@ -20,7 +20,7 @@ There's a config file parser as well.
 #include <iostream>
 #include <vector>
 
-import mcfp;
+#include "mcfp/mcfp.hpp"
 
 int main(int argc, char *const argv[])
 {

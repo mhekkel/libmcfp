@@ -1,5 +1,6 @@
 EXCLUDE_SYMBOLS        = std*
-FILE_PATTERNS          = *.cppm
+FILE_PATTERNS          = *.hpp
+RECURSIVE			   = YES
 GENERATE_XML           = YES
 GENERATE_HTML          = NO
 GENERATE_TODOLIST      = NO
