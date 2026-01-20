@@ -24,7 +24,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-module;
+#include "mcfp/mcfp.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -32,8 +32,6 @@ module;
 #include <limits>
 #include <string_view>
 #include <vector>
-
-module mcfp;
 
 namespace mcfp
 {

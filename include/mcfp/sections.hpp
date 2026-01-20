@@ -24,7 +24,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-module;
+#pragma once
+
+#include "mcfp/options.hpp"
 
 #include <iostream>
 #include <iomanip>
@@ -34,10 +36,6 @@ module;
 #include <type_traits>
 #include <utility>
 
-export module mcfp:sections;
-
-import :options;
-
 // --------------------------------------------------------------------
 
 /// @cond
@@ -45,7 +43,7 @@ import :options;
 namespace mcfp
 {
 
-export class section
+class section
 {
   public:
 	template <typename... Options>

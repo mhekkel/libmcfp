@@ -24,7 +24,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-module;
+#include "mcfp/mcfp.hpp"
 
 #include <cassert>
 #include <climits>
@@ -42,8 +42,6 @@ module;
 # include <cstdio>
 # include <io.h>
 #endif
-
-module mcfp;
 
 namespace mcfp
 {

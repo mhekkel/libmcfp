@@ -24,7 +24,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-module;
+#pragma once
 
 #include <charconv>
 #if __has_include(<experimental/type_traits>)
@@ -32,8 +32,6 @@ module;
 #endif
 #include <type_traits>
 #include <utility>
-
-export module mcfp:charconv;
 
 namespace mcfp
 {
@@ -123,7 +121,7 @@ struct ff_charconv<T>
 template <typename T>
 using charconv = typename std::conditional_t<is_detected_v<from_chars_function, T>, std_charconv<T>, ff_charconv<T>>;
 
-export template <typename T>
+template <typename T>
 constexpr auto from_chars(const char *s, const char *e, T &v)
 {
 	return charconv<T>::from_chars(s, e, v);

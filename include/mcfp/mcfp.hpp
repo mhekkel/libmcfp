@@ -24,11 +24,18 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-module;
+#pragma once
 
 /// \file mcfp.cppm
 /// This module library contains code to parse argc/argv and store the
 /// values provided into a singleton object.
+
+// IWYU pragma: begin_exports
+#include "mcfp/error.hpp"
+#include "mcfp/options.hpp"
+#include "mcfp/sections.hpp"
+#include "mcfp/text.hpp"
+// IWYU pragma: begin_exports
 
 #include <algorithm>
 #include <cassert>
@@ -41,13 +48,6 @@ module;
 #include <utility>
 #include <vector>
 
-export module mcfp;
-
-export import :error;
-export import :options;
-export import :sections;
-export import :text;
-
 namespace mcfp
 {
 
@@ -59,7 +59,7 @@ namespace mcfp
  *
  */
 
-export class config
+class config
 {
   public:
 	/**
@@ -564,7 +564,7 @@ export class config
  * @param description The help text for this option
  * @return auto The option object created
  */
-export template <typename T = void>
+template <typename T = void>
 auto make_option(ostring name, std::string description)
 	requires(not is_container_type_v<T>)
 {
@@ -572,7 +572,7 @@ auto make_option(ostring name, std::string description)
 }
 
 /** @cond */
-export template <typename T>
+template <typename T>
 auto make_option(ostring name, std::string description)
 	requires(is_container_type_v<T>)
 {
@@ -596,7 +596,7 @@ auto make_option(ostring name, std::string description)
  * @param description The help text for this option
  * @return auto The option object created
  */
-export template <typename T>
+template <typename T>
 auto make_option(ostring name, const T &v, std::string description)
 	requires(not is_container_type_v<T>)
 {
@@ -620,7 +620,7 @@ auto make_option(ostring name, const T &v, std::string description)
  * @param description The help text for this option
  * @return auto The option object created
  */
-export template <typename T = void>
+template <typename T = void>
 auto make_hidden_option(ostring name, std::string description)
 	requires(not is_container_type_v<T>)
 {
@@ -628,7 +628,7 @@ auto make_hidden_option(ostring name, std::string description)
 }
 
 /** @cond */
-export template <typename T>
+template <typename T>
 auto make_hidden_option(ostring name, std::string description)
 	requires(is_container_type_v<T>)
 {
@@ -654,7 +654,7 @@ auto make_hidden_option(ostring name, std::string description)
  * @param description The help text for this option
  * @return auto The option object created
  */
-export template <typename T>
+template <typename T>
 auto make_hidden_option(ostring name, const T &v, std::string description)
 	requires(not is_container_type_v<T>)
 {

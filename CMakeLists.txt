@@ -33,13 +33,6 @@ include(CPM)
 include(CMakePackageConfigHelpers)
 include(CTest)
 
-if(CMAKE_GENERATOR STREQUAL "Ninja Multi-Config")
-	set(CMAKE_CROSS_CONFIGS "Debug;Release")
-	set(CMAKE_DEFAULT_CONFIGS "Debug;Release")
-elseif(NOT(CMAKE_GENERATOR STREQUAL "Ninja"))
-	message(FATAL_ERROR "Ninja is required as generator")
-endif()
-
 option(BUILD_DOCUMENTATION "Build the documentation" OFF)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
@@ -60,18 +53,17 @@ if(NOT STD_CHARCONV_COMPILING)
 		EXCLUDE_FROM_ALL YES)
 endif()
 
-file(GLOB_RECURSE mcfp_cppm modules/*.cppm)
+file(GLOB_RECURSE mcfp_headers include/*.hpp)
 file(GLOB_RECURSE mcfp_cpp src/*.cpp)
 
 if(STD_CHARCONV_COMPILING)
 	list(FILTER mcfp_cpp EXCLUDE REGEX src/charconv-fast_float\.cpp)
 endif()
 
-add_library(mcfp STATIC ${mcfp_cpp})
+add_library(mcfp ${mcfp_cpp})
 add_library(mcfp::mcfp ALIAS mcfp)
 
 target_compile_features(mcfp PUBLIC cxx_std_20)
-target_compile_options(mcfp PUBLIC -pthread)
 
 if(NOT STD_CHARCONV_COMPILING)
 	target_include_directories(mcfp PRIVATE $<TARGET_PROPERTY:FastFloat::fast_float,INTERFACE_INCLUDE_DIRECTORIES>)
@@ -83,10 +75,10 @@ endif()
 
 target_sources(mcfp
 	PUBLIC
-	FILE_SET mcfp_module TYPE CXX_MODULES
-	BASE_DIRS modules
+	FILE_SET mcfp_module TYPE HEADERS
+	BASE_DIRS include
 	FILES
-	${mcfp_cppm})
+	${mcfp_headers})
 
 # installation
 
@@ -99,8 +91,7 @@ set_target_properties(mcfp PROPERTIES
 
 install(TARGETS mcfp
 	EXPORT mcfp
-	CXX_MODULES_BMI DESTINATION "lib/cxx/bmi/mcfp"
-	FILE_SET mcfp_module DESTINATION "lib/cxx/miu/mcfp")
+	FILE_SET mcfp_module DESTINATION "include")
 
 install(EXPORT mcfp
 	NAMESPACE mcfp::
@@ -118,16 +109,6 @@ write_basic_package_version_file(
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/mcfp-config.cmake"
 	"${CMAKE_CURRENT_BINARY_DIR}/mcfp-config-version.cmake"
 	DESTINATION lib/cmake/mcfp)
-
-set(generator -G "${CMAKE_GENERATOR}")
-
-if(CMAKE_GENERATOR_TOOLSET)
-	list(APPEND generator -T "${CMAKE_GENERATOR_TOOLSET}")
-endif()
-
-if(CMAKE_GENERATOR_PLATFORM)
-	list(APPEND generator -A "${CMAKE_GENERATOR_PLATFORM}")
-endif()
 
 if(BUILD_TESTING AND PROJECT_IS_TOP_LEVEL)
 	add_subdirectory(test)

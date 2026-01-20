@@ -24,12 +24,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-module;
+#include "mcfp/mcfp.hpp"
 
 #include <ostream>
 #include <utility>
-
-module mcfp;
 
 namespace mcfp
 {

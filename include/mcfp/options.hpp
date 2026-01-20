@@ -25,7 +25,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-module;
+#pragma once
+
+#include "mcfp/charconv.hpp"
+#include "mcfp/error.hpp"
+#include "mcfp/text.hpp"
 
 #include <cassert>
 #include <charconv>
@@ -36,12 +40,6 @@ module;
 #include <type_traits>
 #include <utility>
 #include <vector>
-
-export module mcfp:options;
-
-import :charconv;
-import :error;
-import :text;
 
 namespace mcfp
 {
@@ -244,7 +242,7 @@ constexpr void ostring::parse()
 // command line argument to the type that should be stored.
 // In fact, here is where the command line arguments are checked for
 // proper formatting.
-export template <typename T, typename = void>
+template <typename T, typename = void>
 struct option_traits;
 
 template <typename T>

@@ -24,7 +24,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-module;
+#pragma once
 
 /**
  * @file text.cppm
@@ -34,8 +34,6 @@ module;
 #include <cstddef>
 #include <string_view>
 #include <vector>
-
-export module mcfp:text;
 
 namespace mcfp
 {
@@ -48,7 +46,7 @@ namespace mcfp
 /// The algorithm uses dynamic programming to find the optimal
 /// separation in lines.
 
-export class word_wrapper : public std::vector<std::string_view>
+class word_wrapper : public std::vector<std::string_view>
 {
   public:
 	word_wrapper(std::string_view text, size_t width);
