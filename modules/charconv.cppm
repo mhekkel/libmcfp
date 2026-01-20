@@ -74,26 +74,26 @@ struct nonesuch
 	void operator=(nonesuch const &) = delete;
 };
 
-export template <template <class...> class Op, class... Args>
+template <template <class...> class Op, class... Args>
 using is_detected = typename detail::detector<nonesuch, void, Op, Args...>::value_t;
 
-export template <template <class...> class Op, class... Args>
+template <template <class...> class Op, class... Args>
 constexpr bool is_detected_v = is_detected<Op, Args...>::value;
 
-export template <template <class...> class Op, class... Args>
+template <template <class...> class Op, class... Args>
 using detected_t = typename detail::detector<nonesuch, void, Op, Args...>::type;
 
-export template <class Default, template <class...> class Op, class... Args>
+template <class Default, template <class...> class Op, class... Args>
 using detected_or = detail::detector<Default, void, Op, Args...>;
 
-export template <class Expected, template <class...> class Op, class... Args>
+template <class Expected, template <class...> class Op, class... Args>
 using is_detected_exact = std::is_same<Expected, detected_t<Op, Args...>>;
 
-export template <class Expected, template <class...> class Op, class... Args>
+template <class Expected, template <class...> class Op, class... Args>
 constexpr bool is_detected_exact_v = is_detected_exact<Expected, Op, Args...>::value;
 #else
 
-export template <template <class...> class Op, class... Args>
+template <template <class...> class Op, class... Args>
 constexpr bool is_detected_v = std::experimental::is_detected<Op, Args...>::value;
 
 #endif
@@ -120,7 +120,7 @@ struct ff_charconv<T>
 	static std::from_chars_result from_chars(const char *a, const char *b, T &v);
 };
 
-export template <typename T>
+template <typename T>
 using charconv = typename std::conditional_t<is_detected_v<from_chars_function, T>, std_charconv<T>, ff_charconv<T>>;
 
 export template <typename T>

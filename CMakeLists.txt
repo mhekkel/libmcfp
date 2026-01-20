@@ -71,6 +71,7 @@ add_library(mcfp STATIC ${mcfp_cpp})
 add_library(mcfp::mcfp ALIAS mcfp)
 
 target_compile_features(mcfp PUBLIC cxx_std_20)
+target_compile_options(mcfp PUBLIC -pthread)
 
 if(NOT STD_CHARCONV_COMPILING)
 	target_include_directories(mcfp PRIVATE $<TARGET_PROPERTY:FastFloat::fast_float,INTERFACE_INCLUDE_DIRECTORIES>)
@@ -83,6 +84,7 @@ endif()
 target_sources(mcfp
 	PUBLIC
 	FILE_SET mcfp_module TYPE CXX_MODULES
+	BASE_DIRS modules
 	FILES
 	${mcfp_cppm})
 
@@ -97,8 +99,8 @@ set_target_properties(mcfp PROPERTIES
 
 install(TARGETS mcfp
 	EXPORT mcfp
-	CXX_MODULES_BMI DESTINATION "lib/cxx/bmi"
-	FILE_SET mcfp_module DESTINATION "lib/cxx/miu")
+	CXX_MODULES_BMI DESTINATION "lib/cxx/bmi/mcfp"
+	FILE_SET mcfp_module DESTINATION "lib/cxx/miu/mcfp")
 
 install(EXPORT mcfp
 	NAMESPACE mcfp::

@@ -43,7 +43,6 @@ module;
 
 export module mcfp;
 
-export import :charconv;
 export import :error;
 export import :options;
 export import :sections;

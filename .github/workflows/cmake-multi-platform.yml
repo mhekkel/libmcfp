@@ -33,8 +33,6 @@ jobs:
             cpp_compiler: clang++
           - os: macos-latest
             cpp_compiler: clang++
-          - os: macos-latest
-            cpp_compiler: g++
         exclude:
           - os: windows-latest
             cpp_compiler: g++
@@ -44,6 +42,8 @@ jobs:
             cpp_compiler: cl
           - os: macos-latest
             cpp_compiler: cl
+          - os: macos-latest
+            cpp_compiler: g++
 
     steps:
     - uses: actions/checkout@v4
