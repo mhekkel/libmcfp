@@ -69,10 +69,6 @@ if(NOT STD_CHARCONV_COMPILING)
 	target_include_directories(mcfp PRIVATE $<TARGET_PROPERTY:FastFloat::fast_float,INTERFACE_INCLUDE_DIRECTORIES>)
 endif()
 
-if(MSVC)
-	target_compile_definitions(mcfp INTERFACE NOMINMAX=1)
-endif()
-
 target_sources(mcfp
 	PUBLIC
 	FILE_SET mcfp_module TYPE HEADERS
@@ -90,13 +86,13 @@ set_target_properties(mcfp PROPERTIES
 	COMPATIBLE_INTERFACE_STRING mcfp_MAJOR_VERSION)
 
 install(TARGETS mcfp
-	EXPORT mcfp
-	FILE_SET mcfp_module DESTINATION "include")
+	EXPORT mcfp-targets
+	FILE_SET mcfp_module
+	DESTINATION "include")
 
-install(EXPORT mcfp
+install(EXPORT mcfp-targets
 	NAMESPACE mcfp::
-	DESTINATION lib/cmake/mcfp
-	FILE "mcfp-targets.cmake")
+	DESTINATION lib/cmake/mcfp)
 
 configure_package_config_file(${PROJECT_SOURCE_DIR}/cmake/mcfp-config.cmake.in
 	${CMAKE_CURRENT_BINARY_DIR}/mcfp-config.cmake
