@@ -35,7 +35,7 @@
 #include "mcfp/options.hpp"
 #include "mcfp/sections.hpp"
 #include "mcfp/text.hpp"
-// IWYU pragma: begin_exports
+// IWYU pragma: end_exports
 
 #include <algorithm>
 #include <cassert>
