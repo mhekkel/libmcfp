@@ -1,0 +1,8 @@
+Notes on how this package can be tested.
+────────────────────────────────────────
+
+This package can be tested by running the provided test:
+
+    sh run-unit-test
+
+in order to confirm its integrity.

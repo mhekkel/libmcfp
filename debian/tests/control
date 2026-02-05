@@ -1,0 +1,3 @@
+Tests: run-unit-test
+Depends: build-essential, cmake, @
+Restrictions: allow-stderr

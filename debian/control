@@ -1,0 +1,27 @@
+Source: libmcfp
+Priority: optional
+Section: libs
+Maintainer: Debian Med Packaging Team <debian-med-packaging@lists.alioth.debian.org>
+Uploaders: Maarten L. Hekkelman <maarten@hekkelman.com>
+Build-Depends: debhelper-compat (= 13),
+               catch2,
+               cmake
+Standards-Version: 4.6.2
+Vcs-Browser: https://forge.hekkelman.net/maarten/mcfp
+Vcs-Git: https://forge.hekkelman.net/maarten/mcfp
+Homepage: https://forge.hekkelman.net/maarten/mcfp
+Rules-Requires-Root: no
+
+Package: libmcfp-dev
+Architecture: any
+Section: libdevel
+Depends: ${misc:Depends}
+Description: header only configuration parser library
+ There are already a few configuration parser around, but most of them
+ introduce runtime dependencies. This header-only library avoids that
+ and add a simple to use and complete C++ API for accessing configuration
+ passed through command line arguments or configuration files. The argv
+ parsing is following the POSIX standard.
+ .
+ Configuration is available throughout the entire program using a singleton
+ object.

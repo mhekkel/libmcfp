@@ -1,0 +1,29 @@
+#!/bin/bash
+set -e
+set -x
+
+pkg="libmcfp-dev"
+
+if [ "$AUTOPKGTEST_TMP" = "" ] ; then
+  AUTOPKGTEST_TMP=`mktemp -d /tmp/${pkg}-test.XXXXXX`
+  trap "rm -rf $AUTOPKGTEST_TMP" 0 INT QUIT ABRT PIPE TERM
+fi
+
+cp -r /usr/share/doc/${pkg}/examples/* $AUTOPKGTEST_TMP
+
+cd $AUTOPKGTEST_TMP
+
+cmake .
+cmake --build .
+
+./example x -c a -c b -a 3 -b 4.1 > ./example.out
+
+cat > ./example.ref <<'EOF'
+The first operand is x
+Text option is foo
+a (3) * b (4.1) = 12.3
+c: a
+c: b
+EOF
+
+exec cmp -s ./example.out ./example.ref
