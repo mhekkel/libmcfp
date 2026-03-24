@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Maarten L. Hekkelman
+#
+# SPDX-License-Identifier: CC0-1.0
+
 sphinx<5
 exhale==0.3.6
 myst-parser

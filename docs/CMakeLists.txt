@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Maarten L. Hekkelman
+# SPDX-License-Identifier: BSD-2-Clause
+
 find_package(Doxygen REQUIRED)
 find_package(Sphinx REQUIRED)
 

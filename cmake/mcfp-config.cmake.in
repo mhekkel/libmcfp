@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Maarten L. Hekkelman
+#
+# SPDX-License-Identifier: BSD-2-Clause
+
 @PACKAGE_INIT@
 
 INCLUDE("${CMAKE_CURRENT_LIST_DIR}/mcfp-targets.cmake")
