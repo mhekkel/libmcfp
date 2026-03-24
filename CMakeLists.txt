@@ -47,7 +47,7 @@ try_compile(STD_CHARCONV_COMPILING
 if(NOT STD_CHARCONV_COMPILING)
 	message(NOTICE "mcfp: Using fast_float for std::from_chars")
 	CPMFindPackage(
-		NAME fast_float
+		NAME FastFloat
 		GIT_REPOSITORY "https://github.com/fastfloat/fast_float"
 		GIT_TAG v8.0.2
 		EXCLUDE_FROM_ALL YES)
