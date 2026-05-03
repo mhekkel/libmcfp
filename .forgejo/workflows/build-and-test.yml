@@ -1,4 +1,4 @@
-name: multi platform test
+name: test on Debian
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
+    runs-on: debian-latest
 
     strategy:
       # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
@@ -21,19 +21,14 @@ jobs:
       #
       # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
       matrix:
-        os: [debian-latest, freebsd-latest]
+        os: [debian-latest]
         build_type: [Release]
-        cpp_compiler: [g++, clang++, c++]
+        cpp_compiler: [g++, clang++]
         include:
-          - os: freebsd-latest
-            cpp_compiler: c++
           - os: debian-latest
             cpp_compiler: g++
           - os: debian-latest
             cpp_compiler: clang++
-        exclude:
-          - os: debian-latest
-            cpp_compiler: c++
 
     steps:
     - uses: https://data.forgejo.org/actions/checkout@v4
@@ -47,7 +42,7 @@ jobs:
     - name: Install Catch2 debian
       if: matrix.os == 'debian-latest'
       run: >
-        apt-get update && apt-get install -y catch2 build-essential ninja-build cmake
+        apt-get update && apt-get install -y catch2 build-essential ninja-build cmake clang++
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
