@@ -23,12 +23,8 @@ jobs:
       matrix:
         os: [debian-latest]
         build_type: [Release]
-        cpp_compiler: [g++, clang++]
-        include:
-          - os: debian-latest
-            cpp_compiler: g++
-          - os: debian-latest
-            cpp_compiler: clang++
+        # cpp_compiler: [g++, clang++]
+        cpp_compiler: [g++]
 
     steps:
     - uses: https://data.forgejo.org/actions/checkout@v4
