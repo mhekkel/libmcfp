@@ -2,7 +2,7 @@
 on: push
 jobs:
   ipv6:
-    runs-on: docker
+    runs-on: debian-latest
     steps:
       - run: |
           apt update; apt install --yes curl
