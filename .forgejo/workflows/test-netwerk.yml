@@ -5,4 +5,4 @@ jobs:
     runs-on: debian-latest
     steps:
       - run: |
-          curl -s -o /dev/null https://forge.hekkelman.net/maarten/mcfp
+          curl -s -o /dev/null https://www.nrc.nl/
