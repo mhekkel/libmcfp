@@ -21,18 +21,18 @@ jobs:
       #
       # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
       matrix:
-        os: [ubuntu-latest, freebsd-latest]
+        os: [debian-latest, freebsd-latest]
         build_type: [Release]
         cpp_compiler: [g++, clang++, c++]
         include:
           - os: freebsd-latest
             cpp_compiler: c++
-          - os: ubuntu-latest
+          - os: debian-latest
             cpp_compiler: g++
-          - os: ubuntu-latest
+          - os: debian-latest
             cpp_compiler: clang++
         exclude:
-          - os: ubuntu-latest
+          - os: debian-latest
             cpp_compiler: c++
 
     steps:
@@ -44,8 +44,8 @@ jobs:
       shell: bash
       run: echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
-    - name: Install Catch2 Ubuntu
-      if: matrix.os == 'ubuntu-latest'
+    - name: Install Catch2 debian
+      if: matrix.os == 'debian-latest'
       run: >
         sudo apt-get update && sudo apt-get install catch2
 
