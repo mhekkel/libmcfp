@@ -1,8 +1,0 @@
----
-on: push
-jobs:
-  ipv6:
-    runs-on: debian-latest
-    steps:
-      - run: |
-          curl -s -o /dev/null https://www.nrc.nl/
