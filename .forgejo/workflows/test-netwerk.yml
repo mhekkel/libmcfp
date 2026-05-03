@@ -5,5 +5,4 @@ jobs:
     runs-on: debian-latest
     steps:
       - run: |
-          apt update; apt install --yes curl
-          curl -s -o /dev/null http://ipv6.google.com
+          curl -s -o /dev/null https://forge.hekkelman.net/maarten/mcfp
