@@ -4,8 +4,8 @@ SPDX-FileCopyrightText: 2026 Maarten L. Hekkelman
 SPDX-License-Identifier: BSD-2-Clause
 -->
 
-[![github CI](https://github.com/mhekkel/libmcfp/actions/workflows/cmake-multi-platform.yml/badge.svg)](https://github.com/mhekkel/libmcfp/actions)
-[![github CI](https://github.com/mhekkel/libmcfp/actions/workflows/build-documentation.yml/badge.svg)](https://github.com/mhekkel/libmcfp/actions)
+[![github CI](https://forge.hekkelman.net/maarten/mcfp/actions/workflows/build-and-test.yml/badge.svg)](https://forge.hekkelman.net/maarten/mcfp/actions)
+<!-- [![github CI](https://forge.hekkelman.net/maarten/mcfp/actions/workflows/build-documentation.yml/badge.svg)](https://forge.hekkelman.net/maarten/mcfp/actions) -->
 
 # libmcfp
 
