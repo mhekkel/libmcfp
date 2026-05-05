@@ -21,10 +21,10 @@ jobs:
       #
       # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
       matrix:
-        os: [debian-latest]
+        os: [debian-latest, freebsd-latest]
         build_type: [Release]
         # cpp_compiler: [g++, clang++]
-        cpp_compiler: [g++]
+        # cpp_compiler: [g++, clang++]
 
     steps:
     - uses: https://data.forgejo.org/actions/checkout@v4
@@ -46,9 +46,9 @@ jobs:
       run: >
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
         -G Ninja
-        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -S ${{ github.workspace }}
+        # -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
 
     - name: Build
       # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
