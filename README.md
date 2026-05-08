@@ -4,7 +4,8 @@ SPDX-FileCopyrightText: 2026 Maarten L. Hekkelman
 SPDX-License-Identifier: BSD-2-Clause
 -->
 
-[![github CI](https://forge.hekkelman.net/maarten/mcfp/actions/workflows/build-and-test.yml/badge.svg)](https://forge.hekkelman.net/maarten/mcfp/actions)
+[![github CI](https://forge.hekkelman.net/maarten/mcfp/actions/workflows/build-and-test-debian.yml/badge.svg)](https://forge.hekkelman.net/maarten/mcfp/actions)
+[![github CI](https://forge.hekkelman.net/maarten/mcfp/actions/workflows/build-and-test-freebsd.yml/badge.svg)](https://forge.hekkelman.net/maarten/mcfp/actions)
 <!-- [![github CI](https://forge.hekkelman.net/maarten/mcfp/actions/workflows/build-documentation.yml/badge.svg)](https://forge.hekkelman.net/maarten/mcfp/actions) -->
 
 # libmcfp
