@@ -19,6 +19,7 @@
 # include <string>
 # include <system_error>
 # include <type_traits>
+# include <utility>
 #endif
 
 namespace mcfp
@@ -88,6 +89,7 @@ MCFP_EXPORT class config_category_impl : public std::error_category
 			case config_error::wrong_type_cast_flag:
 				return "the value assigned in a config file to a flag option was not 'true', 'false' or an integral numerical value";
 		}
+		std::unreachable();
 	}
 
 	/**

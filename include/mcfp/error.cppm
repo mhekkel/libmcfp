@@ -14,6 +14,7 @@ module;
 #include <string>
 #include <system_error>
 #include <type_traits>
+#include <utility>
 
 export module mcfp:error;
 
@@ -22,4 +23,3 @@ export module mcfp:error;
 #define MCFP_INLINE
 
 #include "error.hpp"
-

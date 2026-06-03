@@ -2,10 +2,13 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-# include "fast_float/fast_float.h"
+#ifndef BUILD_CXX_MODULE
 # include "mcfp/mcfp.hpp"
+#endif
 
-# include <charconv>
+#include "fast_float/fast_float.h"
+
+#include <charconv>
 
 #ifdef BUILD_CXX_MODULE
 module mcfp;
