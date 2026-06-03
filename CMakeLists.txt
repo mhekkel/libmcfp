@@ -25,13 +25,14 @@
 cmake_minimum_required(VERSION 3.28)
 
 # set the project name
-project(mcfp VERSION 2.0.1 LANGUAGES CXX)
+project(mcfp VERSION 2.0.2 LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 include(CPM)
 include(CMakePackageConfigHelpers)
 include(CTest)
+include(GNUInstallDirs)
 
 option(BUILD_DOCUMENTATION "Build the documentation" OFF)
 option(BUILD_CXX_MODULE "Build the library as a C++ 20 module" OFF)
@@ -55,7 +56,7 @@ if(NOT STD_CHARCONV_COMPILING)
 endif()
 
 file(GLOB_RECURSE mcfp_headers include/*.hpp)
-file(GLOB_RECURSE mcfp_modules modules/*.cppm)
+file(GLOB_RECURSE mcfp_modules include/*.cppm)
 
 if(BUILD_CXX_MODULE)
     file(GLOB_RECURSE mcfp_cpp src/*.cxx)
@@ -80,11 +81,15 @@ if(BUILD_CXX_MODULE)
     target_sources(mcfp
         PUBLIC
         FILE_SET mcfp_module TYPE CXX_MODULES
-        BASE_DIRS modules
+        BASE_DIRS include
         FILES
         ${mcfp_modules})
 
     target_compile_definitions(mcfp PUBLIC BUILD_CXX_MODULE)
+
+    target_include_directories(mcfp PUBLIC
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_LIBDIR}/cxx/miu>
+    )
 else()
     target_sources(mcfp
         PUBLIC
@@ -108,6 +113,8 @@ if(BUILD_CXX_MODULE)
         EXPORT mcfp
         CXX_MODULES_BMI DESTINATION "lib/cxx/bmi"
         FILE_SET mcfp_module DESTINATION "lib/cxx/miu")
+
+    install(FILES ${mcfp_headers} DESTINATION "lib/cxx/miu")
 
     install(EXPORT mcfp
         NAMESPACE mcfp::

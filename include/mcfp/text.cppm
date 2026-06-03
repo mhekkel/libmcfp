@@ -44,4 +44,4 @@ export module mcfp:text;
 #define MCFP_EXPORT export
 #define MCFP_INLINE
 
-#include "../include/mcfp/text.hpp"
+#include "text.hpp"
