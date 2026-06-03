@@ -26,19 +26,4 @@
 
 module;
 
-/**
- * @file text.cppm
- * This file contains word wrapping code
- */
-
-#include <cstddef>
-#include <string_view>
-#include <vector>
-
-export module mcfp:text;
-
-#define IN_MODULE_INTERFACE
-#define MCFP_EXPORT export
-#define MCFP_INLINE
-
-#include "text.hpp"
+#include "options.cpp"

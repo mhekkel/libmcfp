@@ -26,28 +26,4 @@
 
 module;
 
-#include <algorithm>
-#include <cassert>
-#include <cstring>
-#include <filesystem>
-#include <memory>
-#include <optional>
-#include <system_error>
-#include <type_traits>
-#include <utility>
-#include <vector>
-
-export module mcfp;
-
-#define IN_MODULE_INTERFACE
-#define MCFP_EXPORT export
-#define MCFP_INLINE
-
-export import :charconv;
-export import :error;
-export import :options;
-export import :sections;
-export import :text;
-
-#include "mcfp.hpp"
-
+#include "text.cpp"

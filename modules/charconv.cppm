@@ -1,17 +1,17 @@
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
- * 
+ *
  * Copyright (c) 2026 Maarten L. Hekkelman
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -26,24 +26,19 @@
 
 module;
 
-#include <cassert>
+// #include "fast_float/fast_float.h"
+
+#if __has_include(<experimental/type_traits>)
+# include <experimental/type_traits>
+#endif
 #include <charconv>
-#include <cstdio>
-#include <filesystem>
-#include <optional>
-#include <string>
 #include <type_traits>
 #include <utility>
-#include <vector>
 
-export module mcfp:options;
-
-import :charconv;
-import :error;
-import :text;
+export module mcfp:charconv;
 
 #define IN_MODULE_INTERFACE
 #define MCFP_EXPORT export
 #define MCFP_INLINE
 
-#include "options.hpp"
+#include "../include/mcfp/charconv.hpp"

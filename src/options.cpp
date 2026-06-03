@@ -24,14 +24,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// #ifdef BUILD_CXX_MODULE
-// module;
-// #else
+#ifndef BUILD_CXX_MODULE
 # include "mcfp/mcfp.hpp"
-// #endif
+#endif
 
-# include <ostream>
-# include <utility>
+#include <ostream>
+#include <utility>
 
 #ifdef BUILD_CXX_MODULE
 module mcfp;

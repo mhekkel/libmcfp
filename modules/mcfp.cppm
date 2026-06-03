@@ -26,17 +26,43 @@
 
 module;
 
-#include <charconv>
-#if __has_include(<experimental/type_traits>)
-# include <experimental/type_traits>
-#endif
+#include <algorithm>
+#include <cassert>
+#include <cassert>
+#include <climits>
+#include <cstdint>
+#include <cstring>
+#include <filesystem>
+#include <filesystem>
+#include <fstream>
+#include <memory>
+#include <optional>
+#include <ostream>
+#include <system_error>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
-export module mcfp:charconv;
+#if __has_include(<sys/ioctl.h>)
+# include <fcntl.h>
+# include <sys/ioctl.h>
+# include <unistd.h>
+#elif defined(_WIN32)
+# include <Windows.h>
+# include <cstdio>
+# include <io.h>
+#endif
+
+export module mcfp;
 
 #define IN_MODULE_INTERFACE
 #define MCFP_EXPORT export
 #define MCFP_INLINE
 
-#include "charconv.hpp"
+export import :charconv;
+export import :error;
+export import :options;
+export import :sections;
+export import :text;
+
+#include "../include/mcfp/mcfp.hpp"

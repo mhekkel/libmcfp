@@ -55,8 +55,13 @@ if(NOT STD_CHARCONV_COMPILING)
 endif()
 
 file(GLOB_RECURSE mcfp_headers include/*.hpp)
-file(GLOB_RECURSE mcfp_modules include/*.cppm)
-file(GLOB_RECURSE mcfp_cpp src/*.cpp)
+file(GLOB_RECURSE mcfp_modules modules/*.cppm)
+
+if(BUILD_CXX_MODULE)
+    file(GLOB_RECURSE mcfp_cpp src/*.cxx)
+else()
+    file(GLOB_RECURSE mcfp_cpp src/*.cpp)
+endif()
 
 if(STD_CHARCONV_COMPILING)
     list(FILTER mcfp_cpp EXCLUDE REGEX src/charconv-fast_float\.cpp)
@@ -75,11 +80,11 @@ if(BUILD_CXX_MODULE)
     target_sources(mcfp
         PUBLIC
         FILE_SET mcfp_module TYPE CXX_MODULES
-        BASE_DIRS include
+        BASE_DIRS modules
         FILES
         ${mcfp_modules})
 
-    target_compile_definitions(mcfp PRIVATE BUILD_CXX_MODULE)
+    target_compile_definitions(mcfp PUBLIC BUILD_CXX_MODULE)
 else()
     target_sources(mcfp
         PUBLIC

@@ -24,11 +24,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// #ifdef BUILD_CXX_MODULE
-// module;
-// #else
+#ifndef BUILD_CXX_MODULE
 # include "mcfp/mcfp.hpp"
-// #endif
+#endif
 
 # include <cassert>
 # include <climits>
