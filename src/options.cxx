@@ -4,9 +4,12 @@
 
 module;
 
-#include <ostream>
-#include <utility>
+#define MCFP_INCLUDE_HEADERS
+#include "options.cpp"
+#undef MCFP_INCLUDE_HEADERS
 
 module mcfp;
+
+#define MCFP_INCLUDE_CODE
 
 #include "options.cpp"

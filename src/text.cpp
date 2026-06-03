@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-#ifndef BUILD_CXX_MODULE
-# include "mcfp/mcfp.hpp"
+#include "mcfp-internal.hpp"
 
+#if defined(MCFP_INCLUDE_HEADERS)
 # include <algorithm>
 # include <cctype>
 # include <cstdint>
@@ -13,6 +13,8 @@
 # include <vector>
 
 #endif
+
+#if defined(MCFP_INCLUDE_CODE)
 
 namespace mcfp
 {
@@ -227,3 +229,5 @@ std::string_view::const_iterator word_wrapper::next_line_break(std::string_view:
 }
 
 } // namespace mcfp
+
+#endif

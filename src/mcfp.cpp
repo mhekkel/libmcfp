@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-#ifndef BUILD_CXX_MODULE
-# include "mcfp/mcfp.hpp"
+#include "mcfp-internal.hpp"
 
+#if defined(MCFP_INCLUDE_HEADERS)
 # include <cassert>
 # include <climits>
 # include <cstdint>
@@ -20,10 +20,11 @@
 #  include <Windows.h>
 #  include <cstdio>
 #  include <io.h>
-
 #endif
 
 #endif
+
+#if defined(MCFP_INCLUDE_CODE)
 
 namespace mcfp
 {
@@ -443,3 +444,5 @@ std::ostream &operator<<(std::ostream &os, const config &conf)
 }
 
 } // namespace mcfp
+
+#endif

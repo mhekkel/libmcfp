@@ -2,17 +2,17 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-#ifndef BUILD_CXX_MODULE
-# include "mcfp/mcfp.hpp"
-#endif
+#include "mcfp-internal.hpp"
+
+#if defined(MCFP_INCLUDE_HEADERS)
 
 #include "fast_float/fast_float.h"
 
 #include <charconv>
 
-#ifdef BUILD_CXX_MODULE
-module mcfp;
 #endif
+
+#if defined(MCFP_INCLUDE_CODE)
 
 namespace mcfp
 {
@@ -32,3 +32,5 @@ std::from_chars_result ff_charconv<double>::from_chars(const char *a, const char
 }
 
 } // namespace mcfp
+
+#endif

@@ -2,13 +2,15 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-#ifndef BUILD_CXX_MODULE
-# include "mcfp/mcfp.hpp"
+#include "mcfp-internal.hpp"
 
+#if defined(MCFP_INCLUDE_HEADERS)
 #include <ostream>
 #include <utility>
 
 #endif
+
+#if defined(MCFP_INCLUDE_CODE)
 
 namespace mcfp
 {
@@ -101,3 +103,5 @@ void option_base::write(std::ostream &os, std::string_view section_name, size_t 
 }
 
 } // namespace mcfp
+
+#endif

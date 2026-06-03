@@ -4,13 +4,12 @@
 
 module;
 
-# include <algorithm>
-# include <cctype>
-# include <cstdint>
-# include <limits>
-# include <string_view>
-# include <vector>
+#define MCFP_INCLUDE_HEADERS
+#include "text.cpp"
+#undef MCFP_INCLUDE_HEADERS
 
 module mcfp;
+
+#define MCFP_INCLUDE_CODE
 
 #include "text.cpp"
