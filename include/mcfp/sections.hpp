@@ -53,7 +53,7 @@ MCFP_EXPORT class section
 	{
 		os << '\n';
 		if (not m_name.empty())
-			os << "section " << std::quoted(m_name) << "\n\n";
+			os << "section [" << m_name << "]\n\n";
 
 		m_impl->write(os, m_name, indent, output_width);
 	}
