@@ -26,15 +26,22 @@
 
 #pragma once
 
-#include "mcfp/options.hpp"
+#ifndef MCFP_EXPORT
+# error "Please include mcfp.hpp only"
+#endif
 
-#include <iostream>
-#include <iomanip>
-#include <memory>
-#include <string>
-#include <string_view>
-#include <type_traits>
-#include <utility>
+#ifndef IN_MODULE_INTERFACE
+
+# include "mcfp/options.hpp"
+
+# include <iomanip>
+# include <iostream>
+# include <memory>
+# include <string>
+# include <string_view>
+# include <type_traits>
+# include <utility>
+#endif
 
 // --------------------------------------------------------------------
 
@@ -43,7 +50,7 @@
 namespace mcfp
 {
 
-class section
+MCFP_EXPORT class section
 {
   public:
 	template <typename... Options>
@@ -194,4 +201,3 @@ class section
 } // namespace mcfp
 
 /// @endcond
-

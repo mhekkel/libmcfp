@@ -24,23 +24,31 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "mcfp/mcfp.hpp"
+// #ifdef BUILD_CXX_MODULE
+// module;
+// #else
+# include "mcfp/mcfp.hpp"
+// #endif
 
-#include <cassert>
-#include <climits>
-#include <cstdint>
-#include <filesystem>
-#include <fstream>
-#include <ostream>
+# include <cassert>
+# include <climits>
+# include <cstdint>
+# include <filesystem>
+# include <fstream>
+# include <ostream>
 
-#if __has_include(<sys/ioctl.h>)
-# include <fcntl.h>
-# include <sys/ioctl.h>
-# include <unistd.h>
-#elif defined(_WIN32)
-# include <Windows.h>
-# include <cstdio>
-# include <io.h>
+# if __has_include(<sys/ioctl.h>)
+#  include <fcntl.h>
+#  include <sys/ioctl.h>
+#  include <unistd.h>
+# elif defined(_WIN32)
+#  include <Windows.h>
+#  include <cstdio>
+#  include <io.h>
+# endif
+
+#ifdef BUILD_CXX_MODULE
+module mcfp;
 #endif
 
 namespace mcfp
@@ -77,7 +85,7 @@ uint32_t get_terminal_width()
 }
 #else
 # warning "Could not find the terminal width, falling back to default"
-inline uint32_t get_terminal_width()
+MCFP_INLINE uint32_t get_terminal_width()
 {
 	return 80;
 }

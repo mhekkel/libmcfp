@@ -1,7 +1,7 @@
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
- * Copyright (c) 2022-2025 Maarten L. hekkelman
+ * Copyright (c) 2026 Maarten L. Hekkelman
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -24,46 +24,19 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+module;
 
-#ifndef MCFP_EXPORT
-# error "Please include mcfp.hpp only"
+#include <charconv>
+#if __has_include(<experimental/type_traits>)
+# include <experimental/type_traits>
 #endif
+#include <type_traits>
+#include <utility>
 
-/**
- * @file text.hpp
- * This file contains word wrapping code
- */
+export module mcfp:charconv;
 
-#ifndef IN_MODULE_INTERFACE
-# include <cstddef>
-# include <string_view>
-# include <vector>
-#endif
+#define IN_MODULE_INTERFACE
+#define MCFP_EXPORT export
+#define MCFP_INLINE
 
-namespace mcfp
-{
-
-/// @cond
-
-// --------------------------------------------------------------------
-/// Simplified line breaking code taken from a decent text editor.
-/// In this case, simplified means it only supports ASCII.
-/// The algorithm uses dynamic programming to find the optimal
-/// separation in lines.
-
-MCFP_EXPORT class word_wrapper : public std::vector<std::string_view>
-{
-  public:
-	word_wrapper(std::string_view text, size_t width);
-
-  private:
-	std::vector<std::string_view> wrap_line(std::string_view line, size_t width);
-
-	std::string_view::const_iterator next_line_break(std::string_view::const_iterator text,
-		std::string_view::const_iterator end);
-};
-
-/// @endcond
-
-} // namespace mcfp
+#include "charconv.hpp"

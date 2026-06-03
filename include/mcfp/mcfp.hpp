@@ -30,23 +30,29 @@
 /// This module library contains code to parse argc/argv and store the
 /// values provided into a singleton object.
 
+#ifndef IN_MODULE_INTERFACE
+
+# define MCFP_EXPORT
+# define MCFP_INLINE inline
+
 // IWYU pragma: begin_exports
-#include "mcfp/error.hpp"
-#include "mcfp/options.hpp"
-#include "mcfp/sections.hpp"
-#include "mcfp/text.hpp"
+# include "mcfp/error.hpp"
+# include "mcfp/options.hpp"
+# include "mcfp/sections.hpp"
+# include "mcfp/text.hpp"
 // IWYU pragma: end_exports
 
-#include <algorithm>
-#include <cassert>
-#include <cstring>
-#include <filesystem>
-#include <memory>
-#include <optional>
-#include <system_error>
-#include <type_traits>
-#include <utility>
-#include <vector>
+# include <algorithm>
+# include <cassert>
+# include <cstring>
+# include <filesystem>
+# include <memory>
+# include <optional>
+# include <system_error>
+# include <type_traits>
+# include <utility>
+# include <vector>
+#endif
 
 namespace mcfp
 {
@@ -59,7 +65,7 @@ namespace mcfp
  *
  */
 
-class config
+MCFP_EXPORT class config
 {
   public:
 	/**
@@ -564,7 +570,7 @@ class config
  * @param description The help text for this option
  * @return auto The option object created
  */
-template <typename T = void>
+MCFP_EXPORT template <typename T = void>
 auto make_option(ostring name, std::string description)
 	requires(not is_container_type_v<T>)
 {
@@ -572,7 +578,7 @@ auto make_option(ostring name, std::string description)
 }
 
 /** @cond */
-template <typename T>
+MCFP_EXPORT template <typename T>
 auto make_option(ostring name, std::string description)
 	requires(is_container_type_v<T>)
 {
@@ -596,7 +602,7 @@ auto make_option(ostring name, std::string description)
  * @param description The help text for this option
  * @return auto The option object created
  */
-template <typename T>
+MCFP_EXPORT template <typename T>
 auto make_option(ostring name, const T &v, std::string description)
 	requires(not is_container_type_v<T>)
 {
@@ -620,7 +626,7 @@ auto make_option(ostring name, const T &v, std::string description)
  * @param description The help text for this option
  * @return auto The option object created
  */
-template <typename T = void>
+MCFP_EXPORT template <typename T = void>
 auto make_hidden_option(ostring name, std::string description)
 	requires(not is_container_type_v<T>)
 {
@@ -628,7 +634,7 @@ auto make_hidden_option(ostring name, std::string description)
 }
 
 /** @cond */
-template <typename T>
+MCFP_EXPORT template <typename T>
 auto make_hidden_option(ostring name, std::string description)
 	requires(is_container_type_v<T>)
 {
@@ -654,7 +660,7 @@ auto make_hidden_option(ostring name, std::string description)
  * @param description The help text for this option
  * @return auto The option object created
  */
-template <typename T>
+MCFP_EXPORT template <typename T>
 auto make_hidden_option(ostring name, const T &v, std::string description)
 	requires(not is_container_type_v<T>)
 {

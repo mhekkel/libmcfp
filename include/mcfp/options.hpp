@@ -27,19 +27,25 @@
 
 #pragma once
 
-#include "mcfp/charconv.hpp"
-#include "mcfp/error.hpp"
-#include "mcfp/text.hpp"
+#ifndef MCFP_EXPORT
+# error "Please include mcfp.hpp only"
+#endif
 
-#include <cassert>
-#include <charconv>
-#include <cstdio>
-#include <filesystem>
-#include <optional>
-#include <string>
-#include <type_traits>
-#include <utility>
-#include <vector>
+#ifndef IN_MODULE_INTERFACE
+# include "mcfp/charconv.hpp"
+# include "mcfp/error.hpp"
+# include "mcfp/text.hpp"
+
+# include <cassert>
+# include <charconv>
+# include <cstdio>
+# include <filesystem>
+# include <optional>
+# include <string>
+# include <type_traits>
+# include <utility>
+# include <vector>
+#endif
 
 namespace mcfp
 {
@@ -72,12 +78,12 @@ template <typename T>
 			 is_detected_v<iterator_t, T> and
 			 not is_detected_v<std_string_npos_t, T>)
 struct is_container_type<T>
-	: std::true_type
+    : std::true_type
 {
 };
 
 template <typename T>
-inline constexpr bool is_container_type_v = is_container_type<T>::value;
+MCFP_INLINE constexpr bool is_container_type_v = is_container_type<T>::value;
 
 static_assert(is_container_type_v<std::vector<int>>);
 static_assert(is_container_type_v<std::vector<std::string>>);
@@ -88,7 +94,7 @@ static_assert(is_container_type_v<std::vector<std::string>>);
 // This error reporting function is not constexpr and thus when it is
 // called by the checking the format of options strings, it will cause
 // a compile time error.
-[[noreturn]] inline void report_error(const char *msg)
+[[noreturn]] MCFP_INLINE void report_error(const char *msg)
 {
 	(void)fputs(msg, stderr);
 	exit(1);
@@ -174,7 +180,7 @@ struct ostring
 	string_view m_short;
 
 	template <size_t N>
-	consteval inline ostring(const char (&s)[N]) // NOLINT(hicpp-explicit-conversions)
+	consteval MCFP_INLINE ostring(const char (&s)[N]) // NOLINT(hicpp-explicit-conversions)
 		: m_str(s, N - 1)
 	{
 		parse();
@@ -183,13 +189,13 @@ struct ostring
 	constexpr void parse();
 };
 
-constexpr inline bool is_alnum(int ch) noexcept
+constexpr MCFP_INLINE bool is_alnum(int ch) noexcept
 {
 	return (ch >= '0' and ch <= '9') or (ch >= 'a' and ch <= 'z') or
 	       (ch >= 'A' and ch <= 'Z');
 }
 
-constexpr inline bool is_valid_option_char(char ch) noexcept
+constexpr MCFP_INLINE bool is_valid_option_char(char ch) noexcept
 {
 	return ch == '-' or ch == '_' or is_alnum(ch);
 }
@@ -242,7 +248,7 @@ constexpr void ostring::parse()
 // command line argument to the type that should be stored.
 // In fact, here is where the command line arguments are checked for
 // proper formatting.
-template <typename T, typename = void>
+MCFP_EXPORT template <typename T, typename = void>
 struct option_traits;
 
 template <typename T>
@@ -469,6 +475,5 @@ struct option<void> : public option_base
 };
 
 /// @endcond
-
 
 } // namespace mcfp

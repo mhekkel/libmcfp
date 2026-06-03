@@ -7,7 +7,9 @@
 #include <iostream>
 #include <vector>
 
-#include "mcfp/mcfp.hpp"
+// #include "mcfp/mcfp.hpp"
+
+import mcfp;
 
 int main(int argc, char *const argv[])
 {

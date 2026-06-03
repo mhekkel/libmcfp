@@ -1,17 +1,17 @@
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
- *
- * Copyright (c) 2022-2025 Maarten L. hekkelman
- *
+ * 
+ * Copyright (c) 2026 Maarten L. Hekkelman
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- *
+ * 
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -24,46 +24,23 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+module;
 
-#ifndef MCFP_EXPORT
-# error "Please include mcfp.hpp only"
-#endif
+#include <iostream>
+#include <iomanip>
+#include <memory>
+#include <string>
+#include <string_view>
+#include <type_traits>
+#include <utility>
 
-/**
- * @file text.hpp
- * This file contains word wrapping code
- */
+export module mcfp:sections;
 
-#ifndef IN_MODULE_INTERFACE
-# include <cstddef>
-# include <string_view>
-# include <vector>
-#endif
+import :options;
 
-namespace mcfp
-{
+#define IN_MODULE_INTERFACE
+#define MCFP_EXPORT export
+#define MCFP_INLINE
 
-/// @cond
+#include "sections.hpp"
 
-// --------------------------------------------------------------------
-/// Simplified line breaking code taken from a decent text editor.
-/// In this case, simplified means it only supports ASCII.
-/// The algorithm uses dynamic programming to find the optimal
-/// separation in lines.
-
-MCFP_EXPORT class word_wrapper : public std::vector<std::string_view>
-{
-  public:
-	word_wrapper(std::string_view text, size_t width);
-
-  private:
-	std::vector<std::string_view> wrap_line(std::string_view line, size_t width);
-
-	std::string_view::const_iterator next_line_break(std::string_view::const_iterator text,
-		std::string_view::const_iterator end);
-};
-
-/// @endcond
-
-} // namespace mcfp

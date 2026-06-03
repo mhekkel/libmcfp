@@ -24,14 +24,22 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "mcfp/mcfp.hpp"
+// #ifdef BUILD_CXX_MODULE
+// module;
+// #else
+# include "mcfp/mcfp.hpp"
+// #endif
 
-#include <algorithm>
-#include <cctype>
-#include <cstdint>
-#include <limits>
-#include <string_view>
-#include <vector>
+# include <algorithm>
+# include <cctype>
+# include <cstdint>
+# include <limits>
+# include <string_view>
+# include <vector>
+
+#ifdef BUILD_CXX_MODULE
+module mcfp;
+#endif
 
 namespace mcfp
 {

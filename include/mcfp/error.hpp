@@ -26,6 +26,10 @@
 
 #pragma once
 
+#ifndef MCFP_EXPORT
+# error "Please include mcfp.hpp only"
+#endif
+
 /**
  * @file error.hpp
  *
@@ -33,9 +37,11 @@
  *
  */
 
-#include <string>
-#include <system_error>
-#include <type_traits>
+#ifndef IN_MODULE_INTERFACE
+# include <string>
+# include <system_error>
+# include <type_traits>
+#endif
 
 namespace mcfp
 {
@@ -47,7 +53,7 @@ namespace mcfp
  *
  * @brief A stronly typed class containing the error codes reported by @ref mcfp::config
  */
-enum class config_error
+MCFP_EXPORT enum class config_error
 {
 	unknown_option = 1,              /**< The option requested does not exist, was not part of @ref mcfp::config::init. This error is returned by @ref mcfp::config::get */
 	option_does_not_accept_argument, /**< When parsing the command line arguments a value (argument) was specified for an option that should not have one */
@@ -62,7 +68,7 @@ enum class config_error
  * @brief The implementation for config_category error messages
  *
  */
-class config_category_impl : public std::error_category
+MCFP_EXPORT class config_category_impl : public std::error_category
 {
   public:
 	/**
@@ -122,7 +128,7 @@ class config_category_impl : public std::error_category
  *
  * @return std::error_category&
  */
-inline std::error_category &config_category()
+MCFP_EXPORT MCFP_INLINE std::error_category &config_category()
 {
 	static config_category_impl instance;
 	return instance;
@@ -134,7 +140,7 @@ inline std::error_category &config_category()
  * @param e A config_error enum
  * @return std::error_code
  */
-inline std::error_code make_error_code(config_error e)
+MCFP_EXPORT MCFP_INLINE std::error_code make_error_code(config_error e)
 {
 	return { static_cast<int>(e), config_category() };
 }
@@ -145,7 +151,7 @@ inline std::error_code make_error_code(config_error e)
  * @param e A config_error enum
  * @return std::error_condition
  */
-inline std::error_condition make_error_condition(config_error e)
+MCFP_EXPORT MCFP_INLINE std::error_condition make_error_condition(config_error e)
 {
 	return { static_cast<int>(e), config_category() };
 }
@@ -159,7 +165,7 @@ namespace std
 
 template <> // NOLINT(bugprone-std-namespace-modification,cert-dcl58-cpp)
 struct is_error_condition_enum<mcfp::config_error>
-	: public true_type
+    : public true_type
 {
 };
 

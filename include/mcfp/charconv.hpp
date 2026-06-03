@@ -26,12 +26,20 @@
 
 #pragma once
 
-#include <charconv>
-#if __has_include(<experimental/type_traits>)
-# include <experimental/type_traits>
+#ifndef MCFP_EXPORT
+# error "Please include mcfp.hpp only"
 #endif
-#include <type_traits>
-#include <utility>
+
+#ifndef IN_MODULE_INTERFACE
+
+# include <charconv>
+# if __has_include(<experimental/type_traits>)
+#  include <experimental/type_traits>
+# endif
+# include <type_traits>
+# include <utility>
+
+#endif
 
 namespace mcfp
 {
@@ -72,26 +80,26 @@ struct nonesuch
 	void operator=(nonesuch const &) = delete;
 };
 
-template <template <class...> class Op, class... Args>
+MCFP_EXPORT template <template <class...> class Op, class... Args>
 using is_detected = typename detail::detector<nonesuch, void, Op, Args...>::value_t;
 
-template <template <class...> class Op, class... Args>
+MCFP_EXPORT template <template <class...> class Op, class... Args>
 constexpr bool is_detected_v = is_detected<Op, Args...>::value;
 
-template <template <class...> class Op, class... Args>
+MCFP_EXPORT template <template <class...> class Op, class... Args>
 using detected_t = typename detail::detector<nonesuch, void, Op, Args...>::type;
 
-template <class Default, template <class...> class Op, class... Args>
+MCFP_EXPORT template <class Default, template <class...> class Op, class... Args>
 using detected_or = detail::detector<Default, void, Op, Args...>;
 
-template <class Expected, template <class...> class Op, class... Args>
+MCFP_EXPORT template <class Expected, template <class...> class Op, class... Args>
 using is_detected_exact = std::is_same<Expected, detected_t<Op, Args...>>;
 
-template <class Expected, template <class...> class Op, class... Args>
+MCFP_EXPORT template <class Expected, template <class...> class Op, class... Args>
 constexpr bool is_detected_exact_v = is_detected_exact<Expected, Op, Args...>::value;
 #else
 
-template <template <class...> class Op, class... Args>
+MCFP_EXPORT template <template <class...> class Op, class... Args>
 constexpr bool is_detected_v = std::experimental::is_detected<Op, Args...>::value;
 
 #endif
@@ -118,10 +126,10 @@ struct ff_charconv<T>
 	static std::from_chars_result from_chars(const char *a, const char *b, T &v);
 };
 
-template <typename T>
+MCFP_EXPORT template <typename T>
 using charconv = typename std::conditional_t<is_detected_v<from_chars_function, T>, std_charconv<T>, ff_charconv<T>>;
 
-template <typename T>
+MCFP_EXPORT template <typename T>
 constexpr auto from_chars(const char *s, const char *e, T &v)
 {
 	return charconv<T>::from_chars(s, e, v);

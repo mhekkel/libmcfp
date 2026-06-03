@@ -25,9 +25,14 @@
  */
 
 #include "test-main.hpp"
+
 #include <filesystem>
 
-#include "mcfp/mcfp.hpp"
+#if BUILD_CXX_MODULE
+import mcfp;
+#else
+# include <mcfp/mcfp.hpp>
+#endif
 
 // --------------------------------------------------------------------
 
