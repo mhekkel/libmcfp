@@ -29,6 +29,7 @@ jobs:
         build_type: [Release]
         # cpp_compiler: [g++, clang++]
         cpp_compiler: [c++]
+        module: ["ON", "OFF"]
 
     steps:
     - uses: https://data.forgejo.org/actions/checkout@v4
@@ -52,6 +53,7 @@ jobs:
         -G Ninja
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DBUILD_CXX_MODULE=${{ matrix.module }}
         -S ${{ github.workspace }}
 
     - name: Build
