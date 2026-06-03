@@ -14,9 +14,7 @@ A library for parsing command line arguments and configuration files and making 
 
 There's a config file parser as well.
 
-> **_NOTE:_** The naming of libmcfp has changed again in version 1.3.4 reverting the rename of 1.3.3. To use libmcfp you should use find_package(mcfp) and link to mcfp::mcfp
-
-> **_NOTE:_** This library is now a cpp20 module library instead of a header only library.
+Before version 2 this library was header only, but that has changed, as of version 2 libmcfp can be built as either a C++ module library or a regular library.
 
 ## Synopsis
 
@@ -183,9 +181,20 @@ Use [cmake](https://cmake.org/) to install _libmcfp_. You will also need a very
 recent compiler.
 
 ```bash
-git clone https://github.com/mhekkel/libmcfp.git
-cd libmcfp
+git clone https://forge.hekkelman.net/maarten/mcfp.git
+cd mcfp
 cmake -B build -G Ninja
 cmake --build build
 cmake --install build
 ```
+
+ If you want to build the module library, you will need at least gcc 15 or a recent clang. And then you will have to add a parameter to cmake, like this:
+
+ ```bash
+git clone https://forge.hekkelman.net/maarten/mcfp.git
+cd mcfp
+cmake -B build -G Ninja -DBUILD_CXX_MODULE=ON
+cmake --build build
+cmake --install build
+```
+
