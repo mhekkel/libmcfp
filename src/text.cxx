@@ -4,8 +4,6 @@
 
 module;
 
-# include "mcfp/mcfp.hpp"
-
 # include <algorithm>
 # include <cctype>
 # include <cstdint>
@@ -14,7 +12,5 @@ module;
 # include <vector>
 
 module mcfp;
-
-#define BUILD_CXX_MODULE
 
 #include "text.cpp"

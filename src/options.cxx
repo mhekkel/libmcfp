@@ -9,5 +9,4 @@ module;
 
 module mcfp;
 
-#define BUILD_CXX_MODULE
 #include "options.cpp"
