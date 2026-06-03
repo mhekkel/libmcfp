@@ -4,7 +4,6 @@
 
 #ifndef BUILD_CXX_MODULE
 # include "mcfp/mcfp.hpp"
-#endif
 
 # include <cassert>
 # include <climits>
@@ -21,10 +20,9 @@
 #  include <Windows.h>
 #  include <cstdio>
 #  include <io.h>
-# endif
 
-#ifdef BUILD_CXX_MODULE
-module mcfp;
+#endif
+
 #endif
 
 namespace mcfp

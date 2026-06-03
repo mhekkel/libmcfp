@@ -4,13 +4,10 @@
 
 #ifndef BUILD_CXX_MODULE
 # include "mcfp/mcfp.hpp"
-#endif
 
 #include <ostream>
 #include <utility>
 
-#ifdef BUILD_CXX_MODULE
-module mcfp;
 #endif
 
 namespace mcfp

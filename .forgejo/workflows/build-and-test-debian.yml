@@ -29,8 +29,7 @@ jobs:
         build_type: [Release]
         # cpp_compiler: [g++, clang++]
         cpp_compiler: [g++]
-        # module: ["ON", "OFF"] < Modules will only work with gcc >= 15
-        module: [ "OFF" ]
+        module: ["ON", "OFF"]
 
     steps:
     - uses: https://data.forgejo.org/actions/checkout@v4

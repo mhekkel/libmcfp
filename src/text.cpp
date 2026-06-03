@@ -4,7 +4,6 @@
 
 #ifndef BUILD_CXX_MODULE
 # include "mcfp/mcfp.hpp"
-#endif
 
 # include <algorithm>
 # include <cctype>
@@ -13,8 +12,6 @@
 # include <string_view>
 # include <vector>
 
-#ifdef BUILD_CXX_MODULE
-module mcfp;
 #endif
 
 namespace mcfp

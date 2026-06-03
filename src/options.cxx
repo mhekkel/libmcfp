@@ -4,4 +4,10 @@
 
 module;
 
+#include <ostream>
+#include <utility>
+
+module mcfp;
+
+#define BUILD_CXX_MODULE
 #include "options.cpp"
