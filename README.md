@@ -193,14 +193,3 @@ cmake -B build -G Ninja
 cmake --build build
 cmake --install build
 ```
-
- If you want to build the module library, you will need at least gcc 15 or a recent clang. And then you will have to add a parameter to cmake, like this:
-
- ```bash
-git clone https://forge.hekkelman.net/maarten/mcfp.git
-cd mcfp
-cmake -B build -G Ninja -DMCFP_BUILD_CXX_MODULE=ON
-cmake --build build
-cmake --install build
-```
-
