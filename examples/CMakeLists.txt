@@ -13,6 +13,8 @@ endif()
 add_executable(example example.cpp)
 target_link_libraries(example mcfp::mcfp)
 
-# Build using c++ module library
-add_executable(example-m example.cpp)
-target_link_libraries(example-m mcfp::mcfp-module)
+if(MCFP_BUILD_CXX_MODULE)
+	# Build using c++ module library
+	add_executable(example-m example.cpp)
+	target_link_libraries(example-m mcfp::mcfp-module)
+endif()
