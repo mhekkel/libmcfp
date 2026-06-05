@@ -2,6 +2,12 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause
 
+# This makefile builds a traditional library, and when the compiler
+# is thought to be good enough, a c++ module library as well.
+# Both are installed. The users selects either the traditional
+# library by using mcfp::mcfp as target library, or the module
+# by using mcfp::mcfp-module
+
 cmake_minimum_required(VERSION 3.28)
 
 # set the project name
@@ -100,22 +106,17 @@ if(MCFP_BUILD_CXX_MODULE)
     target_compile_definitions(mcfp-module PUBLIC MCFP_CXX_MODULE)
 
     target_include_directories(mcfp-module PUBLIC
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_LIBDIR}>
-    )
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>/mcfp)
 
     install(TARGETS mcfp-module
-        EXPORT mcfp-module
+        EXPORT mcfp-module-targets
         CXX_MODULES_BMI DESTINATION "lib/cxx/bmi"
         FILE_SET mcfp_module DESTINATION "lib/cxx/miu")
 
-    install(EXPORT mcfp-module
+    install(EXPORT mcfp-module-targets
         NAMESPACE mcfp::
         DESTINATION lib/cmake/mcfp
         FILE "mcfp-module-targets.cmake")
-
-    install(EXPORT mcfp-module
-        NAMESPACE mcfp::
-        DESTINATION lib/cmake/mcfp)
 
 endif()
 

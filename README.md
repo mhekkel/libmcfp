@@ -27,7 +27,7 @@ In your CMakeLists.txt file you can specify what version to use by either provid
 #include <iostream>
 #include <vector>
 
-#if MCFP_CXX_MODULE
+#if defined(MCFP_CXX_MODULE)
 import mcfp;
 #else
 #include "mcfp/mcfp.hpp"

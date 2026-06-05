@@ -1,3 +1,6 @@
+Version 2.0.2
+- Build as traditional as well as module library.
+
 Version 2.0.1
 - Fix name of fast_float in CPMFindPackage to FastFloat
 
