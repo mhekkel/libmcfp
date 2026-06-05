@@ -15,10 +15,10 @@ include(CTest)
 include(GNUInstallDirs)
 
 option(BUILD_DOCUMENTATION "Build the documentation" OFF)
-option(BUILD_CXX_MODULE "Build the library as a C++ 20 module" OFF)
+option(MCFP_BUILD_CXX_MODULE "Build the library as a C++ 20 module library" OFF)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    if(BUILD_CXX_MODULE AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 15)
+    if(MCFP_BUILD_CXX_MODULE AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 15)
         message(FATAL_ERROR "Sorry, your gcc is too old")
     endif()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers")
@@ -40,16 +40,12 @@ endif()
 
 file(GLOB_RECURSE mcfp_headers include/*.hpp)
 file(GLOB_RECURSE mcfp_modules include/*.cppm)
-
-if(BUILD_CXX_MODULE)
-    file(GLOB_RECURSE mcfp_cpp src/*.cxx)
-else()
-    file(GLOB_RECURSE mcfp_cpp src/*.cpp)
-endif()
+file(GLOB_RECURSE mcfp_cpp src/*.cpp)
+file(GLOB_RECURSE mcfp_cxx src/*.cxx)
 
 if(STD_CHARCONV_COMPILING)
     list(FILTER mcfp_cpp EXCLUDE REGEX src/charconv-fast_float\.cpp)
-    list(FILTER mcfp_cpp EXCLUDE REGEX src/charconv-fast_float\.cxx)
+    list(FILTER mcfp_cxx EXCLUDE REGEX src/charconv-fast_float\.cxx)
 endif()
 
 add_library(mcfp ${mcfp_cpp})
@@ -61,29 +57,12 @@ if(NOT STD_CHARCONV_COMPILING)
     target_include_directories(mcfp PRIVATE $<TARGET_PROPERTY:FastFloat::fast_float,INTERFACE_INCLUDE_DIRECTORIES>)
 endif()
 
-if(BUILD_CXX_MODULE)
-    target_sources(mcfp
-        PUBLIC
-        FILE_SET mcfp_module TYPE CXX_MODULES
-        BASE_DIRS include
-        FILES
-        ${mcfp_modules})
-
-    target_compile_definitions(mcfp PUBLIC BUILD_CXX_MODULE)
-
-    target_include_directories(mcfp PUBLIC
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_LIBDIR}/cxx/miu>
-    )
-else()
-    target_sources(mcfp
-        PUBLIC
-        FILE_SET mcfp_module TYPE HEADERS
-        BASE_DIRS include
-        FILES
-        ${mcfp_headers})
-endif()
-
-# installation
+target_sources(mcfp
+    PUBLIC
+    FILE_SET mcfp_classic TYPE HEADERS
+    BASE_DIRS include
+    FILES
+    ${mcfp_headers})
 
 set(mcfp_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
 set_target_properties(mcfp PROPERTIES
@@ -92,27 +71,52 @@ set_target_properties(mcfp PROPERTIES
     INTERFACE_mcfp_MAJOR_VERSION ${PROJECT_VERSION_MAJOR}
     COMPATIBLE_INTERFACE_STRING mcfp_MAJOR_VERSION)
 
-if(BUILD_CXX_MODULE)
-    install(TARGETS mcfp
-        EXPORT mcfp
+install(TARGETS mcfp
+    EXPORT mcfp-targets
+    FILE_SET mcfp_classic
+    DESTINATION "include")
+
+install(EXPORT mcfp-targets
+    NAMESPACE mcfp::
+    DESTINATION lib/cmake/mcfp)
+
+if(MCFP_BUILD_CXX_MODULE)
+    add_library(mcfp-module ${mcfp_cxx})
+    add_library(mcfp::mcfp-module ALIAS mcfp-module)
+
+    target_compile_features(mcfp-module PUBLIC cxx_std_23)
+
+    if(NOT STD_CHARCONV_COMPILING)
+        target_include_directories(mcfp-module PRIVATE $<TARGET_PROPERTY:FastFloat::fast_float,INTERFACE_INCLUDE_DIRECTORIES>)
+    endif()
+
+    target_sources(mcfp-module
+        PUBLIC
+        FILE_SET mcfp_module TYPE CXX_MODULES
+        BASE_DIRS include
+        FILES
+        ${mcfp_modules})
+
+    target_compile_definitions(mcfp-module PUBLIC MCFP_CXX_MODULE)
+
+    target_include_directories(mcfp-module PUBLIC
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_LIBDIR}>
+    )
+
+    install(TARGETS mcfp-module
+        EXPORT mcfp-module
         CXX_MODULES_BMI DESTINATION "lib/cxx/bmi"
         FILE_SET mcfp_module DESTINATION "lib/cxx/miu")
 
-    install(FILES ${mcfp_headers} DESTINATION "lib/cxx/miu")
-
-    install(EXPORT mcfp
+    install(EXPORT mcfp-module
         NAMESPACE mcfp::
         DESTINATION lib/cmake/mcfp
-        FILE "mcfp-targets.cmake")
-else()
-    install(TARGETS mcfp
-        EXPORT mcfp-targets
-        FILE_SET mcfp_module
-        DESTINATION "include")
+        FILE "mcfp-module-targets.cmake")
 
-    install(EXPORT mcfp-targets
+    install(EXPORT mcfp-module
         NAMESPACE mcfp::
         DESTINATION lib/cmake/mcfp)
+
 endif()
 
 configure_package_config_file(${PROJECT_SOURCE_DIR}/cmake/mcfp-config.cmake.in

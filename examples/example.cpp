@@ -7,7 +7,7 @@
 #include <iostream>
 #include <vector>
 
-#if BUILD_CXX_MODULE
+#if defined(MCFP_CXX_MODULE)
 import mcfp;
 #else
 #include "mcfp/mcfp.hpp"
@@ -91,7 +91,7 @@ int main(int argc, char *const argv[])
 
 	// If options are specified more than once, you can get the count
 
-	int VERBOSE = config.count("verbose");
+	[[maybe_unused]] int VERBOSE = config.count("verbose");
 
 	// Operands are arguments that are not options, e.g. files to act upon
 

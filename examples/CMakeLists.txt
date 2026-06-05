@@ -9,5 +9,10 @@ if(NOT (TARGET mcfp))
 	find_package(mcfp REQUIRED)
 endif()
 
+# Build using traditional headers
 add_executable(example example.cpp)
 target_link_libraries(example mcfp::mcfp)
+
+# Build using c++ module library
+add_executable(example-m example.cpp)
+target_link_libraries(example-m mcfp::mcfp-module)

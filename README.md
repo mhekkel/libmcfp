@@ -14,7 +14,9 @@ A library for parsing command line arguments and configuration files and making 
 
 There's a config file parser as well.
 
-Before version 2 this library was header only, but that has changed, as of version 2 libmcfp can be built as either a C++ module library or a regular library.
+Before version 2 this library was header only, but that has changed, as of version 2 libmcfp can be built as either a C++ module library or a regular library. The default is to build and install both, but only when the compiler is new enough.
+
+In your CMakeLists.txt file you can specify what version to use by either providing `mcfp::mcfp` or `mcfp::mcfp-module` as library to `target_link_libraries`.
 
 ## Synopsis
 
@@ -25,7 +27,11 @@ Before version 2 this library was header only, but that has changed, as of versi
 #include <iostream>
 #include <vector>
 
+#if MCFP_CXX_MODULE
+import mcfp;
+#else
 #include "mcfp/mcfp.hpp"
+#endif
 
 int main(int argc, char *const argv[])
 {
@@ -193,7 +199,7 @@ cmake --install build
  ```bash
 git clone https://forge.hekkelman.net/maarten/mcfp.git
 cd mcfp
-cmake -B build -G Ninja -DBUILD_CXX_MODULE=ON
+cmake -B build -G Ninja -DMCFP_BUILD_CXX_MODULE=ON
 cmake --build build
 cmake --install build
 ```

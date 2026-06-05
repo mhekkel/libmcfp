@@ -5,8 +5,9 @@
 #include "test-main.hpp"
 
 #include <filesystem>
+#include <fstream>
 
-#if BUILD_CXX_MODULE
+#if MCFP_CXX_MODULE
 import mcfp;
 #else
 # include <mcfp/mcfp.hpp>
@@ -63,12 +64,14 @@ TEST_CASE("suffixed-options")
 
   -v [ --verbose ]      
 
-section "ccd"
+section [ccd]
 
   --ccd.download-missing-files
                         This option will allow your software to
                         download missing CCD files
 )";
+
+	CHECK(os.str() == test_str);
 }
 
 TEST_CASE("suffixed-options-2")
