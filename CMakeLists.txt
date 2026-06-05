@@ -25,11 +25,17 @@ option(MCFP_BUILD_CXX_MODULE "Build the library as a C++ 20 module library" OFF)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     if(MCFP_BUILD_CXX_MODULE AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 15)
-        message(FATAL_ERROR "Sorry, your gcc is too old")
+        message(WARNING "Sorry, your gcc is too old, not building the module library")
+        set(MCFP_BUILD_CXX_MODULE OFF)
     endif()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers")
 elseif(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+elseif(${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD")
+    if(MCFP_BUILD_CXX_MODULE AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 20)
+        message(WARNING "Sorry, your gcc is too old, not building the module library")
+        set(MCFP_BUILD_CXX_MODULE OFF)
+    endif()
 endif()
 
 try_compile(STD_CHARCONV_COMPILING
