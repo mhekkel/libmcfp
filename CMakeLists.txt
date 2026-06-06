@@ -126,7 +126,8 @@ if(MCFP_BUILD_CXX_MODULE)
 
 endif()
 
-configure_package_config_file(${PROJECT_SOURCE_DIR}/cmake/mcfp-config.cmake.in
+configure_package_config_file(
+    ${PROJECT_SOURCE_DIR}/cmake/mcfp-config.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/mcfp-config.cmake
     INSTALL_DESTINATION lib/cmake/mcfp)
 write_basic_package_version_file(
@@ -134,7 +135,8 @@ write_basic_package_version_file(
     VERSION ${PROJECT_VERSION}
     COMPATIBILITY AnyNewerVersion)
 
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/mcfp-config.cmake"
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/mcfp-config.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/mcfp-config-version.cmake"
     DESTINATION lib/cmake/mcfp)
 
