@@ -21,7 +21,7 @@ include(CTest)
 include(GNUInstallDirs)
 
 option(BUILD_DOCUMENTATION "Build the documentation" OFF)
-option(MCFP_BUILD_CXX_MODULE "Build the library as a C++ 20 module library" OFF)
+option(MCFP_BUILD_CXX_MODULE "Build the library as a C++ 20 module library" ON)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     if(MCFP_BUILD_CXX_MODULE AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 15)
