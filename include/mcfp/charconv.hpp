@@ -5,7 +5,8 @@
 #pragma once
 
 #ifndef MCFP_EXPORT
-# error "Please include mcfp.hpp only"
+# define MCFP_EXPORT
+# define MCFP_INLINE inline
 #endif
 
 #ifndef IN_MODULE_INTERFACE

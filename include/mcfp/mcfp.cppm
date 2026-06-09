@@ -6,11 +6,9 @@ module;
 
 #include <algorithm>
 #include <cassert>
-#include <cassert>
 #include <climits>
 #include <cstdint>
 #include <cstring>
-#include <filesystem>
 #include <filesystem>
 #include <fstream>
 #include <memory>
@@ -37,10 +35,9 @@ export module mcfp;
 #define MCFP_EXPORT export
 #define MCFP_INLINE
 
-export import :charconv;
-export import :error;
-export import :options;
-export import :sections;
-export import :text;
-
+#include "error.hpp"
+#include "charconv.hpp"
+#include "options.hpp"
+#include "sections.hpp"
+#include "text.hpp"
 #include "mcfp.hpp"

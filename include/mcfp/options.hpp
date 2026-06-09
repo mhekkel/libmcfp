@@ -5,13 +5,13 @@
 #pragma once
 
 #ifndef MCFP_EXPORT
-# error "Please include mcfp.hpp only"
+# define MCFP_EXPORT
+# define MCFP_INLINE inline
 #endif
 
 #ifndef IN_MODULE_INTERFACE
 # include "mcfp/charconv.hpp"
 # include "mcfp/error.hpp"
-# include "mcfp/text.hpp"
 
 # include <cassert>
 # include <charconv>
