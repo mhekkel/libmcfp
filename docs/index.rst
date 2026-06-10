@@ -81,8 +81,8 @@ Other requirements are `CMake <https://cmake.org/>`_ version 3.28 or higher.
 
 .. code-block:: console
 
-   git clone https://github.com/mhekkel/libmcfp.git
-   cd libmcfp
+   git clone https://forge.hekkelman.net/maarten/mcfp.git
+   cd mcfp
    cmake -B build
    cmake --build build
    cmake --install build
