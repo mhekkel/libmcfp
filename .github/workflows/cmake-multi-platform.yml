@@ -10,6 +10,13 @@ on:
   pull_request:
     branches: [ "trunk" ]
 
+permissions:
+  contents: write
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  VCPKG_FEATURE_FLAGS: dependencygraph
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -67,6 +74,10 @@ jobs:
       if: matrix.os == 'macos-latest'
       run: >
         brew install catch2
+
+    - name: Install Catch2 windows
+      if: matrix.os == 'windows-latest'
+      run: ${{ github.workspace }}/vcpkg/vcpkg install
 
     - name: Set up MSVC
       uses: ilammy/msvc-dev-cmd@v1
