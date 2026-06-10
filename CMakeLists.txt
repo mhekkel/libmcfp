@@ -118,7 +118,7 @@ if(MCFP_BUILD_CXX_MODULE)
     target_compile_definitions(mcfp-module PUBLIC MCFP_CXX_MODULE)
 
     target_include_directories(mcfp-module PUBLIC
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>/mcfp)
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/mcfp>)
 
     install(TARGETS mcfp-module
         EXPORT mcfp-module-targets
