@@ -69,8 +69,6 @@ MCFP_EXPORT class config
 		requires(std::is_base_of_v<option_base, Options> and ...)
 	config &init(std::string usage, Options &&...options)
 	{
-		using std::operator""sv;
-
 		m_sections.clear();
 
 		m_usage = std::move(usage);
