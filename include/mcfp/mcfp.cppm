@@ -18,7 +18,6 @@ import std;
 
 export module mcfp;
 
-#define IN_MODULE_INTERFACE
 #define MCFP_EXPORT export
 #define MCFP_INLINE
 

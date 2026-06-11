@@ -4,7 +4,7 @@
 
 #pragma once
 
-#ifndef IN_MODULE_INTERFACE
+#ifndef MCFP_CXX_MODULE
 # include "mcfp/charconv.hpp"
 # include "mcfp/error.hpp"
 
