@@ -4,23 +4,10 @@
 
 module;
 
-#include <algorithm>
-#include <cassert>
-#include <climits>
-#include <cstdint>
-#include <cstring>
-#include <filesystem>
-#include <fstream>
-#include <memory>
-#include <optional>
-#include <ostream>
-#include <system_error>
-#include <type_traits>
-#include <utility>
-#include <vector>
+import std;
 
 #if __has_include(<sys/ioctl.h>)
-# include <fcntl.h>
+// # include <fcntl.h>
 # include <sys/ioctl.h>
 # include <unistd.h>
 #elif defined(_WIN32)

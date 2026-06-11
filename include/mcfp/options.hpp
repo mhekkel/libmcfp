@@ -4,11 +4,6 @@
 
 #pragma once
 
-#ifndef MCFP_EXPORT
-# define MCFP_EXPORT
-# define MCFP_INLINE inline
-#endif
-
 #ifndef IN_MODULE_INTERFACE
 # include "mcfp/charconv.hpp"
 # include "mcfp/error.hpp"
@@ -17,6 +12,7 @@
 # include <charconv>
 # include <cstdio>
 # include <filesystem>
+# include <iostream>
 # include <optional>
 # include <string>
 # include <type_traits>
@@ -55,7 +51,7 @@ template <typename T>
 			 is_detected_v<iterator_t, T> and
 			 not is_detected_v<std_string_npos_t, T>)
 struct is_container_type<T>
-    : std::true_type
+	: std::true_type
 {
 };
 
@@ -73,8 +69,9 @@ static_assert(is_container_type_v<std::vector<std::string>>);
 // a compile time error.
 [[noreturn]] MCFP_INLINE void report_error(const char *msg)
 {
-	(void)fputs(msg, stderr);
-	exit(1);
+	// (void)fputs(msg, stderr);
+	std::println(std::cerr, "{}", msg);
+	std::exit(1);
 }
 
 // --------------------------------------------------------------------

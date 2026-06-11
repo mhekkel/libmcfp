@@ -4,17 +4,12 @@
 
 #pragma once
 
-#ifndef MCFP_EXPORT
-# define MCFP_EXPORT
-# define MCFP_INLINE inline
-#endif
-
 /**
  * @file text.hpp
  * This file contains word wrapping code
  */
 
-#ifndef IN_MODULE_INTERFACE
+#ifndef MCFP_CXX_MODULE
 # include <cstddef>
 # include <string_view>
 # include <vector>

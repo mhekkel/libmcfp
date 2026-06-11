@@ -4,11 +4,6 @@
 
 #pragma once
 
-#ifndef MCFP_EXPORT
-# define MCFP_EXPORT
-# define MCFP_INLINE inline
-#endif
-
 /**
  * @file error.hpp
  *
@@ -16,7 +11,7 @@
  *
  */
 
-#ifndef IN_MODULE_INTERFACE
+#ifndef MCFP_CXX_MODULE
 # include <string>
 # include <system_error>
 # include <type_traits>

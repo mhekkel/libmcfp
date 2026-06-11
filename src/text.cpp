@@ -2,19 +2,16 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-#include "mcfp-internal.hpp"
+#ifndef MCFP_CXX_MODULE
+# include "mcfp-internal.hpp"
 
-#if defined(MCFP_INCLUDE_HEADERS)
 # include <algorithm>
 # include <cctype>
 # include <cstdint>
 # include <limits>
 # include <string_view>
 # include <vector>
-
 #endif
-
-#if defined(MCFP_INCLUDE_CODE)
 
 namespace mcfp
 {
@@ -25,7 +22,7 @@ namespace mcfp
 /// The algorithm uses dynamic programming to find the optimal
 /// separation in lines.
 
-word_wrapper::word_wrapper(std::string_view text, size_t width)
+word_wrapper::word_wrapper(std::string_view text, std::size_t width)
 {
 	std::string_view::size_type line_start = 0, line_end = text.find('\n');
 
@@ -48,10 +45,10 @@ word_wrapper::word_wrapper(std::string_view text, size_t width)
 	}
 }
 
-std::vector<std::string_view> word_wrapper::wrap_line(std::string_view line, size_t width)
+std::vector<std::string_view> word_wrapper::wrap_line(std::string_view line, std::size_t width)
 {
 	std::vector<std::string_view> result;
-	std::vector<size_t> offsets = { 0 };
+	std::vector<std::size_t> offsets = { 0 };
 
 	auto b = line.begin();
 	while (b != line.end())
@@ -63,18 +60,18 @@ std::vector<std::string_view> word_wrapper::wrap_line(std::string_view line, siz
 		b = e;
 	}
 
-	size_t count = offsets.size() - 1;
+	std::size_t count = offsets.size() - 1;
 
-	std::vector<size_t> minima(count + 1, std::numeric_limits<size_t>::max());
+	std::vector<std::size_t> minima(count + 1, std::numeric_limits<std::size_t>::max());
 	minima[0] = 0;
-	std::vector<size_t> breaks(count + 1, 0);
+	std::vector<std::size_t> breaks(count + 1, 0);
 
-	for (size_t i = 0; i < count; ++i)
+	for (std::size_t i = 0; i < count; ++i)
 	{
-		size_t j = i + 1;
+		std::size_t j = i + 1;
 		while (j <= count)
 		{
-			size_t w = offsets[j] - offsets[i];
+			std::size_t w = offsets[j] - offsets[i];
 
 			if (w > width)
 				break;
@@ -82,7 +79,7 @@ std::vector<std::string_view> word_wrapper::wrap_line(std::string_view line, siz
 			while (w > 0 and std::isspace(line[offsets[i] + w - 1]))
 				--w;
 
-			size_t cost = minima[i];
+			std::size_t cost = minima[i];
 			if (j < count) // last line may be shorter
 				cost += (width - w) * (width - w);
 
@@ -96,10 +93,10 @@ std::vector<std::string_view> word_wrapper::wrap_line(std::string_view line, siz
 		}
 	}
 
-	size_t j = count;
+	std::size_t j = count;
 	while (j > 0)
 	{
-		size_t i = breaks[j];
+		std::size_t i = breaks[j];
 		result.push_back(line.substr(offsets[i], offsets[j] - offsets[i]));
 		j = i;
 	}
@@ -183,7 +180,7 @@ std::string_view::const_iterator word_wrapper::next_line_break(std::string_view:
 		/* WJ */ { IBK, PBK, PBK, IBK, PBK, PBK, PBK, IBK, IBK, IBK, IBK, IBK, IBK, CIB, PBK },
 	};
 
-	uint8_t ch = *text;
+	std::uint8_t ch = *text;
 
 	LineBreakClass cls;
 
@@ -229,5 +226,3 @@ std::string_view::const_iterator word_wrapper::next_line_break(std::string_view:
 }
 
 } // namespace mcfp
-
-#endif

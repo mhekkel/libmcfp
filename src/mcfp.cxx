@@ -4,12 +4,20 @@
 
 module;
 
-#define MCFP_INCLUDE_HEADERS
-#include "mcfp.cpp"
-#undef MCFP_INCLUDE_HEADERS
+#include <cassert>
+
+# if __has_include(<sys/ioctl.h>)
+// #  include <fcntl.h>
+#  include <sys/ioctl.h>
+#  include <unistd.h>
+# elif defined(_WIN32)
+#  include <Windows.h>
+#  include <cstdio>
+#  include <io.h>
+#endif
 
 module mcfp;
 
-#define MCFP_INCLUDE_CODE
+import std;
 
 #include "mcfp.cpp"

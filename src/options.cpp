@@ -2,22 +2,19 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-#include "mcfp-internal.hpp"
+#ifndef MCFP_CXX_MODULE
+# include "mcfp-internal.hpp"
 
-#if defined(MCFP_INCLUDE_HEADERS)
-#include <ostream>
-#include <utility>
-
+# include <ostream>
+# include <utility>
 #endif
-
-#if defined(MCFP_INCLUDE_CODE)
 
 namespace mcfp
 {
 
-size_t option_base::width(std::string_view section_name) const
+std::size_t option_base::width(std::string_view section_name) const
 {
-	size_t result = m_name.length();
+	std::size_t result = m_name.length();
 	if (not section_name.empty())
 		result += section_name.length() + 1;
 	if (result <= 1)
@@ -33,12 +30,12 @@ size_t option_base::width(std::string_view section_name) const
 	return result + 6;
 }
 
-void option_base::write(std::ostream &os, std::string_view section_name, size_t indent, size_t output_width) const
+void option_base::write(std::ostream &os, std::string_view section_name, std::size_t indent, std::size_t output_width) const
 {
 	if (m_hidden) // quick exit
 		return;
 
-	size_t w2 = 2;
+	std::size_t w2 = 2;
 	if (section_name.empty())
 	{
 		os << "  ";
@@ -103,5 +100,3 @@ void option_base::write(std::ostream &os, std::string_view section_name, size_t 
 }
 
 } // namespace mcfp
-
-#endif

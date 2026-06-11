@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-#include "mcfp-internal.hpp"
+#ifndef MCFP_CXX_MODULE
+# include "mcfp-internal.hpp"
 
-#if defined(MCFP_INCLUDE_HEADERS)
 # include <cassert>
 # include <climits>
 # include <cstdint>
@@ -13,18 +13,15 @@
 # include <ostream>
 
 # if __has_include(<sys/ioctl.h>)
-#  include <fcntl.h>
+// #  include <fcntl.h>
 #  include <sys/ioctl.h>
 #  include <unistd.h>
 # elif defined(_WIN32)
 #  include <Windows.h>
 #  include <cstdio>
 #  include <io.h>
+# endif
 #endif
-
-#endif
-
-#if defined(MCFP_INCLUDE_CODE)
 
 namespace mcfp
 {
@@ -46,9 +43,9 @@ uint32_t get_terminal_width()
 #elif __has_include(<sys/ioctl.h>)
 /// @brief Get the width in columns of the current terminal
 /// @return number of columns of the terminal
-uint32_t get_terminal_width()
+std::uint32_t get_terminal_width()
 {
-	uint32_t result = 80;
+	std::uint32_t result = 80;
 
 	if (::isatty(STDOUT_FILENO))
 	{
@@ -60,7 +57,7 @@ uint32_t get_terminal_width()
 }
 #else
 # warning "Could not find the terminal width, falling back to default"
-MCFP_INLINE uint32_t get_terminal_width()
+MCFP_INLINE std::uint32_t get_terminal_width()
 {
 	return 80;
 }
@@ -444,5 +441,3 @@ std::ostream &operator<<(std::ostream &os, const config &conf)
 }
 
 } // namespace mcfp
-
-#endif

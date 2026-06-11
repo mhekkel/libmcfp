@@ -4,12 +4,8 @@
 
 module;
 
-#define MCFP_INCLUDE_HEADERS
-#include "text.cpp"
-#undef MCFP_INCLUDE_HEADERS
-
 module mcfp;
 
-#define MCFP_INCLUDE_CODE
+import std;
 
 #include "text.cpp"

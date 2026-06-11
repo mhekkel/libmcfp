@@ -4,20 +4,9 @@
 
 #pragma once
 
-#ifndef MCFP_EXPORT
-# define MCFP_EXPORT
-# define MCFP_INLINE inline
-#endif
-
-#ifndef IN_MODULE_INTERFACE
-
+#ifndef MCFP_CXX_MODULE
 # include <charconv>
-# if __has_include(<experimental/type_traits>)
-#  include <experimental/type_traits>
-# endif
-# include <type_traits>
-# include <utility>
-
+# include <experimental/type_traits>
 #endif
 
 namespace mcfp

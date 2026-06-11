@@ -4,13 +4,7 @@
 
 #pragma once
 
-#ifndef MCFP_EXPORT
-# define MCFP_EXPORT
-# define MCFP_INLINE inline
-#endif
-
-#ifndef IN_MODULE_INTERFACE
-
+#ifndef MCFP_CXX_MODULE
 # include "mcfp/options.hpp"
 
 # include <iomanip>
