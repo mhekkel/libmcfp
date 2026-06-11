@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: BSD-2-Clause
 
 #ifndef MCFP_CXX_MODULE
-#include "mcfp-internal.hpp"
+# include "fast_float/fast_float.h"
+# include "mcfp/mcfp.hpp"
 
-#include "fast_float/fast_float.h"
-#include <charconv>
+# include <charconv>
 #endif
 
 namespace mcfp

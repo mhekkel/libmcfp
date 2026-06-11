@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 
 #ifndef MCFP_CXX_MODULE
-# include "mcfp-internal.hpp"
+# include "mcfp/mcfp.hpp"
 
 # include <ostream>
 # include <utility>
