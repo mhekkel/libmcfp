@@ -8,12 +8,15 @@
 # library by using mcfp::mcfp as target library, or the module
 # by using mcfp::mcfp-module
 
-cmake_minimum_required(VERSION 4.2.3)
+cmake_minimum_required(VERSION 3.28)
 
-set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "451f2fe2-a8a2-47c3-bc32-94786d8fc91b")
+# Experimental import std support
+if(${CMAKE_VERSION} VERSION_EQUAL 4.3.3)
+    set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "451f2fe2-a8a2-47c3-bc32-94786d8fc91b")
 
-set(CMAKE_CXX_STANDARD_REQUIRED OFF)
-set(CMAKE_CXX_MODULE_STD 1)
+    set(CMAKE_CXX_STANDARD_REQUIRED OFF)
+    set(CMAKE_CXX_MODULE_STD 1)
+endif()
 
 # set the project name
 project(mcfp VERSION 2.0.2 LANGUAGES CXX)
@@ -68,16 +71,17 @@ file(GLOB_RECURSE mcfp_cxx src/*.cxx)
 
 if(STD_CHARCONV_COMPILING)
     list(FILTER mcfp_cpp EXCLUDE REGEX src/charconv-fast_float\.cpp)
-    list(FILTER mcfp_cxx EXCLUDE REGEX src/charconv-fast_float\.cxx)
 endif()
 
 add_library(mcfp ${mcfp_cpp})
 add_library(mcfp::mcfp ALIAS mcfp)
 
 target_compile_features(mcfp PUBLIC cxx_std_23)
+target_compile_definitions(mcfp PUBLIC USE_MODULE_STD=${CMAKE_CXX_MODULE_STD})
 
 if(NOT STD_CHARCONV_COMPILING)
     target_include_directories(mcfp PRIVATE $<TARGET_PROPERTY:FastFloat::fast_float,INTERFACE_INCLUDE_DIRECTORIES>)
+	target_compile_definitions(mcfp PRIVATE USE_FAST_FLOAT)
 endif()
 
 target_sources(mcfp

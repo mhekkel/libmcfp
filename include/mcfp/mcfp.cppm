@@ -4,7 +4,18 @@
 
 module;
 
+#if USE_MODULE_STD
 import std;
+#else
+#include <charconv>
+#include <iostream>
+#include <filesystem>
+#include <optional>
+#include <string>
+#include <system_error>
+#include <utility>
+#include <vector>
+#endif
 
 #if __has_include(<sys/ioctl.h>)
 // # include <fcntl.h>
