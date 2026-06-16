@@ -11,7 +11,7 @@
 cmake_minimum_required(VERSION 3.28)
 
 # set the project name
-project(mcfp VERSION 2.0.2 LANGUAGES CXX)
+project(mcfp VERSION 2.0.3 LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
