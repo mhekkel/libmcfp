@@ -14,6 +14,7 @@
 # include <filesystem>
 # include <iostream>
 # include <optional>
+# include <print>
 # include <string>
 # include <type_traits>
 # include <utility>
@@ -208,7 +209,7 @@ constexpr void ostring::parse()
 				break;
 
 			if (not is_valid_option_char(ch))
-				report_error("Short variant of option should be alnum");
+				report_error("Invalid character in long option name");
 		}
 
 		m_long = m_str.substr(0, len);
@@ -297,7 +298,7 @@ struct option_base
 	char m_short_name;     ///< The single character name of the argument, can be zero
 	bool m_is_flag = true, ///< When true, this option does not allow arguments
 		m_multi = false,   ///< When true, this option allows mulitple values.
-		m_hidden;          ///< When true, this option is hidden from the help text
+		m_hidden = false;  ///< When true, this option is hidden from the help text
 	int m_seen = 0;        ///< How often the option was seen on the command line
 
 	// We store the actual data in the argument list, i.e. strings
@@ -441,7 +442,7 @@ struct option<void> : public option_base
 			m_seen = 1;
 		else if (value == "false")
 			m_seen = 0;
-		else if (auto [ptr, ec2] = mcfp::from_chars(
+		else if (auto [ptr, ec2] = std::from_chars(
 					 value.data(), value.data() + value.length(), m_seen);
 			ec2 != std::errc{} or ptr != value.data() + value.length())
 			ec = make_error_code(config_error::wrong_type_cast_flag);

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <type_traits>
 #ifndef MCFP_CXX_MODULE
 # include <charconv>
 # include <experimental/type_traits>
@@ -85,10 +86,15 @@ struct std_charconv
 };
 
 template <typename T, typename = void>
-struct ff_charconv;
+struct ff_charconv
+{
+	static std::from_chars_result from_chars(const char *a, const char *b, T &v)
+	{
+		static_assert(false);
+	}
+};
 
-template <typename T>
-	requires(std::is_floating_point_v<T>)
+template <std::floating_point T>
 struct ff_charconv<T>
 {
 	static std::from_chars_result from_chars(const char *a, const char *b, T &v);

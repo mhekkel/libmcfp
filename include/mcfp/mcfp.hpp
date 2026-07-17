@@ -106,7 +106,7 @@ MCFP_EXPORT class config
 
 		auto s = std::make_unique<section>(section_name, std::forward<Options>(options)...);
 
-		if (si != m_sections.end())
+		if (si != m_sections.end() and (*si)->name() == section_name)
 			*si = std::move(s);
 		else
 			m_sections.insert(si, std::move(s));
