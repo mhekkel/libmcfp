@@ -30,11 +30,11 @@ word_wrapper::word_wrapper(std::string_view text, std::size_t width)
 	{
 		auto line = text.substr(line_start, line_end - line_start);
 		if (line.empty())
-			this->push_back(line);
+			m_lines.push_back(line);
 		else
 		{
 			auto lines = wrap_line(line, width);
-			this->insert(this->end(), lines.begin(), lines.end());
+			m_lines.insert(m_lines.end(), lines.begin(), lines.end());
 		}
 
 		if (line_end == std::string_view::npos)
