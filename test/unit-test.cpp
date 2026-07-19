@@ -4,7 +4,7 @@
 
 #include "test-main.hpp"
 
-#if MCFP_CXX_MODULE
+#if MCFP_MODULE_MODE
 import mcfp;
 #else
 # include <mcfp/mcfp.hpp>

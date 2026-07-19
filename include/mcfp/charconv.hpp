@@ -5,7 +5,7 @@
 #pragma once
 
 #include <type_traits>
-#ifndef MCFP_CXX_MODULE
+#ifndef MCFP_MODULE_MODE
 # include <charconv>
 # include <experimental/type_traits>
 #endif

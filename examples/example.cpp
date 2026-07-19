@@ -7,7 +7,7 @@
 #include <iostream>
 #include <vector>
 
-#if defined(MCFP_CXX_MODULE)
+#if defined(MCFP_MODULE_MODE)
 import mcfp;
 #else
 #include "mcfp/mcfp.hpp"

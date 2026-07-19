@@ -124,7 +124,7 @@ if(MCFP_BUILD_CXX_MODULE)
         FILES
         ${mcfp_modules})
 
-    target_compile_definitions(mcfp-module PUBLIC MCFP_CXX_MODULE)
+    target_compile_definitions(mcfp-module PUBLIC MCFP_MODULE_MODE)
 
     target_include_directories(mcfp-module PUBLIC
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/mcfp>)

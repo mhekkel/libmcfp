@@ -8,7 +8,7 @@
 /// This module library contains code to parse argc/argv and store the
 /// values provided into a singleton object.
 
-#ifndef MCFP_CXX_MODULE
+#ifndef MCFP_MODULE_MODE
 # define MCFP_EXPORT
 # define MCFP_INLINE inline
 

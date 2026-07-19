@@ -9,7 +9,7 @@
  * This file contains word wrapping code
  */
 
-#ifndef MCFP_CXX_MODULE
+#ifndef MCFP_MODULE_MODE
 # include <cstddef>
 # include <string_view>
 # include <vector>

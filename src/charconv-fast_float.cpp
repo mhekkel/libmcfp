@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-#ifndef MCFP_CXX_MODULE
+#ifndef MCFP_MODULE_MODE
 # include "fast_float/fast_float.h"
 # include "mcfp/mcfp.hpp"
 

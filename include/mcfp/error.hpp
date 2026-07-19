@@ -11,7 +11,7 @@
  *
  */
 
-#ifndef MCFP_CXX_MODULE
+#ifndef MCFP_MODULE_MODE
 # include <string>
 # include <system_error>
 # include <type_traits>

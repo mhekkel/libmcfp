@@ -4,7 +4,7 @@
 
 #pragma once
 
-#ifndef MCFP_CXX_MODULE
+#ifndef MCFP_MODULE_MODE
 # include "mcfp/options.hpp"
 
 # include <iomanip>
