@@ -17,7 +17,7 @@ std::size_t option_base::width(std::string_view section_name) const
 	std::size_t result = m_name.length();
 	if (not section_name.empty())
 		result += section_name.length() + 1;
-	if (result <= 1)
+	if (result < 2)
 		result = 2;
 	else if (m_short_name != 0 and section_name.empty())
 		result += 7;

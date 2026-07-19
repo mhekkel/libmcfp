@@ -376,7 +376,7 @@ MCFP_EXPORT class config
 	void parse_config_file(const std::filesystem::path &file, std::error_code &ec);
 
   private:
-	static bool is_name_char(int ch)
+	static constexpr bool is_name_char(int ch)
 	{
 		return std::isalnum(ch) or ch == '_' or ch == '-';
 	}

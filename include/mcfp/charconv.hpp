@@ -4,10 +4,11 @@
 
 #pragma once
 
-#include <type_traits>
 #ifndef MCFP_MODULE_MODE
 # include <charconv>
+# include <concepts>
 # include <experimental/type_traits>
+# include <type_traits>
 #endif
 
 namespace mcfp
@@ -101,7 +102,7 @@ struct ff_charconv<T>
 };
 
 MCFP_EXPORT template <typename T>
-using charconv = typename std::conditional_t<is_detected_v<from_chars_function, T>, std_charconv<T>, ff_charconv<T>>;
+using charconv = std::conditional_t<is_detected_v<from_chars_function, T>, std_charconv<T>, ff_charconv<T>>;
 
 MCFP_EXPORT template <typename T>
 constexpr auto from_chars(const char *s, const char *e, T &v)
