@@ -50,7 +50,7 @@ std::uint32_t get_terminal_width()
 	if (::isatty(STDOUT_FILENO))
 	{
 		struct winsize w{};
-		::ioctl(0, TIOCGWINSZ, &w); // NOLINT(hicpp-vararg)
+		::ioctl(STDOUT_FILENO, TIOCGWINSZ, &w); // NOLINT(hicpp-vararg)
 		result = w.ws_col;
 	}
 	return result;
