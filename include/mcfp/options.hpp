@@ -243,6 +243,7 @@ struct option_base
 		, m_desc(std::move(desc))
 		, m_short_name(name_short.size() > 0 ? name_short.front() : 0)
 		, m_hidden(hidden)
+		, m_seen(0)
 	{
 	}
 
