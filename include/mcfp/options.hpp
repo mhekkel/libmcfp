@@ -76,83 +76,13 @@ static_assert(is_container_type_v<std::vector<std::string>>);
 }
 
 // --------------------------------------------------------------------
-
-template <typename CharT>
-class string_view_base
-{
-  public:
-	using char_type = CharT;
-
-	using value_type = char_type;
-	using iterator = const char_type *;
-
-	constexpr explicit string_view_base(const char *s) noexcept
-		: m_data(s)
-	{
-		while (m_data[m_size] != 0)
-			++m_size;
-	}
-
-	constexpr string_view_base(const char *s, size_t N) noexcept
-		: m_data(s)
-		, m_size(N)
-	{
-	}
-
-	template <size_t N>
-	constexpr explicit string_view_base(const char (&s)[N]) noexcept
-		: m_data(s)
-		, m_size(N - 1)
-	{
-	}
-
-	constexpr string_view_base() noexcept = default;
-	constexpr string_view_base(const string_view_base &) noexcept = default;
-	constexpr string_view_base &
-	operator=(const string_view_base &) noexcept = default;
-	// constexpr string_view_base(nullptr_t) = delete;
-
-	template <typename StringType>
-	// requires(std::is_same_v<typename StringType::value_type, value_type>)
-	constexpr explicit string_view_base(const StringType &s) noexcept
-		: m_data(s.data())
-		, m_size(s.size())
-	{
-	}
-
-	[[nodiscard]] constexpr const char_type *data() const noexcept { return m_data; }
-	[[nodiscard]] constexpr size_t size() const noexcept { return m_size; }
-
-	[[nodiscard]] constexpr iterator begin() const noexcept { return m_data; }
-	[[nodiscard]] constexpr iterator end() const noexcept { return m_data + m_size; }
-	[[nodiscard]] constexpr char_type operator[](size_t ix) const noexcept
-	{
-		return m_data[ix];
-	}
-
-	[[nodiscard]] constexpr char_type front() const noexcept { return m_data[0]; }
-	[[nodiscard]] constexpr char_type back() const noexcept { return m_data[m_size - 1]; }
-
-	[[nodiscard]] constexpr string_view_base substr(size_t pos, size_t len) const noexcept
-	{
-		return { m_data + pos, len };
-	}
-
-  private:
-	const char_type *m_data = nullptr;
-	size_t m_size = 0;
-};
-
-using string_view = string_view_base<char>;
-
-// --------------------------------------------------------------------
 // A parsed options string, that is, split out the short and long names
 
 struct ostring
 {
-	string_view m_str;
-	string_view m_long;
-	string_view m_short;
+	std::string_view m_str;
+	std::string_view m_long;
+	std::string_view m_short;
 
 	template <size_t N>
 	consteval MCFP_INLINE ostring(const char (&s)[N]) // NOLINT(hicpp-explicit-conversions)
@@ -307,7 +237,7 @@ struct option_base
 
 	option_base(const option_base &rhs) = default;
 
-	constexpr option_base(string_view name_long, string_view name_short,
+	constexpr option_base(std::string_view name_long, std::string_view name_short,
 		std::string desc, bool hidden)
 		: m_name(name_long.begin(), name_long.end())
 		, m_desc(std::move(desc))
@@ -373,14 +303,14 @@ struct option : public option_base
 
 	option(const option &rhs) = default;
 
-	option(string_view name_long, string_view name_short, std::string desc,
+	option(std::string_view name_long, std::string_view name_short, std::string desc,
 		bool hidden)
 		: option_base(name_long, name_short, std::move(desc), hidden)
 	{
 		m_is_flag = false;
 	}
 
-	option(string_view name_long, string_view name_short,
+	option(std::string_view name_long, std::string_view name_short,
 		const value_type &default_value, std::string desc, bool hidden)
 		: option(name_long, name_short, std::move(desc), hidden)
 	{
@@ -409,7 +339,7 @@ struct multiple_option : public option_base
 
 	multiple_option(const multiple_option &rhs) = default;
 
-	multiple_option(string_view name_long, string_view name_short,
+	multiple_option(std::string_view name_long, std::string_view name_short,
 		std::string desc, bool hidden)
 		: option_base(name_long, name_short, std::move(desc), hidden)
 	{
@@ -430,7 +360,7 @@ struct option<void> : public option_base
 {
 	option(const option &rhs) = default;
 
-	option(string_view name_long, string_view name_short, std::string desc,
+	option(std::string_view name_long, std::string_view name_short, std::string desc,
 		bool hidden)
 		: option_base(name_long, name_short, std::move(desc), hidden)
 	{
