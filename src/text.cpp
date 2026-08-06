@@ -80,7 +80,7 @@ std::vector<std::string_view> word_wrapper::wrap_line(std::string_view line, std
 				--w;
 
 			std::size_t cost = minima[i];
-			if (j < count) // last line may be shorter
+			if (j < count and width > w) // last line may be shorter
 				cost += (width - w) * (width - w);
 
 			if (cost < minima[j])
