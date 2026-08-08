@@ -145,7 +145,7 @@ MCFP_EXPORT class section
 
 		void write(std::ostream &os, std::string_view section_name, size_t wrap_width, size_t output_width) const override
 		{
-			std::apply([&os, section_name, wrap_width, output_width](auto &&...opts)
+			std::apply([&os, section_name, wrap_width, output_width](auto const &...opts)
 				{ (opts.write(os, section_name, wrap_width, output_width), ...); }, m_options);
 		}
 
