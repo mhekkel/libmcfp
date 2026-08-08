@@ -91,7 +91,7 @@ struct ff_charconv
 {
 	static std::from_chars_result from_chars(const char *a, const char *b, T &v)
 	{
-		static_assert(false);
+		static_assert(not std::same_as<T, T>, "from_chars is not supported for this type");
 	}
 };
 
