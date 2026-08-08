@@ -154,12 +154,10 @@ void config::parse(int argc, const char *const argv[], std::error_code &ec)
 
 			if (opt->m_is_flag)
 			{
-				if (opt_arg.empty() or opt_arg == "true")
+				if (opt_arg.empty())
 					++opt->m_seen;
-				else if (opt_arg == "false")
-					opt->m_seen = 0;
 				else
-					ec = make_error_code(config_error::option_does_not_accept_argument);
+					opt->set_value(opt_arg, ec);
 
 				continue;
 			}
