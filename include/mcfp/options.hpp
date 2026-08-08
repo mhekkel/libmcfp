@@ -14,7 +14,7 @@
 # include <filesystem>
 # include <iostream>
 # include <optional>
-# include <print>
+# include <stdexcept>
 # include <string>
 # include <type_traits>
 # include <utility>
@@ -70,9 +70,7 @@ static_assert(is_container_type_v<std::vector<std::string>>);
 // a compile time error.
 [[noreturn]] MCFP_INLINE void report_error(const char *msg)
 {
-	// (void)fputs(msg, stderr);
-	std::println(std::cerr, "{}", msg);
-	std::exit(1);
+	throw std::invalid_argument(msg);
 }
 
 // --------------------------------------------------------------------
