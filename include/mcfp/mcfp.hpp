@@ -166,8 +166,15 @@ MCFP_EXPORT class config
 	 */
 	[[nodiscard]] std::string get_last_option() const
 	{
-		return s_last_option;
+		return get_last_option_ref();
 	}
+
+	/**
+	 * @brief Get a reference to the thread-local last option storage
+	 *
+	 * @return std::string& reference to last option
+	 */
+	static std::string &get_last_option_ref();
 
 	/**
 	 * @brief Simply return true if the option with \a name has a value assigned
@@ -232,7 +239,7 @@ MCFP_EXPORT class config
 		using return_type = std::remove_cv_t<T>;
 
 		// store name for inspection later on
-		s_last_option = name;
+		get_last_option_ref() = name;
 
 		return_type result{};
 		auto opt = get_option(name);
@@ -524,8 +531,6 @@ MCFP_EXPORT class config
 
 	std::vector<std::string> m_operands;
 	std::vector<std::unique_ptr<section>> m_sections;
-
-	static thread_local std::string s_last_option;
 
 	/// @endcond
 };

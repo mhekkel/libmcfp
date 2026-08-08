@@ -68,7 +68,56 @@ MCFP_INLINE uint32_t get_terminal_width()
 
 // --------------------------------------------------------------------
 
-thread_local std::string config::s_last_option;
+class config_category_impl : public std::error_category
+{
+  public:
+	[[nodiscard]] const char *name() const noexcept override
+	{
+		return "configuration";
+	}
+
+	[[nodiscard]] std::string message(int ev) const override
+	{
+		switch (static_cast<config_error>(ev))
+		{
+			case config_error::unknown_option:
+				return "unknown option";
+			case config_error::option_does_not_accept_argument:
+				return "option does not accept argument";
+			case config_error::missing_argument_for_option:
+				return "missing argument for option";
+			case config_error::option_not_specified:
+				return "option was not specified";
+			case config_error::invalid_config_file:
+				return "config file contains a syntax error";
+			case config_error::wrong_type_cast:
+				return "the implementation contains a type cast error";
+			case config_error::config_file_not_found:
+				return "the specified config file was not found";
+			case config_error::wrong_type_cast_flag:
+				return "the value assigned in a config file to a flag option was not 'true', 'false' or an integral numerical value";
+		}
+		return "unknown configuration error";
+	}
+
+	[[nodiscard]] bool equivalent(const std::error_code & /*code*/, int /*condition*/) const noexcept override
+	{
+		return false;
+	}
+};
+
+std::error_category &config_category()
+{
+	static config_category_impl instance;
+	return instance;
+}
+
+thread_local std::string s_last_option_tls;
+
+std::string &config::get_last_option_ref()
+{
+	return s_last_option_tls;
+}
 
 void config::parse(int argc, const char *const argv[])
 {
@@ -145,7 +194,7 @@ void config::parse(int argc, const char *const argv[], std::error_code &ec)
 			}
 
 			// store name for inspection later on
-			s_last_option = s_arg;
+			get_last_option_ref() = std::string{s_arg};
 
 			opt = get_option(s_arg);
 			if (opt == nullptr)
@@ -176,7 +225,7 @@ void config::parse(int argc, const char *const argv[], std::error_code &ec)
 			while (*arg != 0 and not ec)
 			{
 				// store name for inspection later on
-				s_last_option = *arg;
+				get_last_option_ref() = std::string{*arg};
 				opt = get_option(*arg++);
 
 				if (opt == nullptr)
@@ -343,7 +392,7 @@ void config::parse_config_file(std::istream &is, std::error_code &ec)
 				else if (is_eoln(ch))
 				{
 					// store name for inspection later on
-					s_last_option = name;
+					get_last_option_ref() = name;
 
 					auto opt = get_option(section, name);
 
