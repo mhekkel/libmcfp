@@ -411,10 +411,10 @@ MCFP_EXPORT class config
 
 	constexpr static std::tuple<std::string_view, std::string_view> split_name(std::string_view name) noexcept
 	{
-		using std::operator""sv;
-
 		auto p = name.find('.');
-		return p == std::string_view::npos ? std::make_tuple(""sv, name) : std::make_tuple(name.substr(0, p), name.substr(p + 1));
+		return p == std::string_view::npos
+		           ? std::make_tuple(std::string_view{}, name)
+		           : std::make_tuple(name.substr(0, p), name.substr(p + 1));
 	}
 
 	// --------------------------------------------------------------------
