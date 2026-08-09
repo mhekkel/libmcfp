@@ -378,7 +378,14 @@ MCFP_EXPORT class config
   private:
 	static constexpr bool is_name_char(int ch)
 	{
+#ifdef _WIN32
+		return (ch >= '0' && ch <= '9') ||
+			   (ch >= 'A' && ch <= 'Z') ||
+			   (ch >= 'a' && ch <= 'z') ||
+			   ch == '_' || ch == '-';
+#else
 		return std::isalnum(ch) or ch == '_' or ch == '-';
+#endif
 	}
 
 	static constexpr bool is_eoln(int ch)
