@@ -19,7 +19,7 @@ if(${CMAKE_VERSION} VERSION_EQUAL 4.3.3)
 endif()
 
 # set the project name
-project(mcfp VERSION 2.0.3 LANGUAGES CXX)
+project(mcfp VERSION 2.0.4 LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
