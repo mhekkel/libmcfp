@@ -379,10 +379,10 @@ MCFP_EXPORT class config
 	static constexpr bool is_name_char(int ch)
 	{
 #ifdef _WIN32
-		return (ch >= '0' && ch <= '9') ||
-			   (ch >= 'A' && ch <= 'Z') ||
-			   (ch >= 'a' && ch <= 'z') ||
-			   ch == '_' || ch == '-';
+		return (ch >= '0' and ch <= '9') or
+			   (ch >= 'A' and ch <= 'Z') or
+			   (ch >= 'a' and ch <= 'z') or
+			   ch == '_' or ch == '-';
 #else
 		return std::isalnum(ch) or ch == '_' or ch == '-';
 #endif
