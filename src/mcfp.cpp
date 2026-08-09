@@ -112,12 +112,7 @@ std::error_category &config_category()
 	return instance;
 }
 
-thread_local std::string s_last_option_tls;
-
-std::string &config::get_last_option_ref()
-{
-	return s_last_option_tls;
-}
+thread_local std::string config::s_last_option;
 
 void config::parse(int argc, const char *const argv[])
 {
@@ -194,7 +189,7 @@ void config::parse(int argc, const char *const argv[], std::error_code &ec)
 			}
 
 			// store name for inspection later on
-			get_last_option_ref() = std::string{s_arg};
+			s_last_option = std::string{s_arg};
 
 			opt = get_option(s_arg);
 			if (opt == nullptr)
@@ -225,7 +220,7 @@ void config::parse(int argc, const char *const argv[], std::error_code &ec)
 			while (*arg != 0 and not ec)
 			{
 				// store name for inspection later on
-				get_last_option_ref() = std::string{*arg};
+				s_last_option = std::string{*arg};
 				opt = get_option(*arg++);
 
 				if (opt == nullptr)
@@ -392,7 +387,7 @@ void config::parse_config_file(std::istream &is, std::error_code &ec)
 				else if (is_eoln(ch))
 				{
 					// store name for inspection later on
-					get_last_option_ref() = name;
+					s_last_option = name;
 
 					auto opt = get_option(section, name);
 

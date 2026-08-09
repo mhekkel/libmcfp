@@ -8,7 +8,7 @@
 /// This module library contains code to parse argc/argv and store the
 /// values provided into a singleton object.
 
-#ifndef IN_MODULE_INTERFACE
+#ifndef MCFP_MODULE_MODE
 
 # define MCFP_EXPORT
 # define MCFP_INLINE inline
@@ -69,8 +69,6 @@ MCFP_EXPORT class config
 		requires(std::is_base_of_v<option_base, Options> and ...)
 	config &init(std::string usage, Options &&...options)
 	{
-		using std::operator""sv;
-
 		m_sections.clear();
 
 		m_usage = std::move(usage);
@@ -166,15 +164,8 @@ MCFP_EXPORT class config
 	 */
 	[[nodiscard]] std::string get_last_option() const
 	{
-		return get_last_option_ref();
+		return s_last_option;
 	}
-
-	/**
-	 * @brief Get a reference to the thread-local last option storage
-	 *
-	 * @return std::string& reference to last option
-	 */
-	static std::string &get_last_option_ref();
 
 	/**
 	 * @brief Simply return true if the option with \a name has a value assigned
@@ -239,7 +230,7 @@ MCFP_EXPORT class config
 		using return_type = std::remove_cv_t<T>;
 
 		// store name for inspection later on
-		get_last_option_ref() = name;
+		s_last_option = name;
 
 		return_type result{};
 		auto opt = get_option(name);
@@ -386,7 +377,7 @@ MCFP_EXPORT class config
 	void parse_config_file(const std::filesystem::path &file, std::error_code &ec);
 
   private:
-	static bool is_name_char(int ch)
+	static constexpr bool is_name_char(int ch)
 	{
 		return std::isalnum(ch) or ch == '_' or ch == '-';
 	}
@@ -421,10 +412,10 @@ MCFP_EXPORT class config
 
 	constexpr static std::tuple<std::string_view, std::string_view> split_name(std::string_view name) noexcept
 	{
-		using std::operator""sv;
-
 		auto p = name.find('.');
-		return p == std::string_view::npos ? std::make_tuple(""sv, name) : std::make_tuple(name.substr(0, p), name.substr(p + 1));
+		return p == std::string_view::npos
+				? std::make_tuple(std::string_view{}, name)
+				: std::make_tuple(name.substr(0, p), name.substr(p + 1));
 	}
 
 	// --------------------------------------------------------------------
@@ -531,6 +522,7 @@ MCFP_EXPORT class config
 
 	std::vector<std::string> m_operands;
 	std::vector<std::unique_ptr<section>> m_sections;
+	static thread_local std::string s_last_option;
 
 	/// @endcond
 };

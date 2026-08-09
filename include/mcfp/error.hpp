@@ -4,10 +4,6 @@
 
 #pragma once
 
-#ifndef MCFP_EXPORT
-# error "Please include mcfp.hpp only"
-#endif
-
 /**
  * @file error.hpp
  *
@@ -15,7 +11,7 @@
  *
  */
 
-#ifndef IN_MODULE_INTERFACE
+#ifndef MCFP_MODULE_MODE
 # include <string>
 # include <system_error>
 # include <type_traits>
