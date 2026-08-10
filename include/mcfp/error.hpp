@@ -66,6 +66,6 @@ MCFP_EXPORT MCFP_INLINE std::error_code make_error_code(config_error e)
 // Make our error_codes implicitly convertible
 template <> // NOLINT(bugprone-std-namespace-modification,cert-dcl58-cpp)
 struct std::is_error_code_enum<mcfp::config_error>
-	: public true_type
+	: public std::true_type
 {
 };
