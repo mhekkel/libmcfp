@@ -9,7 +9,6 @@
 /// values provided into a singleton object.
 
 #ifndef MCFP_MODULE_MODE
-
 # define MCFP_EXPORT
 # define MCFP_INLINE inline
 
@@ -107,7 +106,7 @@ MCFP_EXPORT class config
 
 		auto s = std::make_unique<section>(section_name, std::forward<Options>(options)...);
 
-		if (si != m_sections.end())
+		if (si != m_sections.end() and (*si)->name() == section_name)
 			*si = std::move(s);
 		else
 			m_sections.insert(si, std::move(s));
@@ -379,7 +378,14 @@ MCFP_EXPORT class config
   private:
 	static constexpr bool is_name_char(int ch)
 	{
+#ifdef _WIN32
+		return (ch >= '0' and ch <= '9') or
+			   (ch >= 'A' and ch <= 'Z') or
+			   (ch >= 'a' and ch <= 'z') or
+			   ch == '_' or ch == '-';
+#else
 		return std::isalnum(ch) or ch == '_' or ch == '-';
+#endif
 	}
 
 	static constexpr bool is_eoln(int ch)

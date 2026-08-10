@@ -7,7 +7,7 @@
 #include <filesystem>
 #include <fstream>
 
-#if MCFP_CXX_MODULE
+#if MCFP_MODULE_MODE
 import mcfp;
 #else
 # include <mcfp/mcfp.hpp>

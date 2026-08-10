@@ -3,6 +3,7 @@
 
 EXCLUDE_SYMBOLS        = std*
 FILE_PATTERNS          = *.hpp
+PREDEFINED             = MCFP_EXPORT= MCFP_INLINE=inline
 RECURSIVE			   = YES
 GENERATE_XML           = YES
 GENERATE_HTML          = NO

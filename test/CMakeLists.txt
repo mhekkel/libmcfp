@@ -12,18 +12,18 @@ add_library(test-main OBJECT "${CMAKE_CURRENT_SOURCE_DIR}/test-main.cpp")
 target_compile_features(test-main PUBLIC cxx_std_20)
 target_link_libraries(test-main PUBLIC Catch2::Catch2)
 
-foreach(mcfptest IN LISTS tests)
-    add_executable(${mcfptest} ${CMAKE_CURRENT_SOURCE_DIR}/${mcfptest}.cpp $<TARGET_OBJECTS:test-main>)
-    target_link_libraries(${mcfptest} PRIVATE mcfp::mcfp Catch2::Catch2)
+# foreach(mcfptest IN LISTS tests)
+#     add_executable(${mcfptest} ${CMAKE_CURRENT_SOURCE_DIR}/${mcfptest}.cpp $<TARGET_OBJECTS:test-main>)
+#     target_link_libraries(${mcfptest} PRIVATE mcfp::mcfp Catch2::Catch2)
 
-    if(MSVC)
-        # Specify unwind semantics so that MSVC knowns how to handle exceptions
-        target_compile_options(${mcfptest} PRIVATE /EHsc)
-    endif()
+#     if(MSVC)
+#         # Specify unwind semantics so that MSVC knowns how to handle exceptions
+#         target_compile_options(${mcfptest} PRIVATE /EHsc)
+#     endif()
 
-    add_test(NAME ${mcfptest}
-        COMMAND $<TARGET_FILE:${mcfptest}> --data-dir ${CMAKE_CURRENT_SOURCE_DIR})
-endforeach()
+#     add_test(NAME ${mcfptest}
+#         COMMAND $<TARGET_FILE:${mcfptest}> --data-dir ${CMAKE_CURRENT_SOURCE_DIR})
+# endforeach()
 
 if(MCFP_BUILD_CXX_MODULE)
     foreach(mcfptest IN LISTS tests)

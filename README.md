@@ -4,9 +4,9 @@ SPDX-FileCopyrightText: 2026 Maarten L. Hekkelman
 SPDX-License-Identifier: BSD-2-Clause
 -->
 
-[![github CI](https://forge.hekkelman.net/maarten/mcfp/actions/workflows/build-and-test-debian.yml/badge.svg)](https://forge.hekkelman.net/maarten/mcfp/actions)
-[![github CI](https://forge.hekkelman.net/maarten/mcfp/actions/workflows/build-and-test-freebsd.yml/badge.svg)](https://forge.hekkelman.net/maarten/mcfp/actions)
-<!-- [![github CI](https://forge.hekkelman.net/maarten/mcfp/actions/workflows/build-documentation.yml/badge.svg)](https://forge.hekkelman.net/maarten/mcfp/actions) -->
+[![forgejo CI](https://forge.hekkelman.net/maarten/mcfp/actions/workflows/build-and-test-debian.yml/badge.svg)](https://forge.hekkelman.net/maarten/mcfp/actions)
+[![forgejo CI](https://forge.hekkelman.net/maarten/mcfp/actions/workflows/build-and-test-freebsd.yml/badge.svg)](https://forge.hekkelman.net/maarten/mcfp/actions)
+<!-- [![forgejo CI](https://forge.hekkelman.net/maarten/mcfp/actions/workflows/build-documentation.yml/badge.svg)](https://forge.hekkelman.net/maarten/mcfp/actions) -->
 
 # libmcfp
 
@@ -27,7 +27,7 @@ In your CMakeLists.txt file you can specify what version to use by either provid
 #include <iostream>
 #include <vector>
 
-#if defined(MCFP_CXX_MODULE)
+#if defined(MCFP_MODULE_MODE)
 import mcfp;
 #else
 #include "mcfp/mcfp.hpp"

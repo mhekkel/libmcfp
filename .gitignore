@@ -7,3 +7,4 @@ build
 .cache
 docs/api
 docs/conf.py
+opencode-session*.json

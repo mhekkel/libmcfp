@@ -4,20 +4,17 @@
 
 #pragma once
 
-#ifndef MCFP_EXPORT
-# error "Please include mcfp.hpp only"
-#endif
-
-#ifndef IN_MODULE_INTERFACE
+#ifndef MCFP_MODULE_MODE
 # include "mcfp/charconv.hpp"
 # include "mcfp/error.hpp"
-# include "mcfp/text.hpp"
 
 # include <cassert>
 # include <charconv>
 # include <cstdio>
 # include <filesystem>
+# include <iostream>
 # include <optional>
+# include <stdexcept>
 # include <string>
 # include <type_traits>
 # include <utility>
@@ -55,7 +52,7 @@ template <typename T>
 			 is_detected_v<iterator_t, T> and
 			 not is_detected_v<std_string_npos_t, T>)
 struct is_container_type<T>
-    : std::true_type
+	: std::true_type
 {
 };
 
@@ -73,88 +70,17 @@ static_assert(is_container_type_v<std::vector<std::string>>);
 // a compile time error.
 [[noreturn]] MCFP_INLINE void report_error(const char *msg)
 {
-	(void)fputs(msg, stderr);
-	exit(1);
+	throw std::invalid_argument(msg);
 }
-
-// --------------------------------------------------------------------
-
-template <typename CharT>
-class string_view_base
-{
-  public:
-	using char_type = CharT;
-
-	using value_type = char_type;
-	using iterator = const char_type *;
-
-	constexpr explicit string_view_base(const char *s) noexcept
-		: m_data(s)
-	{
-		while (m_data[m_size] != 0)
-			++m_size;
-	}
-
-	constexpr string_view_base(const char *s, size_t N) noexcept
-		: m_data(s)
-		, m_size(N)
-	{
-	}
-
-	template <size_t N>
-	constexpr explicit string_view_base(const char (&s)[N]) noexcept
-		: m_data(s)
-		, m_size(N - 1)
-	{
-	}
-
-	constexpr string_view_base() noexcept = default;
-	constexpr string_view_base(const string_view_base &) noexcept = default;
-	constexpr string_view_base &
-	operator=(const string_view_base &) noexcept = default;
-	// constexpr string_view_base(nullptr_t) = delete;
-
-	template <typename StringType>
-	// requires(std::is_same_v<typename StringType::value_type, value_type>)
-	constexpr explicit string_view_base(const StringType &s) noexcept
-		: m_data(s.data())
-		, m_size(s.size())
-	{
-	}
-
-	[[nodiscard]] constexpr const char_type *data() const noexcept { return m_data; }
-	[[nodiscard]] constexpr size_t size() const noexcept { return m_size; }
-
-	[[nodiscard]] constexpr iterator begin() const noexcept { return m_data; }
-	[[nodiscard]] constexpr iterator end() const noexcept { return m_data + m_size; }
-	[[nodiscard]] constexpr char_type operator[](size_t ix) const noexcept
-	{
-		return m_data[ix];
-	}
-
-	[[nodiscard]] constexpr char_type front() const noexcept { return m_data[0]; }
-	[[nodiscard]] constexpr char_type back() const noexcept { return m_data[m_size - 1]; }
-
-	[[nodiscard]] constexpr string_view_base substr(size_t pos, size_t len) const noexcept
-	{
-		return { m_data + pos, len };
-	}
-
-  private:
-	const char_type *m_data = nullptr;
-	size_t m_size = 0;
-};
-
-using string_view = string_view_base<char>;
 
 // --------------------------------------------------------------------
 // A parsed options string, that is, split out the short and long names
 
 struct ostring
 {
-	string_view m_str;
-	string_view m_long;
-	string_view m_short;
+	std::string_view m_str;
+	std::string_view m_long;
+	std::string_view m_short;
 
 	template <size_t N>
 	consteval MCFP_INLINE ostring(const char (&s)[N]) // NOLINT(hicpp-explicit-conversions)
@@ -211,7 +137,7 @@ constexpr void ostring::parse()
 				break;
 
 			if (not is_valid_option_char(ch))
-				report_error("Short variant of option should be alnum");
+				report_error("Invalid character in long option name");
 		}
 
 		m_long = m_str.substr(0, len);
@@ -300,7 +226,7 @@ struct option_base
 	char m_short_name;     ///< The single character name of the argument, can be zero
 	bool m_is_flag = true, ///< When true, this option does not allow arguments
 		m_multi = false,   ///< When true, this option allows mulitple values.
-		m_hidden;          ///< When true, this option is hidden from the help text
+		m_hidden = false;  ///< When true, this option is hidden from the help text
 	int m_seen = 0;        ///< How often the option was seen on the command line
 
 	// We store the actual data in the argument list, i.e. strings
@@ -309,12 +235,13 @@ struct option_base
 
 	option_base(const option_base &rhs) = default;
 
-	constexpr option_base(string_view name_long, string_view name_short,
+	constexpr option_base(std::string_view name_long, std::string_view name_short,
 		std::string desc, bool hidden)
 		: m_name(name_long.begin(), name_long.end())
 		, m_desc(std::move(desc))
 		, m_short_name(name_short.size() > 0 ? name_short.front() : 0)
 		, m_hidden(hidden)
+		, m_seen(0)
 	{
 	}
 
@@ -375,14 +302,14 @@ struct option : public option_base
 
 	option(const option &rhs) = default;
 
-	option(string_view name_long, string_view name_short, std::string desc,
+	option(std::string_view name_long, std::string_view name_short, std::string desc,
 		bool hidden)
 		: option_base(name_long, name_short, std::move(desc), hidden)
 	{
 		m_is_flag = false;
 	}
 
-	option(string_view name_long, string_view name_short,
+	option(std::string_view name_long, std::string_view name_short,
 		const value_type &default_value, std::string desc, bool hidden)
 		: option(name_long, name_short, std::move(desc), hidden)
 	{
@@ -411,7 +338,7 @@ struct multiple_option : public option_base
 
 	multiple_option(const multiple_option &rhs) = default;
 
-	multiple_option(string_view name_long, string_view name_short,
+	multiple_option(std::string_view name_long, std::string_view name_short,
 		std::string desc, bool hidden)
 		: option_base(name_long, name_short, std::move(desc), hidden)
 	{
@@ -432,7 +359,7 @@ struct option<void> : public option_base
 {
 	option(const option &rhs) = default;
 
-	option(string_view name_long, string_view name_short, std::string desc,
+	option(std::string_view name_long, std::string_view name_short, std::string desc,
 		bool hidden)
 		: option_base(name_long, name_short, std::move(desc), hidden)
 	{
@@ -444,7 +371,7 @@ struct option<void> : public option_base
 			m_seen = 1;
 		else if (value == "false")
 			m_seen = 0;
-		else if (auto [ptr, ec2] = mcfp::from_chars(
+		else if (auto [ptr, ec2] = std::from_chars(
 					 value.data(), value.data() + value.length(), m_seen);
 			ec2 != std::errc{} or ptr != value.data() + value.length())
 			ec = make_error_code(config_error::wrong_type_cast_flag);

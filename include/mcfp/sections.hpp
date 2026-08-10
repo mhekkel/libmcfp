@@ -4,12 +4,7 @@
 
 #pragma once
 
-#ifndef MCFP_EXPORT
-# error "Please include mcfp.hpp only"
-#endif
-
-#ifndef IN_MODULE_INTERFACE
-
+#ifndef MCFP_MODULE_MODE
 # include "mcfp/options.hpp"
 
 # include <iomanip>
@@ -150,26 +145,11 @@ MCFP_EXPORT class section
 
 		void write(std::ostream &os, std::string_view section_name, size_t wrap_width, size_t output_width) const override
 		{
-			std::apply([&os, section_name, wrap_width, output_width](auto &&...opts)
+			std::apply([&os, section_name, wrap_width, output_width](auto const &...opts)
 				{ (opts.write(os, section_name, wrap_width, output_width), ...); }, m_options);
 		}
 
 		std::tuple<Options...> m_options;
-	};
-
-	template <typename... Options>
-	struct lib_config_impl : public config_impl<Options...>
-	{
-		explicit lib_config_impl(std::string lib_name, Options &&...options)
-			: config_impl<Options...>(std::forward<Options>(options)...)
-			, m_lib_name(std::move(lib_name))
-		{
-		}
-
-		[[nodiscard]] config_impl_base *next() const noexcept override { return m_next; }
-
-		std::string m_lib_name;
-		config_impl_base *m_next = nullptr;
 	};
 
 	std::string m_name;

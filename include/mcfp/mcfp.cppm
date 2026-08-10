@@ -4,25 +4,21 @@
 
 module;
 
-#include <algorithm>
-#include <cassert>
-#include <cassert>
-#include <climits>
-#include <cstdint>
-#include <cstring>
+#if USE_MODULE_STD
+import std;
+#else
+#include <charconv>
+#include <iostream>
 #include <filesystem>
-#include <filesystem>
-#include <fstream>
-#include <memory>
 #include <optional>
-#include <ostream>
+#include <string>
 #include <system_error>
-#include <type_traits>
 #include <utility>
 #include <vector>
+#endif
 
 #if __has_include(<sys/ioctl.h>)
-# include <fcntl.h>
+// # include <fcntl.h>
 # include <sys/ioctl.h>
 # include <unistd.h>
 #elif defined(_WIN32)
@@ -33,14 +29,12 @@ module;
 
 export module mcfp;
 
-#define IN_MODULE_INTERFACE
 #define MCFP_EXPORT export
 #define MCFP_INLINE
 
-export import :charconv;
-export import :error;
-export import :options;
-export import :sections;
-export import :text;
-
+#include "error.hpp"
+#include "charconv.hpp"
+#include "options.hpp"
+#include "sections.hpp"
+#include "text.hpp"
 #include "mcfp.hpp"

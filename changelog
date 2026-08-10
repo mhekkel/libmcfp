@@ -1,3 +1,13 @@
+Version 2.0.4
+- Fix terminal width detection using wrong file descriptor (stdin → stdout)
+- Fix IFNDR (ill-formed, no diagnostic required) in from_chars fallback template
+- Remove <experimental/type_traits> dependency; use std::void_t-based detection
+- Remove custom string_view_base reimplementation; use std::string_view directly
+- Consistent flag value handling: --verbose=true delegates to set_value like config files
+- Avoid unsigned integer overflow in word wrapping cost calculation
+- Initialize m_seen in option_base constructor
+- Replace std::println/exit in compile-time error handler with throw for cleaner diagnostics
+
 Version 2.0.3
 - Fix include in cmake config file
 

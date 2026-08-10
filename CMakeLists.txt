@@ -10,8 +10,16 @@
 
 cmake_minimum_required(VERSION 3.28)
 
+# Experimental import std support
+if(${CMAKE_VERSION} VERSION_EQUAL 4.3.3)
+    set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "451f2fe2-a8a2-47c3-bc32-94786d8fc91b")
+
+    set(CMAKE_CXX_STANDARD_REQUIRED OFF)
+    set(CMAKE_CXX_MODULE_STD 1)
+endif()
+
 # set the project name
-project(mcfp VERSION 2.0.3 LANGUAGES CXX)
+project(mcfp VERSION 2.0.4 LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
@@ -21,15 +29,27 @@ include(CTest)
 include(GNUInstallDirs)
 
 option(BUILD_DOCUMENTATION "Build the documentation" OFF)
-option(MCFP_BUILD_CXX_MODULE "Build the library as a C++ 20 module library" OFF)
+option(MCFP_BUILD_CXX_MODULE "Build the library as a C++ 20 module library" ON)
 
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    if(MCFP_BUILD_CXX_MODULE)
+        message(WARNING "Sorry, macOS has no support for module libraries, as fat as I can tell")
+        set(MCFP_BUILD_CXX_MODULE OFF)
+    endif()
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     if(MCFP_BUILD_CXX_MODULE AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 15)
-        message(FATAL_ERROR "Sorry, your gcc is too old")
+        message(WARNING "Sorry, your compiler is too old, not building the module library")
+        set(MCFP_BUILD_CXX_MODULE OFF)
     endif()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers")
 elseif(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+	add_definitions(-DNOMINMAX)
+elseif(${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD")
+    if(MCFP_BUILD_CXX_MODULE AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 20)
+        message(WARNING "Sorry, your compiler is too old, not building the module library")
+        set(MCFP_BUILD_CXX_MODULE OFF)
+    endif()
 endif()
 
 try_compile(STD_CHARCONV_COMPILING
@@ -51,16 +71,17 @@ file(GLOB_RECURSE mcfp_cxx src/*.cxx)
 
 if(STD_CHARCONV_COMPILING)
     list(FILTER mcfp_cpp EXCLUDE REGEX src/charconv-fast_float\.cpp)
-    list(FILTER mcfp_cxx EXCLUDE REGEX src/charconv-fast_float\.cxx)
 endif()
 
 add_library(mcfp ${mcfp_cpp})
 add_library(mcfp::mcfp ALIAS mcfp)
 
 target_compile_features(mcfp PUBLIC cxx_std_23)
+target_compile_definitions(mcfp PUBLIC USE_MODULE_STD=${CMAKE_CXX_MODULE_STD})
 
 if(NOT STD_CHARCONV_COMPILING)
     target_include_directories(mcfp PRIVATE $<TARGET_PROPERTY:FastFloat::fast_float,INTERFACE_INCLUDE_DIRECTORIES>)
+	target_compile_definitions(mcfp PRIVATE USE_FAST_FLOAT)
 endif()
 
 target_sources(mcfp
@@ -103,10 +124,10 @@ if(MCFP_BUILD_CXX_MODULE)
         FILES
         ${mcfp_modules})
 
-    target_compile_definitions(mcfp-module PUBLIC MCFP_CXX_MODULE)
+    target_compile_definitions(mcfp-module PUBLIC MCFP_MODULE_MODE)
 
     target_include_directories(mcfp-module PUBLIC
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>/mcfp)
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/mcfp>)
 
     install(TARGETS mcfp-module
         EXPORT mcfp-module-targets
@@ -120,7 +141,8 @@ if(MCFP_BUILD_CXX_MODULE)
 
 endif()
 
-configure_package_config_file(${PROJECT_SOURCE_DIR}/cmake/mcfp-config.cmake.in
+configure_package_config_file(
+    ${PROJECT_SOURCE_DIR}/cmake/mcfp-config.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/mcfp-config.cmake
     INSTALL_DESTINATION lib/cmake/mcfp)
 write_basic_package_version_file(
@@ -128,7 +150,8 @@ write_basic_package_version_file(
     VERSION ${PROJECT_VERSION}
     COMPATIBILITY AnyNewerVersion)
 
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/mcfp-config.cmake"
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/mcfp-config.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/mcfp-config-version.cmake"
     DESTINATION lib/cmake/mcfp)
 
