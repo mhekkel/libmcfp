@@ -62,17 +62,6 @@ MCFP_EXPORT MCFP_INLINE std::error_code make_error_code(config_error e)
 	return { static_cast<int>(e), config_category() };
 }
 
-/**
- * @brief Create an std::error_condition for our config_error enum
- *
- * @param e A config_error enum
- * @return std::error_condition
- */
-MCFP_EXPORT MCFP_INLINE std::error_condition make_error_condition(config_error e)
-{
-	return { static_cast<int>(e), config_category() };
-}
-
 } // namespace mcfp
 
 // Make our error_codes implicitly convertible
@@ -81,7 +70,7 @@ namespace std
 {
 
 template <> // NOLINT(bugprone-std-namespace-modification,cert-dcl58-cpp)
-struct is_error_condition_enum<mcfp::config_error>
+struct is_error_code_enum<mcfp::config_error>
     : public true_type
 {
 };
