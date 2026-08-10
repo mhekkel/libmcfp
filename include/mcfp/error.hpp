@@ -81,7 +81,7 @@ namespace std
 {
 
 template <> // NOLINT(bugprone-std-namespace-modification,cert-dcl58-cpp)
-struct is_error_code_enum<mcfp::config_error>
+struct is_error_condition_enum<mcfp::config_error>
     : public true_type
 {
 };
