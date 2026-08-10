@@ -28,8 +28,7 @@ namespace mcfp
  *
  * @brief A stronly typed class containing the error codes reported by @ref mcfp::config
  */
-MCFP_EXPORT enum class config_error
-{
+MCFP_EXPORT enum class config_error {
 	unknown_option = 1,              /**< The option requested does not exist, was not part of @ref mcfp::config::init. This error is returned by @ref mcfp::config::get */
 	option_does_not_accept_argument, /**< When parsing the command line arguments a value (argument) was specified for an option that should not have one */
 	missing_argument_for_option,     /**< A option without a required argument was found while parsing the command line arguments */
@@ -65,14 +64,8 @@ MCFP_EXPORT MCFP_INLINE std::error_code make_error_code(config_error e)
 } // namespace mcfp
 
 // Make our error_codes implicitly convertible
-
-namespace std
-{
-
 template <> // NOLINT(bugprone-std-namespace-modification,cert-dcl58-cpp)
-struct is_error_code_enum<mcfp::config_error>
-    : public true_type
+struct std::is_error_code_enum<mcfp::config_error>
+	: public true_type
 {
 };
-
-} // namespace std
