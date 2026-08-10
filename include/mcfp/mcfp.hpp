@@ -378,7 +378,14 @@ MCFP_EXPORT class config
   private:
 	static constexpr bool is_name_char(int ch)
 	{
+#ifdef _WIN32
+		return (ch >= '0' and ch <= '9') or
+			   (ch >= 'A' and ch <= 'Z') or
+			   (ch >= 'a' and ch <= 'z') or
+			   ch == '_' or ch == '-';
+#else
 		return std::isalnum(ch) or ch == '_' or ch == '-';
+#endif
 	}
 
 	static constexpr bool is_eoln(int ch)
@@ -413,8 +420,8 @@ MCFP_EXPORT class config
 	{
 		auto p = name.find('.');
 		return p == std::string_view::npos
-		           ? std::make_tuple(std::string_view{}, name)
-		           : std::make_tuple(name.substr(0, p), name.substr(p + 1));
+				? std::make_tuple(std::string_view{}, name)
+				: std::make_tuple(name.substr(0, p), name.substr(p + 1));
 	}
 
 	// --------------------------------------------------------------------
@@ -521,7 +528,6 @@ MCFP_EXPORT class config
 
 	std::vector<std::string> m_operands;
 	std::vector<std::unique_ptr<section>> m_sections;
-
 	static thread_local std::string s_last_option;
 
 	/// @endcond
