@@ -420,8 +420,8 @@ MCFP_EXPORT class config
 	{
 		auto p = name.find('.');
 		return p == std::string_view::npos
-		           ? std::make_tuple(std::string_view{}, name)
-		           : std::make_tuple(name.substr(0, p), name.substr(p + 1));
+				? std::make_tuple(std::string_view{}, name)
+				: std::make_tuple(name.substr(0, p), name.substr(p + 1));
 	}
 
 	// --------------------------------------------------------------------
@@ -528,7 +528,6 @@ MCFP_EXPORT class config
 
 	std::vector<std::string> m_operands;
 	std::vector<std::unique_ptr<section>> m_sections;
-
 	static thread_local std::string s_last_option;
 
 	/// @endcond
