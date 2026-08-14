@@ -338,6 +338,7 @@ void config::parse_config_file(std::istream &is, std::error_code &ec)
 				if (is_name_char(ch))
 				{
 					name = { static_cast<char>(ch) };
+					s_last_option = section.empty() ? name : section + '.' + name;
 					value.clear();
 					state = State::NAME;
 				}
@@ -385,12 +386,12 @@ void config::parse_config_file(std::istream &is, std::error_code &ec)
 
 			case State::NAME:
 				if (is_name_char(ch))
+				{
 					name.insert(name.end(), static_cast<char>(ch));
+					s_last_option = section.empty() ? name : section + '.' + name;
+				}
 				else if (is_eoln(ch))
 				{
-					// store name for inspection later on
-					s_last_option = name;
-
 					auto opt = get_option(section, name);
 
 					if (opt == nullptr)
