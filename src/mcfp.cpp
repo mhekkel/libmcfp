@@ -164,6 +164,13 @@ void config::parse(int argc, const char *const argv[], std::error_code &ec)
 			continue;
 		}
 
+		// Single hyphen should be an operand
+		if (arg[0] == '-' and arg[1] == '\0')
+		{
+			m_operands.emplace_back(arg);
+			continue;
+		}
+
 		option_base *opt = nullptr;
 		std::string_view opt_arg;
 
@@ -186,7 +193,7 @@ void config::parse(int argc, const char *const argv[], std::error_code &ec)
 			}
 
 			// store name for inspection later on
-			s_last_option = std::string{s_arg};
+			s_last_option = std::string{ s_arg };
 
 			opt = get_option(s_arg);
 			if (opt == nullptr)
@@ -215,7 +222,7 @@ void config::parse(int argc, const char *const argv[], std::error_code &ec)
 			while (*arg != 0 and not ec)
 			{
 				// store name for inspection later on
-				s_last_option = std::string{*arg};
+				s_last_option = std::string{ *arg };
 				opt = get_option(*arg++);
 
 				if (opt == nullptr)
