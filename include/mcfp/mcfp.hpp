@@ -83,7 +83,9 @@ MCFP_EXPORT class config
 				[](const std::unique_ptr<section> &s, std::string_view name)
 				{ return s->name().compare(name) < 0; });
 
-			if (si == m_sections.end())
+			if (si != m_sections.end() and (*si)->name() == sp->name())
+				*si = std::move(sp);
+			else
 				m_sections.insert(si, std::move(sp));
 		}
 
