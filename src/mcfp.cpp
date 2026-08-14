@@ -96,11 +96,6 @@ class config_category_impl : public std::error_category
 		}
 		return "unknown configuration error";
 	}
-
-	[[nodiscard]] bool equivalent(const std::error_code & /*code*/, int /*condition*/) const noexcept override
-	{
-		return false;
-	}
 };
 
 std::error_category &config_category()
