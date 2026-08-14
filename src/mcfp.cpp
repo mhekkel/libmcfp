@@ -432,7 +432,10 @@ void config::parse_config_file(std::istream &is, std::error_code &ec)
 							ec = make_error_code(config_error::unknown_option);
 					}
 					else if (opt->m_is_flag)
-						opt->set_value(value, ec);
+					{
+						if (opt->m_seen == 0)
+							opt->set_value(value, ec);
+					}
 					else if (not value.empty() and (opt->m_seen == 0 or opt->m_multi))
 					{
 						opt->set_value(value, ec);
