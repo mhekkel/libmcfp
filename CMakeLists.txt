@@ -11,12 +11,12 @@
 cmake_minimum_required(VERSION 3.28)
 
 # Experimental import std support
-if(${CMAKE_VERSION} VERSION_EQUAL 4.3.3)
-    set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "451f2fe2-a8a2-47c3-bc32-94786d8fc91b")
+# if(${CMAKE_VERSION} VERSION_EQUAL 4.3.3)
+#     set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "451f2fe2-a8a2-47c3-bc32-94786d8fc91b")
 
-    set(CMAKE_CXX_STANDARD_REQUIRED OFF)
-    set(CMAKE_CXX_MODULE_STD 1)
-endif()
+#     set(CMAKE_CXX_STANDARD_REQUIRED OFF)
+#     set(CMAKE_CXX_MODULE_STD 1)
+# endif()
 
 # set the project name
 project(mcfp VERSION 2.0.4 LANGUAGES CXX)
