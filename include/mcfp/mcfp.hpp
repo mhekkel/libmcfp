@@ -150,10 +150,8 @@ MCFP_EXPORT class config
 	 */
 	static config &instance()
 	{
-		static std::unique_ptr<config> s_instance;
-		if (not s_instance)
-			s_instance.reset(new config);
-		return *s_instance;
+		static config s_instance;
+		return s_instance;
 	}
 
 	/**
