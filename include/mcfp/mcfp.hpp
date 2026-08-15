@@ -41,6 +41,14 @@ namespace mcfp
  * Use @ref mcfp::config::instance to create and/or
  * retrieve the single instance.
  *
+ * @par Thread safety
+ * This class is not thread safe. It is intended to be used sequentially:
+ * initialise (@ref init or @ref add_section), parse the command line and/or
+ * config files, and only then query values (@ref get, @ref get_optional,
+ * @ref has, @ref count). Concurrent access from multiple threads while a
+ * @ref parse operation is in flight, or concurrent calls to any member from
+ * multiple threads, results in undefined behaviour.
+ *
  */
 
 MCFP_EXPORT class config
