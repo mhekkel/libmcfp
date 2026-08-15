@@ -33,7 +33,7 @@ option(MCFP_BUILD_CXX_MODULE "Build the library as a C++ 20 module library" ON)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     if(MCFP_BUILD_CXX_MODULE)
-        message(WARNING "Sorry, macOS has no support for module libraries, as fat as I can tell")
+        message(WARNING "Sorry, macOS has no support for module libraries, as far as I can tell")
         set(MCFP_BUILD_CXX_MODULE OFF)
     endif()
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
