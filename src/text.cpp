@@ -68,13 +68,27 @@ std::vector<std::string_view> word_wrapper::wrap_line(std::string_view line, std
 
 	for (std::size_t i = 0; i < count; ++i)
 	{
+		if (minima[i] == std::numeric_limits<std::size_t>::max())
+			continue;
+
 		std::size_t j = i + 1;
 		while (j <= count)
 		{
 			std::size_t w = offsets[j] - offsets[i];
 
 			if (w > width)
+			{
+				if (j == i + 1)
+				{
+					std::size_t cost = minima[i] + (w - width) * (w - width);
+					if (cost < minima[j])
+					{
+						minima[j] = cost;
+						breaks[j] = i;
+					}
+				}
 				break;
+			}
 
 			while (w > 0 and std::isspace(line[offsets[i] + w - 1]))
 				--w;

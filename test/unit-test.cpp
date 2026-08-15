@@ -704,3 +704,48 @@ TEST_CASE("single-hyphen")
 	REQUIRE(config.operands().size() == 1);
 	CHECK(config.operands().front() == "-");
 }
+
+// --------------------------------------------------------------------
+
+TEST_CASE("word_wrapper_overlength_word")
+{
+	// Width is 10, but the middle word has length 34
+	std::string text = "Short prefix supercalifragilisticexpialidocious end";
+
+	mcfp::word_wrapper ww(text, 10);
+
+	std::vector<std::string_view> lines(ww.begin(), ww.end());
+
+	REQUIRE(lines.size() == 4);
+	CHECK(lines[0] == "Short ");
+	CHECK(lines[1] == "prefix ");
+	CHECK(lines[2] == "supercalifragilisticexpialidocious ");
+	CHECK(lines[3] == "end");
+}
+
+TEST_CASE("word_wrapper_leading_and_trailing_overlength")
+{
+	std::string text = "verylongurlthatexceedsthespecifiedwrapwidth and then words";
+
+	mcfp::word_wrapper ww(text, 15);
+
+	std::vector<std::string_view> lines(ww.begin(), ww.end());
+
+	REQUIRE(lines.size() == 2);
+	CHECK(lines[0] == "verylongurlthatexceedsthespecifiedwrapwidth ");
+	CHECK(lines[1] == "and then words");
+}
+
+TEST_CASE("word_wrapper_consecutive_overlength")
+{
+	std::string text = "firstverylongword secondverylongword finalwords";
+
+	mcfp::word_wrapper ww(text, 10);
+
+	std::vector<std::string_view> lines(ww.begin(), ww.end());
+
+	REQUIRE(lines.size() == 3);
+	CHECK(lines[0] == "firstverylongword ");
+	CHECK(lines[1] == "secondverylongword ");
+	CHECK(lines[2] == "finalwords");
+}
