@@ -23,6 +23,7 @@
 # include <cassert>
 # include <cstring>
 # include <filesystem>
+# include <iostream>
 # include <memory>
 # include <optional>
 # include <system_error>
@@ -541,6 +542,8 @@ MCFP_EXPORT class config
  *
  * If the type of \a T is a container (std::vector e.g.) the option can be
  * specified multiple times on the command line.
+ * 
+ * The type \a T cannot be a bool, use void for flags.
  *
  * The name \a name may end with a comma and a single character. This last
  * character will then be the short version whereas the leading characters
@@ -553,7 +556,7 @@ MCFP_EXPORT class config
  */
 MCFP_EXPORT template <typename T = void>
 auto make_option(ostring name, std::string description)
-	requires(not is_container_type_v<T>)
+	requires(not (is_container_type_v<T> or std::is_same_v<T, bool>))
 {
 	return option<T>(name.m_long, name.m_short, std::move(description), false);
 }
@@ -573,6 +576,8 @@ auto make_option(ostring name, std::string description)
  * If the type of \a T is a container (std::vector e.g.) the option can be
  * specified multiple times on the command line.
  *
+ * The type \a T cannot be a bool, use void for flags.
+ *
  * The name \a name may end with a comma and a single character. This last
  * character will then be the short version whereas the leading characters
  * make up the long version.
@@ -585,7 +590,7 @@ auto make_option(ostring name, std::string description)
  */
 MCFP_EXPORT template <typename T>
 auto make_option(ostring name, const T &v, std::string description)
-	requires(not is_container_type_v<T>)
+	requires(not (is_container_type_v<T> or std::is_same_v<T, bool>))
 {
 	return option<T>(name.m_long, name.m_short, v, std::move(description), false);
 }
@@ -598,6 +603,8 @@ auto make_option(ostring name, const T &v, std::string description)
  * If the type of \a T is a container (std::vector e.g.) the option can be
  * specified multiple times on the command line.
  *
+ * The type \a T cannot be a bool, use void for flags.
+ *
  * The name \a name may end with a comma and a single character. This last
  * character will then be the short version whereas the leading characters
  * make up the long version.
@@ -609,7 +616,7 @@ auto make_option(ostring name, const T &v, std::string description)
  */
 MCFP_EXPORT template <typename T = void>
 auto make_hidden_option(ostring name, std::string description)
-	requires(not is_container_type_v<T>)
+	requires(not (is_container_type_v<T> or std::is_same_v<T, bool>))
 {
 	return option<T>(name.m_long, name.m_short, description, true);
 }
@@ -631,6 +638,8 @@ auto make_hidden_option(ostring name, std::string description)
  * If the type of \a T is a container (std::vector e.g.) the option can be
  * specified multiple times on the command line.
  *
+ * The type \a T cannot be a bool, use void for flags.
+ *
  * The name \a name may end with a comma and a single character. This last
  * character will then be the short version whereas the leading characters
  * make up the long version.
@@ -643,7 +652,7 @@ auto make_hidden_option(ostring name, std::string description)
  */
 MCFP_EXPORT template <typename T>
 auto make_hidden_option(ostring name, const T &v, std::string description)
-	requires(not is_container_type_v<T>)
+	requires(not (is_container_type_v<T> or std::is_same_v<T, bool>))
 {
 	return option<T>(name.m_long, name.m_short, v, description, true);
 }
