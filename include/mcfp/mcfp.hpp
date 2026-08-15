@@ -282,6 +282,9 @@ MCFP_EXPORT class config
 		if (ec and ec != config_error::option_not_specified)
 			throw std::system_error(ec, "while getting option '" + std::string{ name } + '\'');
 
+		if (ec) // option_not_specified, return an empty optional
+			result.reset();
+
 		return result;
 	}
 
@@ -562,8 +565,9 @@ MCFP_EXPORT class config
  */
 MCFP_EXPORT template <typename T = void>
 auto make_option(ostring name, std::string description)
-	requires(not (is_container_type_v<T> or std::is_same_v<T, bool>))
+	requires(not is_container_type_v<T>)
 {
+	static_assert(not std::is_same_v<T, bool>, "Use make_option<void> or simply make_option without template parameter for flags");
 	return option<T>(name.m_long, name.m_short, std::move(description), false);
 }
 
@@ -596,8 +600,9 @@ auto make_option(ostring name, std::string description)
  */
 MCFP_EXPORT template <typename T>
 auto make_option(ostring name, const T &v, std::string description)
-	requires(not (is_container_type_v<T> or std::is_same_v<T, bool>))
+	requires(not is_container_type_v<T>)
 {
+	static_assert(not std::is_same_v<T, bool>, "Use make_option<void> or simply make_option without template parameter for flags");
 	return option<T>(name.m_long, name.m_short, v, std::move(description), false);
 }
 
@@ -622,8 +627,9 @@ auto make_option(ostring name, const T &v, std::string description)
  */
 MCFP_EXPORT template <typename T = void>
 auto make_hidden_option(ostring name, std::string description)
-	requires(not (is_container_type_v<T> or std::is_same_v<T, bool>))
+	requires(not is_container_type_v<T>)
 {
+	static_assert(not std::is_same_v<T, bool>, "Use make_option<void> or simply make_option without template parameter for flags");
 	return option<T>(name.m_long, name.m_short, description, true);
 }
 
@@ -658,8 +664,9 @@ auto make_hidden_option(ostring name, std::string description)
  */
 MCFP_EXPORT template <typename T>
 auto make_hidden_option(ostring name, const T &v, std::string description)
-	requires(not (is_container_type_v<T> or std::is_same_v<T, bool>))
+	requires(not is_container_type_v<T>)
 {
+	static_assert(not std::is_same_v<T, bool>, "Use make_option<void> or simply make_option without template parameter for flags");
 	return option<T>(name.m_long, name.m_short, v, description, true);
 }
 

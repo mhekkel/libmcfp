@@ -751,3 +751,301 @@ TEST_CASE("word_wrapper_consecutive_overlength")
 	CHECK(std::string{ lines[1] } == "secondverylongword ");
 	CHECK(std::string{ lines[2] } == "finalwords");
 }
+
+// --------------------------------------------------------------------
+// Flag values in config files (issue: only 'true' was tested before)
+
+TEST_CASE("flag-config-values")
+{
+	const std::string_view config_file{ R"(
+verbose_false = false
+verbose_zero = 0
+verbose_three = 3
+    )" };
+
+	struct membuf : public std::streambuf
+	{
+		membuf(char *text, size_t length)
+		{
+			this->setg(text, text, text + length);
+		}
+	} buffer(const_cast<char *>(config_file.data()), config_file.length());
+
+	std::istream is(&buffer);
+
+	auto &config = mcfp::config::instance();
+
+	config.init(
+		"test [options]",
+		mcfp::make_option("verbose_false,f", ""),
+		mcfp::make_option("verbose_zero,z", ""),
+		mcfp::make_option("verbose_three,t", ""));
+
+	std::error_code ec;
+
+	config.parse_config_file(is, ec);
+
+	CHECK(not ec);
+
+	CHECK(config.count("verbose_false") == 0);
+	CHECK(config.count("verbose_zero") == 0);
+	CHECK(config.count("verbose_three") == 3);
+}
+
+// --------------------------------------------------------------------
+
+TEST_CASE("flag-cli-values")
+{
+	const char *const argv[] = {
+		"test", "--verbose=42", nullptr
+	};
+	int argc = sizeof(argv) / sizeof(char *) - 1;
+
+	auto &config = mcfp::config::instance();
+
+	config.init(
+		"test [options]",
+		mcfp::make_option("verbose,v", ""));
+
+	config.parse(argc, argv);
+
+	CHECK(config.count("verbose") == 42);
+}
+
+// --------------------------------------------------------------------
+// Multiple sections in a single config file
+
+TEST_CASE("config-multiple-sections")
+{
+	const std::string_view config_file{ R"(
+[section-a]
+foo = 1
+[section-b]
+bar = two
+    )" };
+
+	struct membuf : public std::streambuf
+	{
+		membuf(char *text, size_t length)
+		{
+			this->setg(text, text, text + length);
+		}
+	} buffer(const_cast<char *>(config_file.data()), config_file.length());
+
+	std::istream is(&buffer);
+
+	auto &config = mcfp::config::instance();
+
+	config.init("test [options]")
+		.add_section("section-a",
+			mcfp::make_option<int>("foo", ""))
+		.add_section("section-b",
+			mcfp::make_option<std::string>("bar", ""));
+
+	std::error_code ec;
+
+	config.parse_config_file(is, ec);
+
+	CHECK(not ec);
+
+	CHECK(config.has("section-a.foo"));
+	CHECK(config.get<int>("section-a.foo") == 1);
+
+	CHECK(config.has("section-b.bar"));
+	CHECK(config.get("section-b.bar") == "two");
+}
+
+// --------------------------------------------------------------------
+// set_ignore_unknown during config file parsing
+
+TEST_CASE("config-ignore-unknown")
+{
+	const std::string_view config_file{ R"(
+known = value
+unknown_key = ignored
+    )" };
+
+	struct membuf : public std::streambuf
+	{
+		membuf(char *text, size_t length)
+		{
+			this->setg(text, text, text + length);
+		}
+	} buffer(const_cast<char *>(config_file.data()), config_file.length());
+
+	std::istream is(&buffer);
+
+	auto &config = mcfp::config::instance();
+
+	config.init(
+		"test [options]",
+		mcfp::make_option<std::string>("known", ""));
+
+	config.set_ignore_unknown(true);
+
+	std::error_code ec;
+
+	config.parse_config_file(is, ec);
+
+	CHECK(not ec);
+	CHECK(config.has("known"));
+	CHECK(config.get("known") == "value");
+}
+
+// --------------------------------------------------------------------
+// Empty / whitespace-only config files
+
+TEST_CASE("config-empty-file")
+{
+	auto &config = mcfp::config::instance();
+
+	config.init(
+		"test [options]",
+		mcfp::make_option<std::string>("aap", ""));
+
+	SECTION("empty")
+	{
+		const std::string_view config_file{ "" };
+
+		struct membuf : public std::streambuf
+		{
+			membuf(char *text, size_t length)
+			{
+				this->setg(text, text, text + length);
+			}
+		} buffer(const_cast<char *>(config_file.data()), config_file.length());
+
+		std::istream is(&buffer);
+		std::error_code ec;
+
+		config.parse_config_file(is, ec);
+
+		CHECK(not ec);
+	}
+
+	SECTION("whitespace and comments only")
+	{
+		const std::string_view config_file{ "  \n\t\n# just a comment\n; another one\n\n" };
+
+		struct membuf : public std::streambuf
+		{
+			membuf(char *text, size_t length)
+			{
+				this->setg(text, text, text + length);
+			}
+		} buffer(const_cast<char *>(config_file.data()), config_file.length());
+
+		std::istream is(&buffer);
+		std::error_code ec;
+
+		config.parse_config_file(is, ec);
+
+		CHECK(not ec);
+		CHECK_FALSE(config.has("aap"));
+	}
+}
+
+// --------------------------------------------------------------------
+// --option= with an empty value
+
+TEST_CASE("cli-empty-value")
+{
+	auto &config = mcfp::config::instance();
+
+	config.init(
+		"test [options]",
+		mcfp::make_option("flag,f", ""),
+		mcfp::make_option<std::string>("str,s", ""));
+
+	SECTION("flag with empty value increments")
+	{
+		const char *const argv[] = {
+			"test", "--flag=", nullptr
+		};
+		int argc = sizeof(argv) / sizeof(char *) - 1;
+
+		std::error_code ec;
+		config.parse(argc, argv, ec);
+
+		CHECK(not ec);
+		CHECK(config.count("flag") == 1);
+	}
+
+	SECTION("value option with empty value at end of argv")
+	{
+		const char *const argv[] = {
+			"test", "--str=", nullptr
+		};
+		int argc = sizeof(argv) / sizeof(char *) - 1;
+
+		std::error_code ec;
+		config.parse(argc, argv, ec);
+
+		CHECK(ec == mcfp::config_error::missing_argument_for_option);
+	}
+}
+
+// --------------------------------------------------------------------
+// std::filesystem::path options
+
+TEST_CASE("path-option")
+{
+	const char *const argv[] = {
+		"test", "--dir=/some/path/to/dir", nullptr
+	};
+	int argc = sizeof(argv) / sizeof(char *) - 1;
+
+	auto &config = mcfp::config::instance();
+
+	config.init(
+		"test [options]",
+		mcfp::make_option<std::filesystem::path>("dir", ""));
+
+	config.parse(argc, argv);
+
+	CHECK(config.has("dir"));
+	CHECK(config.get<std::filesystem::path>("dir") == std::filesystem::path("/some/path/to/dir"));
+
+	std::error_code ec;
+	CHECK(config.get<std::string>("dir", ec) == "/some/path/to/dir");
+}
+
+// --------------------------------------------------------------------
+// get_optional returns an empty optional when the option was not set
+
+TEST_CASE("get-optional-unset")
+{
+	auto &config = mcfp::config::instance();
+
+	config.init(
+		"test [options]",
+		mcfp::make_option<std::string>("foo", ""),
+		mcfp::make_option<std::string>("bar", "default", ""));
+
+	CHECK_FALSE(config.get_optional<std::string>("foo").has_value());
+	CHECK(config.get_optional<std::string>("bar").value() == "default");
+}
+
+// --------------------------------------------------------------------
+// A single '-' is treated as an operand, not an option
+
+TEST_CASE("single-hyphen-operand")
+{
+	const char *const argv[] = {
+		"test", "-", "file.txt", nullptr
+	};
+	int argc = sizeof(argv) / sizeof(char *) - 1;
+
+	auto &config = mcfp::config::instance();
+
+	config.init(
+		"test [options]",
+		mcfp::make_option("verbose,v", ""));
+
+	config.parse(argc, argv);
+
+	CHECK(not config.has("verbose"));
+	REQUIRE(config.operands().size() == 2);
+	CHECK(config.operands()[0] == "-");
+	CHECK(config.operands()[1] == "file.txt");
+}

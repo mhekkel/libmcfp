@@ -50,7 +50,8 @@ struct is_container_type : std::false_type
 template <typename T>
 	requires(detail::is_detected_v<value_type_t, T> and
 			 detail::is_detected_v<iterator_t, T> and
-			 not detail::is_detected_v<std_string_npos_t, T>)
+			 not detail::is_detected_v<std_string_npos_t, T> and
+			 not std::is_same_v<T, std::filesystem::path>)
 struct is_container_type<T>
 	: std::true_type
 {

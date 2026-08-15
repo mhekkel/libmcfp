@@ -1,4 +1,6 @@
 Version 2.0.4
+- Fix std::filesystem::path options being misdetected as containers
+- Fix get_optional returning a value for options that were not specified
 - Fix terminal width detection using wrong file descriptor (stdin → stdout)
 - Fix IFNDR (ill-formed, no diagnostic required) in from_chars fallback template
 - Remove <experimental/type_traits> dependency; use std::void_t-based detection
