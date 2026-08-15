@@ -196,14 +196,14 @@ MCFP_EXPORT class config
 	 * @brief Returns the value for the option with name \a name. Throws
 	 * an exception if the option has not value assigned
 	 *
-	 * If the option is a flag (created without a value type, see @ref make_option),
-	 * request @c bool to retrieve whether the flag was specified.
+	 * Note that you cannot do get<bool>. For flags, use has() or count()
 	 *
 	 * @tparam T The type of the value requested.
 	 * @param name The name of the option requested
 	 * @return auto The value of the named option
 	 */
 	template <typename T>
+		requires (not std::is_same_v<T, bool>)
 	[[nodiscard]] auto get(std::string_view name) const
 	{
 		using return_type = std::remove_cv_t<T>;
@@ -222,12 +222,15 @@ MCFP_EXPORT class config
 	 * the option has no value assigned or is of a wrong type,
 	 * ec is set to an appropriate error
 	 *
+	 * Note that you cannot do get<bool>. For flags, use has() or count()
+	 *
 	 * @tparam T The type of the value requested.
 	 * @param name The name of the option requested
 	 * @param ec The error status is returned in this variable
 	 * @return auto The value of the named option
 	 */
 	template <typename T>
+		requires (not std::is_same_v<T, bool>)
 	auto get(std::string_view name, std::error_code &ec) const
 	{
 		using return_type = std::remove_cv_t<T>;
