@@ -371,6 +371,57 @@ TEST_CASE("t_14")
 
 // --------------------------------------------------------------------
 
+TEST_CASE("bool-1")
+{
+	const char *const argv[] = {
+		"test", "-vvv", "--verbose", nullptr
+	};
+	int argc = sizeof(argv) / sizeof(char *) - 1;
+
+	auto &config = mcfp::config::instance();
+
+	config.init(
+		"test [options]",
+		mcfp::make_option("verbose,v", ""),
+		mcfp::make_option("flag,f", ""));
+
+	config.parse(argc, argv);
+
+	// A flag that was specified reads back as true
+	CHECK(config.get<bool>("verbose"));
+	CHECK(config.get_optional<bool>("verbose").value_or(false));
+
+	// A flag that was not specified reads back as false, without an error
+	std::error_code ec;
+	CHECK_FALSE(config.get<bool>("flag", ec));
+	CHECK(not ec);
+}
+
+TEST_CASE("bool-2")
+{
+	auto &config = mcfp::config::instance();
+
+	config.init(
+		"test [options]",
+		mcfp::make_option<int>("noot", 1, ""),
+		mcfp::make_option<int>("mies", 0, ""));
+
+	// Non-flag options parse their value as a bool
+	CHECK(config.get<bool>("noot"));
+	CHECK_FALSE(config.get<bool>("mies"));
+
+	const char *const argv[] = {
+		"test", "--noot=0", nullptr
+	};
+	int argc = sizeof(argv) / sizeof(char *) - 1;
+
+	config.parse(argc, argv);
+
+	CHECK_FALSE(config.get<bool>("noot"));
+}
+
+// --------------------------------------------------------------------
+
 TEST_CASE("file_1, * utf::tolerance(0.001)")
 {
 	const std::string_view config_file{ R"(

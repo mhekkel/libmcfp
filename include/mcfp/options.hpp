@@ -183,6 +183,35 @@ struct option_traits<T>
 };
 
 template <>
+struct option_traits<bool>
+{
+	using value_type = bool;
+
+	static value_type set_value(std::string_view argument, std::error_code &ec)
+	{
+		if (argument == "true")
+			return true;
+		if (argument == "false")
+			return false;
+
+		int value = 0;
+		auto r = from_chars(argument.data(), argument.data() + argument.length(), value);
+		if (r.ec != std::errc() or r.ptr != argument.data() + argument.length())
+		{
+			ec = make_error_code(config_error::wrong_type_cast);
+			return false;
+		}
+
+		return value != 0;
+	}
+
+	static std::string to_string(const bool &value)
+	{
+		return value ? "true" : "false";
+	}
+};
+
+template <>
 struct option_traits<std::filesystem::path>
 {
 	using value_type = std::filesystem::path;
@@ -254,7 +283,23 @@ struct option_base
 	{
 		T result{};
 
-		if (m_value.empty())
+		if constexpr (std::is_same_v<T, bool>)
+		{
+			// A flag (option<void>) stores its state in m_seen, not in m_value.
+			// Other options store their value as a string, parse it as a bool.
+			if (m_is_flag)
+				result = m_seen != 0;
+			else if (m_value.empty())
+			{
+				if (m_default_value)
+					result = option_traits<bool>::set_value(*m_default_value, ec);
+				else
+					ec = make_error_code(config_error::option_not_specified);
+			}
+			else
+				result = option_traits<bool>::set_value(m_value.front(), ec);
+		}
+		else if (m_value.empty())
 		{
 			if (m_default_value)
 			{
