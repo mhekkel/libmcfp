@@ -34,8 +34,11 @@ uint32_t get_terminal_width()
 	uint32_t result = 80;
 
 	CONSOLE_SCREEN_BUFFER_INFO csbi{};
-	if (::GetConsoleScreenBufferInfo(::GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
+	if (::GetConsoleScreenBufferInfo(::GetStdHandle(STD_OUTPUT_HANDLE), &csbi) and
+		csbi.srWindow.Right > csbi.srWindow.Left)
+	{
 		result = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+	}
 
 	return result;
 }
@@ -50,8 +53,8 @@ std::uint32_t get_terminal_width()
 	if (::isatty(STDOUT_FILENO))
 	{
 		struct winsize w{};
-		::ioctl(STDOUT_FILENO, TIOCGWINSZ, &w); // NOLINT(hicpp-vararg)
-		result = w.ws_col;
+		if (::ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0 and w.ws_col > 0) // NOLINT(hicpp-vararg)
+			result = w.ws_col;
 	}
 	return result;
 }
