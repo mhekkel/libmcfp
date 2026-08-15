@@ -23,7 +23,7 @@
 # include <cassert>
 # include <cstring>
 # include <filesystem>
-# include <iostream>
+# include <iosfwd>
 # include <memory>
 # include <optional>
 # include <system_error>
@@ -195,6 +195,9 @@ MCFP_EXPORT class config
 	/**
 	 * @brief Returns the value for the option with name \a name. Throws
 	 * an exception if the option has not value assigned
+	 *
+	 * If the option is a flag (created without a value type, see @ref make_option),
+	 * request @c bool to retrieve whether the flag was specified.
 	 *
 	 * @tparam T The type of the value requested.
 	 * @param name The name of the option requested
