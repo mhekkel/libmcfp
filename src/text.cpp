@@ -90,7 +90,7 @@ std::vector<std::string_view> word_wrapper::wrap_line(std::string_view line, std
 				break;
 			}
 
-			while (w > 0 and std::isspace(line[offsets[i] + w - 1]))
+			while (w > 0 and std::isspace(static_cast<uint8_t>(line[offsets[i] + w - 1])))
 				--w;
 
 			std::size_t cost = minima[i];
