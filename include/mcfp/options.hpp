@@ -48,9 +48,9 @@ struct is_container_type : std::false_type
 };
 
 template <typename T>
-	requires(is_detected_v<value_type_t, T> and
-			 is_detected_v<iterator_t, T> and
-			 not is_detected_v<std_string_npos_t, T>)
+	requires(detail::is_detected_v<value_type_t, T> and
+			 detail::is_detected_v<iterator_t, T> and
+			 not detail::is_detected_v<std_string_npos_t, T>)
 struct is_container_type<T>
 	: std::true_type
 {
