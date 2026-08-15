@@ -96,11 +96,6 @@ class config_category_impl : public std::error_category
 		}
 		return "unknown configuration error";
 	}
-
-	[[nodiscard]] bool equivalent(const std::error_code & /*code*/, int /*condition*/) const noexcept override
-	{
-		return false;
-	}
 };
 
 std::error_category &config_category()
@@ -164,6 +159,13 @@ void config::parse(int argc, const char *const argv[], std::error_code &ec)
 			continue;
 		}
 
+		// Single hyphen should be an operand
+		if (arg[0] == '-' and arg[1] == '\0')
+		{
+			m_operands.emplace_back(arg);
+			continue;
+		}
+
 		option_base *opt = nullptr;
 		std::string_view opt_arg;
 
@@ -186,7 +188,7 @@ void config::parse(int argc, const char *const argv[], std::error_code &ec)
 			}
 
 			// store name for inspection later on
-			s_last_option = std::string{s_arg};
+			s_last_option = std::string{ s_arg };
 
 			opt = get_option(s_arg);
 			if (opt == nullptr)
@@ -215,7 +217,7 @@ void config::parse(int argc, const char *const argv[], std::error_code &ec)
 			while (*arg != 0 and not ec)
 			{
 				// store name for inspection later on
-				s_last_option = std::string{*arg};
+				s_last_option = std::string{ *arg };
 				opt = get_option(*arg++);
 
 				if (opt == nullptr)
@@ -331,6 +333,7 @@ void config::parse_config_file(std::istream &is, std::error_code &ec)
 				if (is_name_char(ch))
 				{
 					name = { static_cast<char>(ch) };
+					s_last_option = section.empty() ? name : section + '.' + name;
 					value.clear();
 					state = State::NAME;
 				}
@@ -378,12 +381,12 @@ void config::parse_config_file(std::istream &is, std::error_code &ec)
 
 			case State::NAME:
 				if (is_name_char(ch))
+				{
 					name.insert(name.end(), static_cast<char>(ch));
+					s_last_option = section.empty() ? name : section + '.' + name;
+				}
 				else if (is_eoln(ch))
 				{
-					// store name for inspection later on
-					s_last_option = name;
-
 					auto opt = get_option(section, name);
 
 					if (opt == nullptr)
@@ -424,7 +427,10 @@ void config::parse_config_file(std::istream &is, std::error_code &ec)
 							ec = make_error_code(config_error::unknown_option);
 					}
 					else if (opt->m_is_flag)
-						opt->set_value(value, ec);
+					{
+						if (opt->m_seen == 0)
+							opt->set_value(value, ec);
+					}
 					else if (not value.empty() and (opt->m_seen == 0 or opt->m_multi))
 					{
 						opt->set_value(value, ec);

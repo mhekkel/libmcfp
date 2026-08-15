@@ -4,6 +4,8 @@
 
 #include "test-main.hpp"
 
+#include <catch2/catch_test_macros.hpp>
+
 #if MCFP_MODULE_MODE
 import mcfp;
 #else
@@ -681,4 +683,24 @@ TEST_CASE("sections-1")
 
 		CHECK_FALSE(config.has(opt_name));
 	}
+}
+
+// --------------------------------------------------------------------
+
+TEST_CASE("single-hyphen")
+{
+	int argc = 2;
+	const char *const argv[] = {
+		"test", "-", nullptr
+	};
+
+	auto &config = mcfp::config::instance();
+
+	config.init(
+		"test [operands...]");
+
+	config.parse(argc, argv);
+
+	REQUIRE(config.operands().size() == 1);
+	CHECK(config.operands().front() == "-");
 }
