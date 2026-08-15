@@ -82,8 +82,6 @@ class config_category_impl : public std::error_category
 		{
 			case config_error::unknown_option:
 				return "unknown option";
-			case config_error::option_does_not_accept_argument:
-				return "option does not accept argument";
 			case config_error::missing_argument_for_option:
 				return "missing argument for option";
 			case config_error::option_not_specified:

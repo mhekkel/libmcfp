@@ -30,7 +30,6 @@ namespace mcfp
  */
 MCFP_EXPORT enum class config_error {
 	unknown_option = 1,              /**< The option requested does not exist, was not part of @ref mcfp::config::init. This error is returned by @ref mcfp::config::get */
-	option_does_not_accept_argument, /**< When parsing the command line arguments a value (argument) was specified for an option that should not have one */
 	missing_argument_for_option,     /**< A option without a required argument was found while parsing the command line arguments */
 	option_not_specified,            /**< There was not option found on the command line and no default argument was specified for the option passed in @ref mcfp::config::get */
 	invalid_config_file,             /**< The config file is not of the expected format */
