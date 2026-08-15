@@ -424,6 +424,10 @@ void config::parse_config_file(std::istream &is, std::error_code &ec)
 				{
 					auto opt = get_option(section, name);
 
+					// Remove trailing spaces, in a config file this may happen
+					while (not value.empty() and (value.back() == ' ' or value.back() == '\t'))
+						value.pop_back();
+
 					if (opt == nullptr)
 					{
 						if (not m_ignore_unknown)
