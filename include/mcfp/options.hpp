@@ -155,7 +155,7 @@ MCFP_EXPORT template <typename T, typename = void>
 struct option_traits;
 
 template <typename T>
-	requires(std::is_arithmetic_v<T>)
+	requires(std::is_arithmetic_v<T> and not std::is_same_v<T, bool>)
 struct option_traits<T>
 {
 	using value_type = T;
