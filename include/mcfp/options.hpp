@@ -167,7 +167,7 @@ struct option_traits<T>
 			from_chars(argument.data(), argument.data() + argument.length(), value);
 		if (r.ec != std::errc())
 			ec = std::make_error_code(r.ec);
-		else if (*r.ptr != 0)
+		else if (r.ptr != argument.data() + argument.length())
 			ec = std::make_error_code(std::errc::invalid_argument);
 		return value;
 	}
