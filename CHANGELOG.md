@@ -3,6 +3,10 @@ SPDX-FileCopyrightText: 2026 Maarten L. Hekkelman
 SPDX-License-Identifier: CC0-1.0
 -->
 
+Version 2.1.0
+- Changes required to build the library on WIN32 with
+  shared libs enabled.
+
 Version 2.0.5
 - Document the thread-safety contract of the config singleton
 - Remove the unused option_does_not_accept_argument error code
