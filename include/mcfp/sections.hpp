@@ -27,18 +27,9 @@ MCFP_EXPORT class section
 {
   public:
 	template <typename... Options>
-		requires(not(std::is_reference_v<Options> and ...))
-	explicit section(std::string name, Options const &...options)
-		: m_name(std::move(name))
-		, m_impl(new config_impl<Options...>(options...))
-	{
-	}
-
-	template <typename... Options>
-		requires(std::is_rvalue_reference_v<Options> and ...)
 	explicit section(std::string name, Options &&...options)
 		: m_name(std::move(name))
-		, m_impl(new config_impl<Options...>(std::forward<Options>(options)...))
+		, m_impl(std::make_unique<config_impl<std::decay_t<Options>...>>(std::forward<Options>(options)...))
 	{
 	}
 

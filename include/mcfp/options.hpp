@@ -48,9 +48,10 @@ struct is_container_type : std::false_type
 };
 
 template <typename T>
-	requires(is_detected_v<value_type_t, T> and
-			 is_detected_v<iterator_t, T> and
-			 not is_detected_v<std_string_npos_t, T>)
+	requires(detail::is_detected_v<value_type_t, T> and
+			 detail::is_detected_v<iterator_t, T> and
+			 not detail::is_detected_v<std_string_npos_t, T> and
+			 not std::is_same_v<T, std::filesystem::path>)
 struct is_container_type<T>
 	: std::true_type
 {
@@ -155,7 +156,7 @@ MCFP_EXPORT template <typename T, typename = void>
 struct option_traits;
 
 template <typename T>
-	requires(std::is_arithmetic_v<T>)
+	requires(std::is_arithmetic_v<T> and not std::is_same_v<T, bool>)
 struct option_traits<T>
 {
 	using value_type = T;
@@ -167,7 +168,7 @@ struct option_traits<T>
 			from_chars(argument.data(), argument.data() + argument.length(), value);
 		if (r.ec != std::errc())
 			ec = std::make_error_code(r.ec);
-		else if (*r.ptr != 0)
+		else if (r.ptr != argument.data() + argument.length())
 			ec = std::make_error_code(std::errc::invalid_argument);
 		return value;
 	}
@@ -241,7 +242,6 @@ struct option_base
 		, m_desc(std::move(desc))
 		, m_short_name(name_short.size() > 0 ? name_short.front() : 0)
 		, m_hidden(hidden)
-		, m_seen(0)
 	{
 	}
 

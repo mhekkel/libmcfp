@@ -23,6 +23,7 @@
 # include <cassert>
 # include <cstring>
 # include <filesystem>
+# include <iosfwd>
 # include <memory>
 # include <optional>
 # include <system_error>
@@ -39,6 +40,14 @@ namespace mcfp
  * @brief This is the main interface to mcfp. It is a singleton class.
  * Use @ref mcfp::config::instance to create and/or
  * retrieve the single instance.
+ *
+ * @par Thread safety
+ * This class is not thread safe. It is intended to be used sequentially:
+ * initialise (@ref init or @ref add_section), parse the command line and/or
+ * config files, and only then query values (@ref get, @ref get_optional,
+ * @ref has, @ref count). Concurrent access from multiple threads while a
+ * @ref parse operation is in flight, or concurrent calls to any member from
+ * multiple threads, results in undefined behaviour.
  *
  */
 
@@ -83,7 +92,9 @@ MCFP_EXPORT class config
 				[](const std::unique_ptr<section> &s, std::string_view name)
 				{ return s->name().compare(name) < 0; });
 
-			if (si == m_sections.end())
+			if (si != m_sections.end() and (*si)->name() == sp->name())
+				*si = std::move(sp);
+			else
 				m_sections.insert(si, std::move(sp));
 		}
 
@@ -150,10 +161,8 @@ MCFP_EXPORT class config
 	 */
 	static config &instance()
 	{
-		static std::unique_ptr<config> s_instance;
-		if (not s_instance)
-			s_instance.reset(new config);
-		return *s_instance;
+		static config s_instance;
+		return s_instance;
 	}
 
 	/**
@@ -195,11 +204,14 @@ MCFP_EXPORT class config
 	 * @brief Returns the value for the option with name \a name. Throws
 	 * an exception if the option has not value assigned
 	 *
+	 * Note that you cannot do get<bool>. For flags, use has() or count()
+	 *
 	 * @tparam T The type of the value requested.
 	 * @param name The name of the option requested
 	 * @return auto The value of the named option
 	 */
 	template <typename T>
+		requires (not std::is_same_v<T, bool>)
 	[[nodiscard]] auto get(std::string_view name) const
 	{
 		using return_type = std::remove_cv_t<T>;
@@ -218,12 +230,15 @@ MCFP_EXPORT class config
 	 * the option has no value assigned or is of a wrong type,
 	 * ec is set to an appropriate error
 	 *
+	 * Note that you cannot do get<bool>. For flags, use has() or count()
+	 *
 	 * @tparam T The type of the value requested.
 	 * @param name The name of the option requested
 	 * @param ec The error status is returned in this variable
 	 * @return auto The value of the named option
 	 */
 	template <typename T>
+		requires (not std::is_same_v<T, bool>)
 	auto get(std::string_view name, std::error_code &ec) const
 	{
 		using return_type = std::remove_cv_t<T>;
@@ -274,6 +289,9 @@ MCFP_EXPORT class config
 		return_type result = get<T>(name, ec);
 		if (ec and ec != config_error::option_not_specified)
 			throw std::system_error(ec, "while getting option '" + std::string{ name } + '\'');
+
+		if (ec) // option_not_specified, return an empty optional
+			result.reset();
 
 		return result;
 	}
@@ -420,8 +438,8 @@ MCFP_EXPORT class config
 	{
 		auto p = name.find('.');
 		return p == std::string_view::npos
-		           ? std::make_tuple(std::string_view{}, name)
-		           : std::make_tuple(name.substr(0, p), name.substr(p + 1));
+				? std::make_tuple(std::string_view{}, name)
+				: std::make_tuple(name.substr(0, p), name.substr(p + 1));
 	}
 
 	// --------------------------------------------------------------------
@@ -528,7 +546,6 @@ MCFP_EXPORT class config
 
 	std::vector<std::string> m_operands;
 	std::vector<std::unique_ptr<section>> m_sections;
-
 	static thread_local std::string s_last_option;
 
 	/// @endcond
@@ -542,6 +559,8 @@ MCFP_EXPORT class config
  *
  * If the type of \a T is a container (std::vector e.g.) the option can be
  * specified multiple times on the command line.
+ * 
+ * The type \a T cannot be a bool, use void for flags.
  *
  * The name \a name may end with a comma and a single character. This last
  * character will then be the short version whereas the leading characters
@@ -556,6 +575,7 @@ MCFP_EXPORT template <typename T = void>
 auto make_option(ostring name, std::string description)
 	requires(not is_container_type_v<T>)
 {
+	static_assert(not std::is_same_v<T, bool>, "Use make_option<void> or simply make_option without template parameter for flags");
 	return option<T>(name.m_long, name.m_short, std::move(description), false);
 }
 
@@ -574,6 +594,8 @@ auto make_option(ostring name, std::string description)
  * If the type of \a T is a container (std::vector e.g.) the option can be
  * specified multiple times on the command line.
  *
+ * The type \a T cannot be a bool, use void for flags.
+ *
  * The name \a name may end with a comma and a single character. This last
  * character will then be the short version whereas the leading characters
  * make up the long version.
@@ -588,6 +610,7 @@ MCFP_EXPORT template <typename T>
 auto make_option(ostring name, const T &v, std::string description)
 	requires(not is_container_type_v<T>)
 {
+	static_assert(not std::is_same_v<T, bool>, "Use make_option<void> or simply make_option without template parameter for flags");
 	return option<T>(name.m_long, name.m_short, v, std::move(description), false);
 }
 
@@ -598,6 +621,8 @@ auto make_option(ostring name, const T &v, std::string description)
  *
  * If the type of \a T is a container (std::vector e.g.) the option can be
  * specified multiple times on the command line.
+ *
+ * The type \a T cannot be a bool, use void for flags.
  *
  * The name \a name may end with a comma and a single character. This last
  * character will then be the short version whereas the leading characters
@@ -612,6 +637,7 @@ MCFP_EXPORT template <typename T = void>
 auto make_hidden_option(ostring name, std::string description)
 	requires(not is_container_type_v<T>)
 {
+	static_assert(not std::is_same_v<T, bool>, "Use make_option<void> or simply make_option without template parameter for flags");
 	return option<T>(name.m_long, name.m_short, description, true);
 }
 
@@ -632,6 +658,8 @@ auto make_hidden_option(ostring name, std::string description)
  * If the type of \a T is a container (std::vector e.g.) the option can be
  * specified multiple times on the command line.
  *
+ * The type \a T cannot be a bool, use void for flags.
+ *
  * The name \a name may end with a comma and a single character. This last
  * character will then be the short version whereas the leading characters
  * make up the long version.
@@ -646,6 +674,7 @@ MCFP_EXPORT template <typename T>
 auto make_hidden_option(ostring name, const T &v, std::string description)
 	requires(not is_container_type_v<T>)
 {
+	static_assert(not std::is_same_v<T, bool>, "Use make_option<void> or simply make_option without template parameter for flags");
 	return option<T>(name.m_long, name.m_short, v, description, true);
 }
 

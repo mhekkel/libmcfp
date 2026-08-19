@@ -11,15 +11,15 @@
 cmake_minimum_required(VERSION 3.28)
 
 # Experimental import std support
-if(${CMAKE_VERSION} VERSION_EQUAL 4.3.3)
-    set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "451f2fe2-a8a2-47c3-bc32-94786d8fc91b")
+# if(${CMAKE_VERSION} VERSION_EQUAL 4.3.3)
+#     set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "451f2fe2-a8a2-47c3-bc32-94786d8fc91b")
 
-    set(CMAKE_CXX_STANDARD_REQUIRED OFF)
-    set(CMAKE_CXX_MODULE_STD 1)
-endif()
+#     set(CMAKE_CXX_STANDARD_REQUIRED OFF)
+#     set(CMAKE_CXX_MODULE_STD 1)
+# endif()
 
 # set the project name
-project(mcfp VERSION 2.0.4 LANGUAGES CXX)
+project(mcfp VERSION 2.0.5 LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
@@ -33,7 +33,7 @@ option(MCFP_BUILD_CXX_MODULE "Build the library as a C++ 20 module library" ON)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     if(MCFP_BUILD_CXX_MODULE)
-        message(WARNING "Sorry, macOS has no support for module libraries, as fat as I can tell")
+        message(WARNING "Sorry, macOS has no support for module libraries, as far as I can tell")
         set(MCFP_BUILD_CXX_MODULE OFF)
     endif()
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")

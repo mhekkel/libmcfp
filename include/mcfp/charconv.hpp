@@ -31,33 +31,21 @@ namespace detail
 	{
 		using type = Op<Args...>;
 	};
+
+	struct nonesuch
+	{
+		nonesuch() = delete;
+		~nonesuch() = delete;
+		nonesuch(nonesuch const &) = delete;
+		void operator=(nonesuch const &) = delete;
+	};
+
+	template <template <class...> class Op, class... Args>
+	using is_detected = typename detail::detector<nonesuch, void, Op, Args...>;
+
+	template <template <class...> class Op, class... Args>
+	constexpr bool is_detected_v = is_detected<Op, Args...>::value;
 } // namespace detail
-
-struct nonesuch
-{
-	nonesuch() = delete;
-	~nonesuch() = delete;
-	nonesuch(nonesuch const &) = delete;
-	void operator=(nonesuch const &) = delete;
-};
-
-MCFP_EXPORT template <template <class...> class Op, class... Args>
-using is_detected = typename detail::detector<nonesuch, void, Op, Args...>;
-
-MCFP_EXPORT template <template <class...> class Op, class... Args>
-constexpr bool is_detected_v = is_detected<Op, Args...>::value;
-
-MCFP_EXPORT template <template <class...> class Op, class... Args>
-using detected_t = typename detail::detector<nonesuch, void, Op, Args...>::type;
-
-MCFP_EXPORT template <class Default, template <class...> class Op, class... Args>
-using detected_or = detail::detector<Default, void, Op, Args...>;
-
-MCFP_EXPORT template <class Expected, template <class...> class Op, class... Args>
-using is_detected_exact = std::is_same<Expected, detected_t<Op, Args...>>;
-
-MCFP_EXPORT template <class Expected, template <class...> class Op, class... Args>
-constexpr bool is_detected_exact_v = is_detected_exact<Expected, Op, Args...>::value;
 
 template <typename T>
 using from_chars_function = decltype(std::from_chars(std::declval<const char *>(), std::declval<const char *>(), std::declval<T &>()));
@@ -88,7 +76,7 @@ struct ff_charconv<T>
 };
 
 MCFP_EXPORT template <typename T>
-using charconv = std::conditional_t<is_detected_v<from_chars_function, T>, std_charconv<T>, ff_charconv<T>>;
+using charconv = std::conditional_t<detail::is_detected_v<from_chars_function, T>, std_charconv<T>, ff_charconv<T>>;
 
 MCFP_EXPORT template <typename T>
 constexpr auto from_chars(const char *s, const char *e, T &v)

@@ -86,13 +86,14 @@ void option_base::write(std::ostream &os, std::string_view section_name, std::si
 	else
 		os << indent_str.substr(0, indent - w2);
 
-	word_wrapper ww(m_desc, output_width - indent - 1);
+	auto wrap_w = (output_width > indent + 1) ? (output_width - indent - 1) : 20;
+	word_wrapper ww(m_desc, wrap_w);
 	for (auto line : ww)
 	{
 		if (std::exchange(do_indent, true))
 			os << indent_str;
 
-		while (not line.empty() and std::isspace(line.back()))
+		while (not line.empty() and std::isspace(static_cast<uint8_t>(line.back())))
 			line.remove_suffix(1);
 
 		os << line << '\n';

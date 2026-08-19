@@ -34,8 +34,11 @@ uint32_t get_terminal_width()
 	uint32_t result = 80;
 
 	CONSOLE_SCREEN_BUFFER_INFO csbi{};
-	if (::GetConsoleScreenBufferInfo(::GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
+	if (::GetConsoleScreenBufferInfo(::GetStdHandle(STD_OUTPUT_HANDLE), &csbi) and
+		csbi.srWindow.Right > csbi.srWindow.Left)
+	{
 		result = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+	}
 
 	return result;
 }
@@ -50,8 +53,8 @@ std::uint32_t get_terminal_width()
 	if (::isatty(STDOUT_FILENO))
 	{
 		struct winsize w{};
-		::ioctl(STDOUT_FILENO, TIOCGWINSZ, &w); // NOLINT(hicpp-vararg)
-		result = w.ws_col;
+		if (::ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0 and w.ws_col > 0) // NOLINT(hicpp-vararg)
+			result = w.ws_col;
 	}
 	return result;
 }
@@ -64,6 +67,43 @@ MCFP_INLINE std::uint32_t get_terminal_width()
 #endif
 
 // --------------------------------------------------------------------
+
+class config_category_impl : public std::error_category
+{
+  public:
+	[[nodiscard]] const char *name() const noexcept override
+	{
+		return "configuration";
+	}
+
+	[[nodiscard]] std::string message(int ev) const override
+	{
+		switch (static_cast<config_error>(ev))
+		{
+			case config_error::unknown_option:
+				return "unknown option";
+			case config_error::missing_argument_for_option:
+				return "missing argument for option";
+			case config_error::option_not_specified:
+				return "option was not specified";
+			case config_error::invalid_config_file:
+				return "config file contains a syntax error";
+			case config_error::wrong_type_cast:
+				return "the implementation contains a type cast error";
+			case config_error::config_file_not_found:
+				return "the specified config file was not found";
+			case config_error::wrong_type_cast_flag:
+				return "the value assigned in a config file to a flag option was not 'true', 'false' or an integral numerical value";
+		}
+		return "unknown configuration error";
+	}
+};
+
+std::error_category &config_category()
+{
+	static config_category_impl instance;
+	return instance;
+}
 
 thread_local std::string config::s_last_option;
 
@@ -120,6 +160,13 @@ void config::parse(int argc, const char *const argv[], std::error_code &ec)
 			continue;
 		}
 
+		// Single hyphen should be an operand
+		if (arg[0] == '-' and arg[1] == '\0')
+		{
+			m_operands.emplace_back(arg);
+			continue;
+		}
+
 		option_base *opt = nullptr;
 		std::string_view opt_arg;
 
@@ -142,7 +189,7 @@ void config::parse(int argc, const char *const argv[], std::error_code &ec)
 			}
 
 			// store name for inspection later on
-			s_last_option = s_arg;
+			s_last_option = std::string{ s_arg };
 
 			opt = get_option(s_arg);
 			if (opt == nullptr)
@@ -171,7 +218,7 @@ void config::parse(int argc, const char *const argv[], std::error_code &ec)
 			while (*arg != 0 and not ec)
 			{
 				// store name for inspection later on
-				s_last_option = *arg;
+				s_last_option = std::string{ *arg };
 				opt = get_option(*arg++);
 
 				if (opt == nullptr)
@@ -287,6 +334,7 @@ void config::parse_config_file(std::istream &is, std::error_code &ec)
 				if (is_name_char(ch))
 				{
 					name = { static_cast<char>(ch) };
+					s_last_option = section.empty() ? name : section + '.' + name;
 					value.clear();
 					state = State::NAME;
 				}
@@ -334,12 +382,12 @@ void config::parse_config_file(std::istream &is, std::error_code &ec)
 
 			case State::NAME:
 				if (is_name_char(ch))
+				{
 					name.insert(name.end(), static_cast<char>(ch));
+					s_last_option = section.empty() ? name : section + '.' + name;
+				}
 				else if (is_eoln(ch))
 				{
-					// store name for inspection later on
-					s_last_option = name;
-
 					auto opt = get_option(section, name);
 
 					if (opt == nullptr)
@@ -374,13 +422,20 @@ void config::parse_config_file(std::istream &is, std::error_code &ec)
 				{
 					auto opt = get_option(section, name);
 
+					// Remove trailing spaces, in a config file this may happen
+					while (not value.empty() and (value.back() == ' ' or value.back() == '\t'))
+						value.pop_back();
+
 					if (opt == nullptr)
 					{
 						if (not m_ignore_unknown)
 							ec = make_error_code(config_error::unknown_option);
 					}
 					else if (opt->m_is_flag)
-						opt->set_value(value, ec);
+					{
+						if (opt->m_seen == 0)
+							opt->set_value(value, ec);
+					}
 					else if (not value.empty() and (opt->m_seen == 0 or opt->m_multi))
 					{
 						opt->set_value(value, ec);
