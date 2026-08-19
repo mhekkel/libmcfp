@@ -79,6 +79,10 @@ add_library(mcfp::mcfp ALIAS mcfp)
 target_compile_features(mcfp PUBLIC cxx_std_23)
 target_compile_definitions(mcfp PUBLIC USE_MODULE_STD=${CMAKE_CXX_MODULE_STD})
 
+if(BUILD_SHARED_LIBS AND WIN32)
+    target_compile_definitions(mcfp PRIVATE MCFP_SHARED_BUILD)
+endif()
+
 if(NOT STD_CHARCONV_COMPILING)
     target_include_directories(mcfp PRIVATE $<TARGET_PROPERTY:FastFloat::fast_float,INTERFACE_INCLUDE_DIRECTORIES>)
 	target_compile_definitions(mcfp PRIVATE USE_FAST_FLOAT)
@@ -108,7 +112,10 @@ install(EXPORT mcfp-targets
     DESTINATION lib/cmake/mcfp)
 
 if(MCFP_BUILD_CXX_MODULE)
-    add_library(mcfp-module ${mcfp_cxx})
+    # MSVC does not place C++ module interface entities in a DLL's export
+    # table, so a module library cannot be consumed from a shared library.
+    # Build it as a static library to keep module consumers linkable.
+    add_library(mcfp-module STATIC ${mcfp_cxx})
     add_library(mcfp::mcfp-module ALIAS mcfp-module)
 
     target_compile_features(mcfp-module PUBLIC cxx_std_23)
@@ -126,7 +133,10 @@ if(MCFP_BUILD_CXX_MODULE)
 
     target_compile_definitions(mcfp-module PUBLIC MCFP_MODULE_MODE)
 
-    target_include_directories(mcfp-module PUBLIC
+    target_include_directories(mcfp-module
+		PRIVATE
+		${CMAKE_CURRENT_SOURCE_DIR}/include
+		PUBLIC
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/mcfp>)
 
     install(TARGETS mcfp-module

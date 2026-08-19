@@ -5,6 +5,8 @@
 #pragma once
 
 #ifndef MCFP_MODULE_MODE
+# include "mcfp/export.hpp"
+
 # include "mcfp/charconv.hpp"
 # include "mcfp/error.hpp"
 
@@ -290,8 +292,8 @@ struct option_base
 		return result;
 	}
 
-	[[nodiscard]] size_t width(std::string_view section_name) const;
-	void write(std::ostream &os, std::string_view section_name, size_t indent, size_t output_width) const;
+	MCFP_API [[nodiscard]] size_t width(std::string_view section_name) const;
+	MCFP_API void write(std::ostream &os, std::string_view section_name, size_t indent, size_t output_width) const;
 };
 
 template <typename T>

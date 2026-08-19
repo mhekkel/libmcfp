@@ -9,10 +9,9 @@
 /// values provided into a singleton object.
 
 #ifndef MCFP_MODULE_MODE
-# define MCFP_EXPORT
-# define MCFP_INLINE inline
 
 // IWYU pragma: begin_exports
+# include "mcfp/export.hpp"
 # include "mcfp/error.hpp"
 # include "mcfp/options.hpp"
 # include "mcfp/sections.hpp"
@@ -59,7 +58,7 @@ MCFP_EXPORT class config
 	 *
 	 * @param usage The usage message
 	 */
-	void set_usage(std::string usage)
+	MCFP_API void set_usage(std::string usage)
 	{
 		m_usage = std::move(usage);
 	}
@@ -75,7 +74,7 @@ MCFP_EXPORT class config
 	 */
 	template <typename... Options>
 		requires(std::is_base_of_v<option_base, Options> and ...)
-	config &init(std::string usage, Options &&...options)
+	MCFP_API config &init(std::string usage, Options &&...options)
 	{
 		m_sections.clear();
 
@@ -109,7 +108,7 @@ MCFP_EXPORT class config
 	 */
 	template <typename... Options>
 		requires(std::is_base_of_v<option_base, Options> and ...)
-	config &add_section(const std::string &section_name, Options &&...options)
+	MCFP_API config &add_section(const std::string &section_name, Options &&...options)
 	{
 		auto si = std::lower_bound(m_sections.begin(), m_sections.end(), section_name,
 			[](const std::unique_ptr<section> &s, std::string_view name)
@@ -138,7 +137,7 @@ MCFP_EXPORT class config
 	 */
 	template <typename... Options>
 		requires(std::is_base_of_v<option_base, Options> and ...)
-	static void init_lib(std::string section_name, Options &&...options)
+	MCFP_API static void init_lib(std::string section_name, Options &&...options)
 	{
 		get_section_factories().emplace_back(new section_factory(std::move(section_name), std::forward<Options>(options)...));
 	}
@@ -149,7 +148,7 @@ MCFP_EXPORT class config
 	 * @param ignore_unknown When true, unknown options are simply ignored instead of
 	 * throwing an error
 	 */
-	void set_ignore_unknown(bool ignore_unknown)
+	MCFP_API void set_ignore_unknown(bool ignore_unknown)
 	{
 		m_ignore_unknown = ignore_unknown;
 	}
@@ -159,7 +158,7 @@ MCFP_EXPORT class config
 	 *
 	 * @return config& The singleton instance
 	 */
-	static config &instance()
+	MCFP_API static config &instance()
 	{
 		static config s_instance;
 		return s_instance;
@@ -170,9 +169,9 @@ MCFP_EXPORT class config
 	 *
 	 * @return std::string The last parsed or requested option
 	 */
-	[[nodiscard]] std::string get_last_option() const
+	MCFP_API [[nodiscard]] std::string get_last_option() const
 	{
-		return s_last_option;
+		return last_option();
 	}
 
 	/**
@@ -181,7 +180,7 @@ MCFP_EXPORT class config
 	 * @param name The name of the option
 	 * @return bool Returns true when the option has a value
 	 */
-	[[nodiscard]] bool has(std::string_view name) const
+	MCFP_API [[nodiscard]] bool has(std::string_view name) const
 	{
 		auto opt = get_option(name);
 		return opt != nullptr and (opt->m_seen > 0 or opt->m_default_value.has_value());
@@ -194,7 +193,7 @@ MCFP_EXPORT class config
 	 * @param name The name of the option to check
 	 * @return int The count for the named option
 	 */
-	[[nodiscard]] int count(std::string_view name) const
+	MCFP_API [[nodiscard]] int count(std::string_view name) const
 	{
 		auto opt = get_option(name);
 		return opt ? opt->m_seen : 0;
@@ -212,7 +211,7 @@ MCFP_EXPORT class config
 	 */
 	template <typename T>
 		requires (not std::is_same_v<T, bool>)
-	[[nodiscard]] auto get(std::string_view name) const
+	MCFP_API [[nodiscard]] auto get(std::string_view name) const
 	{
 		using return_type = std::remove_cv_t<T>;
 
@@ -239,12 +238,12 @@ MCFP_EXPORT class config
 	 */
 	template <typename T>
 		requires (not std::is_same_v<T, bool>)
-	auto get(std::string_view name, std::error_code &ec) const
+	MCFP_API auto get(std::string_view name, std::error_code &ec) const
 	{
 		using return_type = std::remove_cv_t<T>;
 
 		// store name for inspection later on
-		s_last_option = name;
+		last_option() = name;
 
 		return_type result{};
 		auto opt = get_option(name);
@@ -267,7 +266,7 @@ MCFP_EXPORT class config
 	 * @param name The name of the option value requested
 	 * @return std::string The value of the option
 	 */
-	[[nodiscard]] std::string get(std::string_view name) const
+	MCFP_API [[nodiscard]] std::string get(std::string_view name) const
 	{
 		return get<std::string>(name);
 	}
@@ -281,7 +280,7 @@ MCFP_EXPORT class config
 	 * @return std::optional<T> The value of the named option
 	 */
 	template <typename T>
-	[[nodiscard]] auto get_optional(std::string_view name) const
+	MCFP_API [[nodiscard]] auto get_optional(std::string_view name) const
 	{
 		using return_type = std::optional<std::remove_cv_t<T>>;
 
@@ -303,7 +302,7 @@ MCFP_EXPORT class config
 	 * @param name The name of the option requested
 	 * @return std::optional<std::string> The value of the named option
 	 */
-	[[nodiscard]] auto get_optional(std::string_view name) const
+	MCFP_API [[nodiscard]] auto get_optional(std::string_view name) const
 	{
 		return get_optional<std::string>(name);
 	}
@@ -317,7 +316,7 @@ MCFP_EXPORT class config
 	 * @param ec The error status is returned in this variable
 	 * @return std::string The value of the option
 	 */
-	[[nodiscard]] std::string get(std::string_view name, std::error_code &ec) const
+	MCFP_API [[nodiscard]] std::string get(std::string_view name, std::error_code &ec) const
 	{
 		return get<std::string>(name, ec);
 	}
@@ -327,7 +326,7 @@ MCFP_EXPORT class config
 	 *
 	 * @return const std::vector<std::string>& The operand as a vector of strings
 	 */
-	[[nodiscard]] const std::vector<std::string> &operands() const
+	MCFP_API [[nodiscard]] const std::vector<std::string> &operands() const
 	{
 		return m_operands;
 	}
@@ -342,7 +341,7 @@ MCFP_EXPORT class config
 	 * @param conf The config object to write out
 	 * @return std::ostream& Returns the parameter \a os
 	 */
-	friend std::ostream &operator<<(std::ostream &os, const config &conf);
+	MCFP_API friend std::ostream &operator<<(std::ostream &os, const config &conf);
 
 	// --------------------------------------------------------------------
 
@@ -353,7 +352,7 @@ MCFP_EXPORT class config
 	 * @param argc The number of elements in \a argv
 	 * @param argv The vector of command line arguments
 	 */
-	void parse(int argc, const char *const argv[]);
+	MCFP_API void parse(int argc, const char *const argv[]);
 
 	/**
 	 * @brief Parse a configuration file called \a config_file_name optionally
@@ -366,7 +365,7 @@ MCFP_EXPORT class config
 	 * option was not specified on the command line
 	 * @param search_dirs The list of directories to search for the config file
 	 */
-	void parse_config_file(std::string_view config_option, std::string_view config_file_name,
+	MCFP_API void parse_config_file(std::string_view config_option, std::string_view config_file_name,
 		std::initializer_list<std::string_view> search_dirs);
 
 	/**
@@ -381,7 +380,7 @@ MCFP_EXPORT class config
 	 * @param search_dirs The list of directories to search for the config file
 	 * @param ec The variable containing the error status
 	 */
-	void parse_config_file(std::string_view config_option, std::string_view config_file_name,
+	MCFP_API void parse_config_file(std::string_view config_option, std::string_view config_file_name,
 		std::initializer_list<std::string_view> search_dirs, std::error_code &ec);
 
 	/**
@@ -391,7 +390,7 @@ MCFP_EXPORT class config
 	 * @param file The path to the config file
 	 * @param ec The variable containing the error status
 	 */
-	void parse_config_file(const std::filesystem::path &file, std::error_code &ec);
+	MCFP_API void parse_config_file(const std::filesystem::path &file, std::error_code &ec);
 
   private:
 	static constexpr bool is_name_char(int ch)
@@ -419,7 +418,7 @@ MCFP_EXPORT class config
 	 * @param is A std::istream for the contents of a config file
 	 * @param ec The variable containing the error status
 	 */
-	void parse_config_file(std::istream &is, std::error_code &ec);
+	MCFP_API void parse_config_file(std::istream &is, std::error_code &ec);
 
 	/**
 	 * @brief Parse the \a argv vector containing \a argc elements.
@@ -429,12 +428,12 @@ MCFP_EXPORT class config
 	 * @param argv The vector of command line arguments
 	 * @param ec The variable receiving the error status
 	 */
-	void parse(int argc, const char *const argv[], std::error_code &ec);
+	MCFP_API void parse(int argc, const char *const argv[], std::error_code &ec);
 
 	// --------------------------------------------------------------------
 	/// @cond
 
-	constexpr static std::tuple<std::string_view, std::string_view> split_name(std::string_view name) noexcept
+	MCFP_API constexpr static std::tuple<std::string_view, std::string_view> split_name(std::string_view name) noexcept
 	{
 		auto p = name.find('.');
 		return p == std::string_view::npos
@@ -546,7 +545,12 @@ MCFP_EXPORT class config
 
 	std::vector<std::string> m_operands;
 	std::vector<std::unique_ptr<section>> m_sections;
-	static thread_local std::string s_last_option;
+
+	static std::string &last_option()
+	{
+		static thread_local std::string s;
+		return s;
+	}
 
 	/// @endcond
 };

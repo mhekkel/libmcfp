@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 
 #ifndef MCFP_MODULE_MODE
+# include "mcfp/export.hpp"
 # include "mcfp/mcfp.hpp"
 
 # include <ostream>

@@ -5,6 +5,8 @@
 #pragma once
 
 #ifndef MCFP_MODULE_MODE
+# include "mcfp/export.hpp"
+
 # include <charconv>
 # include <concepts>
 # include <type_traits>

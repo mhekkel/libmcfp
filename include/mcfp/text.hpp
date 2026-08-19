@@ -10,6 +10,8 @@
  */
 
 #ifndef MCFP_MODULE_MODE
+# include "mcfp/export.hpp"
+
 # include <cstddef>
 # include <string_view>
 # include <vector>
@@ -31,10 +33,10 @@ MCFP_EXPORT class word_wrapper
   public:
 	using const_iterator = std::vector<std::string_view>::const_iterator;
 
-	word_wrapper(std::string_view text, size_t width);
+	MCFP_API word_wrapper(std::string_view text, size_t width);
 
-	[[nodiscard]] const_iterator begin() const noexcept { return m_lines.begin(); }
-	[[nodiscard]] const_iterator end() const noexcept { return m_lines.end(); }
+	MCFP_API [[nodiscard]] const_iterator begin() const noexcept { return m_lines.begin(); }
+	MCFP_API [[nodiscard]] const_iterator end() const noexcept { return m_lines.end(); }
 
   private:
 	std::vector<std::string_view> wrap_line(std::string_view line, size_t width);

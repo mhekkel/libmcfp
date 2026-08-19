@@ -12,6 +12,8 @@
  */
 
 #ifndef MCFP_MODULE_MODE
+# include "mcfp/export.hpp"
+
 # include <string>
 # include <system_error>
 # include <type_traits>
@@ -28,7 +30,7 @@ namespace mcfp
  *
  * @brief A stronly typed class containing the error codes reported by @ref mcfp::config
  */
-MCFP_EXPORT enum class config_error {
+MCFP_EXPORT enum class MCFP_API config_error {
 	unknown_option = 1,              /**< The option requested does not exist, was not part of @ref mcfp::config::init. This error is returned by @ref mcfp::config::get */
 	missing_argument_for_option,     /**< A option without a required argument was found while parsing the command line arguments */
 	option_not_specified,            /**< There was not option found on the command line and no default argument was specified for the option passed in @ref mcfp::config::get */
@@ -47,7 +49,7 @@ MCFP_EXPORT enum class config_error {
  *
  * @return std::error_category&
  */
-MCFP_EXPORT std::error_category &config_category();
+MCFP_EXPORT MCFP_API std::error_category &config_category();
 
 /**
  * @brief Create an std::error_code for our config_error enum

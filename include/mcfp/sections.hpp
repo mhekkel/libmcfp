@@ -5,6 +5,7 @@
 #pragma once
 
 #ifndef MCFP_MODULE_MODE
+# include "mcfp/export.hpp"
 # include "mcfp/options.hpp"
 
 # include <iomanip>
@@ -27,15 +28,15 @@ MCFP_EXPORT class section
 {
   public:
 	template <typename... Options>
-	explicit section(std::string name, Options &&...options)
+	MCFP_API explicit section(std::string name, Options &&...options)
 		: m_name(std::move(name))
 		, m_impl(std::make_unique<config_impl<std::decay_t<Options>...>>(std::forward<Options>(options)...))
 	{
 	}
 
-	[[nodiscard]] const std::string &name() const noexcept { return m_name; }
+	MCFP_API [[nodiscard]] const std::string &name() const noexcept { return m_name; }
 
-	void write(std::ostream &os, size_t indent, size_t output_width) const
+	MCFP_API void write(std::ostream &os, size_t indent, size_t output_width) const
 	{
 		os << '\n';
 		if (not m_name.empty())
@@ -44,17 +45,17 @@ MCFP_EXPORT class section
 		m_impl->write(os, m_name, indent, output_width);
 	}
 
-	[[nodiscard]] option_base *get_option(std::string_view name) const
+	MCFP_API [[nodiscard]] option_base *get_option(std::string_view name) const
 	{
 		return m_impl->get_option(name);
 	}
 
-	[[nodiscard]] option_base *get_option(char short_name) const
+	MCFP_API [[nodiscard]] option_base *get_option(char short_name) const
 	{
 		return m_impl->get_option(short_name);
 	}
 
-	[[nodiscard]] size_t get_option_width() const
+	MCFP_API [[nodiscard]] size_t get_option_width() const
 	{
 		return m_impl->get_option_width(m_name);
 	}

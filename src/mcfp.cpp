@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 
 #ifndef MCFP_MODULE_MODE
+# include "mcfp/export.hpp"
 # include "mcfp/mcfp.hpp"
 
 # include <cassert>
@@ -105,8 +106,6 @@ std::error_category &config_category()
 	return instance;
 }
 
-thread_local std::string config::s_last_option;
-
 void config::parse(int argc, const char *const argv[])
 {
 	std::error_code ec;
@@ -189,7 +188,7 @@ void config::parse(int argc, const char *const argv[], std::error_code &ec)
 			}
 
 			// store name for inspection later on
-			s_last_option = std::string{ s_arg };
+			config::last_option() = std::string{ s_arg };
 
 			opt = get_option(s_arg);
 			if (opt == nullptr)
@@ -218,7 +217,7 @@ void config::parse(int argc, const char *const argv[], std::error_code &ec)
 			while (*arg != 0 and not ec)
 			{
 				// store name for inspection later on
-				s_last_option = std::string{ *arg };
+				config::last_option() = std::string{ *arg };
 				opt = get_option(*arg++);
 
 				if (opt == nullptr)
@@ -334,7 +333,7 @@ void config::parse_config_file(std::istream &is, std::error_code &ec)
 				if (is_name_char(ch))
 				{
 					name = { static_cast<char>(ch) };
-					s_last_option = section.empty() ? name : section + '.' + name;
+					config::last_option() = section.empty() ? name : section + '.' + name;
 					value.clear();
 					state = State::NAME;
 				}
@@ -384,7 +383,7 @@ void config::parse_config_file(std::istream &is, std::error_code &ec)
 				if (is_name_char(ch))
 				{
 					name.insert(name.end(), static_cast<char>(ch));
-					s_last_option = section.empty() ? name : section + '.' + name;
+					config::last_option() = section.empty() ? name : section + '.' + name;
 				}
 				else if (is_eoln(ch))
 				{
