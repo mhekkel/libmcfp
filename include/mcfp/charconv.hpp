@@ -1,4 +1,4 @@
-// Copyright Maarten L. Hekkelman 2022-2025
+// Copyright Maarten L. Hekkelman 2022-2026
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
@@ -77,7 +77,7 @@ struct ff_charconv<T>
 	static std::from_chars_result from_chars(const char *a, const char *b, T &v);
 };
 
-MCFP_EXPORT template <typename T>
+template <typename T>
 using charconv = std::conditional_t<detail::is_detected_v<from_chars_function, T>, std_charconv<T>, ff_charconv<T>>;
 
 MCFP_EXPORT template <typename T>
