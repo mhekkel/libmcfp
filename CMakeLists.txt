@@ -44,7 +44,7 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers")
 elseif(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-	add_definitions(-DNOMINMAX)
+    add_definitions(-DNOMINMAX)
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD")
     if(MCFP_BUILD_CXX_MODULE AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 20)
         message(WARNING "Sorry, your compiler is too old, not building the module library")
@@ -85,7 +85,7 @@ endif()
 
 if(NOT STD_CHARCONV_COMPILING)
     target_include_directories(mcfp PRIVATE $<TARGET_PROPERTY:FastFloat::fast_float,INTERFACE_INCLUDE_DIRECTORIES>)
-	target_compile_definitions(mcfp PRIVATE USE_FAST_FLOAT)
+    target_compile_definitions(mcfp PRIVATE USE_FAST_FLOAT)
 endif()
 
 target_sources(mcfp
@@ -134,10 +134,8 @@ if(MCFP_BUILD_CXX_MODULE)
     target_compile_definitions(mcfp-module PUBLIC MCFP_MODULE_MODE)
 
     target_include_directories(mcfp-module
-		PRIVATE
-		${CMAKE_CURRENT_SOURCE_DIR}/include
-		PUBLIC
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/mcfp>)
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/mcfp>)
 
     install(TARGETS mcfp-module
         EXPORT mcfp-module-targets
