@@ -115,7 +115,7 @@ install(EXPORT mcfp-targets
 if(MCFP_BUILD_CXX_MODULE)
     if(BUILD_SHARED_LIBS)
         add_library(mcfp-module SHARED ${mcfp_cxx})
-        target_compile_definitions(mcfp PRIVATE MCFP_SHARED_BUILD)
+        target_compile_definitions(mcfp-module PRIVATE MCFP_SHARED_BUILD)
     else()
         add_library(mcfp-module STATIC ${mcfp_cxx})
     endif()
@@ -125,6 +125,7 @@ if(MCFP_BUILD_CXX_MODULE)
 
     if(NOT STD_CHARCONV_COMPILING)
         target_include_directories(mcfp-module PRIVATE $<TARGET_PROPERTY:FastFloat::fast_float,INTERFACE_INCLUDE_DIRECTORIES>)
+	    target_compile_definitions(mcfp-module PRIVATE USE_FAST_FLOAT)
     endif()
 
     target_sources(mcfp-module
