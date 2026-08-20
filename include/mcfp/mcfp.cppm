@@ -31,7 +31,7 @@ export module mcfp;
 #define MCFP_EXPORT export
 #define MCFP_INLINE
 
-#if defined(_WIN32) && defined(MCFP_SHARED_BUILD)
+#if defined(_WIN32) and defined(MCFP_SHARED_BUILD)
 # define MCFP_API __declspec(dllexport)
 #else
 # define MCFP_API

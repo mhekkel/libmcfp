@@ -9,16 +9,17 @@ module;
 #if USE_MODULE_STD
 import std;
 #else
-#include <algorithm>
-#include <charconv>
-#include <iostream>
-#include <filesystem>
-#include <fstream>
-#include <optional>
-#include <string>
-#include <system_error>
-#include <utility>
-#include <vector>
+# include <algorithm>
+# include <charconv>
+# include <filesystem>
+# include <fstream>
+# include <iostream>
+# include <optional>
+# include <string>
+# include <system_error>
+# include <utility>
+# include <vector>
+
 #endif
 
 #if __has_include(<sys/ioctl.h>)
@@ -31,15 +32,21 @@ import std;
 # include <io.h>
 #endif
 
+#if defined(USE_FAST_FLOAT)
+# include "fast_float/fast_float.h"
+#endif
+
 module mcfp;
 
 #if USE_MODULE_STD
 import std;
 #endif
 
+// clang-format off
 #if defined(USE_FAST_FLOAT)
 #include "charconv-fast_float.cpp"
 #endif
 #include "options.cpp"
 #include "text.cpp"
 #include "mcfp.cpp"
+// clang-format on
