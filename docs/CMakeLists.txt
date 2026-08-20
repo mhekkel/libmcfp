@@ -34,7 +34,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/conf.py.in ${CMAKE_CURRENT_SOURCE_DIR
 set(SPHINX_SOURCE ${CMAKE_CURRENT_SOURCE_DIR})
 set(SPHINX_BUILD ${CMAKE_CURRENT_BINARY_DIR}/sphinx)
 
-add_custom_target("Sphinx-${PROJECT_NAME}" ALL
+add_custom_target("Sphinx-${PROJECT_NAME}"
 	COMMAND ${SPHINX_EXECUTABLE} -b html
 	-Dbreathe_projects.${PROJECT_NAME}=${DOXYGEN_OUTPUT_DIR}
 	${SPHINX_SOURCE} ${SPHINX_BUILD}
