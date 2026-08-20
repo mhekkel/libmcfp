@@ -193,3 +193,11 @@ cmake -B build -G Ninja
 cmake --build build
 cmake --install build
 ```
+
+### macOS
+
+The compilers provided by Apple do not include clang-scan-deps and therefore cannot compile c++20 modules. The solution is to install `llvm` using _homebrew_. After this, you can configure cmake as follows:
+
+```bash
+CMAKE_PREFIX_PATH=/opt/homebrew/opt/llvm cmake -B build -DCMAKE_CXX_COMPILER=/opt/homebrew/opt/llvm/bin/clang++
+```
