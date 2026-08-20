@@ -73,6 +73,7 @@ file(GLOB_RECURSE mcfp_cxx src/*.cxx)
 
 if(STD_CHARCONV_COMPILING)
     list(FILTER mcfp_cpp EXCLUDE REGEX src/charconv-fast_float\.cpp)
+    list(FILTER mcfp_cxx EXCLUDE REGEX src/charconv-fast_float\.cxx)
 endif()
 
 add_library(mcfp ${mcfp_cpp})
