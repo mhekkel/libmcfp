@@ -32,8 +32,8 @@ option(BUILD_DOCUMENTATION "Build the documentation" OFF)
 option(MCFP_BUILD_CXX_MODULE "Build the library as a C++ 20 module library" ON)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    if(MCFP_BUILD_CXX_MODULE)
-        message(WARNING "Sorry, macOS has no support for module libraries, as far as I can tell")
+    if(MCFP_BUILD_CXX_MODULE AND NOT CMAKE_CXX_SCANDEP_SOURCE)
+        message(WARNING "Building c++20 modules on macOS currently only works with llvm compilers installed by homebrew")
         set(MCFP_BUILD_CXX_MODULE OFF)
     endif()
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
@@ -55,7 +55,7 @@ endif()
 
 try_compile(STD_CHARCONV_COMPILING
     SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/test-charconv.cpp
-	CXX_STANDARD 23)
+    CXX_STANDARD 23)
 
 if(NOT STD_CHARCONV_COMPILING)
     message(NOTICE "mcfp: Using fast_float for std::from_chars")
@@ -84,7 +84,7 @@ target_compile_definitions(mcfp PUBLIC USE_MODULE_STD=${CMAKE_CXX_MODULE_STD})
 
 if(BUILD_SHARED_LIBS AND WIN32)
     target_compile_definitions(mcfp PRIVATE MCFP_SHARED_BUILD)
-	set_target_properties(mcfp PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+    set_target_properties(mcfp PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif()
 
 if(NOT STD_CHARCONV_COMPILING)
@@ -119,7 +119,7 @@ if(MCFP_BUILD_CXX_MODULE)
     if(BUILD_SHARED_LIBS)
         add_library(mcfp-module SHARED ${mcfp_cxx})
         target_compile_definitions(mcfp-module PRIVATE MCFP_SHARED_BUILD)
-		set_target_properties(mcfp-module PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+        set_target_properties(mcfp-module PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
     else()
         add_library(mcfp-module STATIC ${mcfp_cxx})
     endif()
