@@ -452,7 +452,7 @@ MCFP_EXPORT class config
 
 	// --------------------------------------------------------------------
 
-	[[nodiscard]] option_base *get_option(std::string_view section_name, std::string_view option_name) const
+	MCFP_API [[nodiscard]] option_base *get_option(std::string_view section_name, std::string_view option_name) const
 	{
 		option_base *result = nullptr;
 
@@ -468,13 +468,13 @@ MCFP_EXPORT class config
 		return result;
 	}
 
-	[[nodiscard]] option_base *get_option(std::string_view name) const
+	MCFP_API [[nodiscard]] option_base *get_option(std::string_view name) const
 	{
 		auto [section_name, option_name] = split_name(name);
 		return get_option(section_name, option_name);
 	}
 
-	[[nodiscard]] option_base *get_option(char short_name) const
+	MCFP_API [[nodiscard]] option_base *get_option(char short_name) const
 	{
 		option_base *result = nullptr;
 
@@ -489,7 +489,7 @@ MCFP_EXPORT class config
 		return result;
 	}
 
-	[[nodiscard]] size_t get_option_width() const
+	MCFP_API [[nodiscard]] size_t get_option_width() const
 	{
 		size_t result = 0;
 		for (auto &s : m_sections)
@@ -507,22 +507,22 @@ MCFP_EXPORT class config
 	class section_factory_base
 	{
 	  public:
-		virtual ~section_factory_base() = default;
+		MCFP_API virtual ~section_factory_base() = default;
 
-		[[nodiscard]] virtual section *create() const = 0;
+		MCFP_API [[nodiscard]] virtual section *create() const = 0;
 	};
 
 	template <typename... Options>
 	class section_factory : public section_factory_base
 	{
 	  public:
-		explicit section_factory(std::string name, Options &&...options)
+		MCFP_API explicit section_factory(std::string name, Options &&...options)
 			: m_name(std::move(name))
 			, m_options(std::forward<Options>(options)...)
 		{
 		}
 
-		[[nodiscard]] section *create() const override
+		MCFP_API [[nodiscard]] section *create() const override
 		{
 			return std::apply([this](Options const &...opts)
 				{ return new section(m_name, opts...); }, m_options);
@@ -532,7 +532,7 @@ MCFP_EXPORT class config
 		std::tuple<Options...> m_options;
 	};
 
-	static std::vector<std::unique_ptr<const section_factory_base>> &get_section_factories()
+	MCFP_API static std::vector<std::unique_ptr<const section_factory_base>> &get_section_factories()
 	{
 		static std::vector<std::unique_ptr<const section_factory_base>> s_factories;
 		return s_factories;
@@ -546,7 +546,7 @@ MCFP_EXPORT class config
 	std::vector<std::string> m_operands;
 	std::vector<std::unique_ptr<section>> m_sections;
 
-	static std::string &last_option()
+	MCFP_API static std::string &last_option()
 	{
 		static thread_local std::string s;
 		return s;

@@ -105,6 +105,11 @@ std::error_category &config_category()
 	return instance;
 }
 
+std::error_code make_error_code(config_error e)
+{
+	return { static_cast<int>(e), config_category() };
+}
+
 void config::parse(int argc, const char *const argv[])
 {
 	std::error_code ec;

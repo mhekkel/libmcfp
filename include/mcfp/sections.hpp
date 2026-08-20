@@ -67,13 +67,13 @@ MCFP_EXPORT class section
 	{
 		virtual ~config_impl_base() = default;
 
-		[[nodiscard]] virtual option_base *get_option(std::string_view name) = 0;
-		[[nodiscard]] virtual option_base *get_option(char short_name) = 0;
+		MCFP_API [[nodiscard]] virtual option_base *get_option(std::string_view name) = 0;
+		MCFP_API [[nodiscard]] virtual option_base *get_option(char short_name) = 0;
 
-		[[nodiscard]] virtual size_t get_option_width(std::string_view section_name) const = 0;
+		MCFP_API [[nodiscard]] virtual size_t get_option_width(std::string_view section_name) const = 0;
 		virtual void write(std::ostream &os, std::string_view section_name, size_t wrap_width, size_t output_width) const = 0;
 
-		[[nodiscard]] virtual config_impl_base *next() const noexcept { return nullptr; }
+		MCFP_API [[nodiscard]] virtual config_impl_base *next() const noexcept { return nullptr; }
 	};
 
 	template <typename... Options>
@@ -81,18 +81,18 @@ MCFP_EXPORT class section
 	{
 		static constexpr size_t N = sizeof...(Options);
 
-		explicit config_impl(Options const &...options)
+		MCFP_API explicit config_impl(Options const &...options)
 			requires(sizeof...(Options) > 0)
 			: m_options(options...)
 		{
 		}
 
-		explicit config_impl(Options &&...options)
+		MCFP_API explicit config_impl(Options &&...options)
 			: m_options(std::forward<Options>(options)...)
 		{
 		}
 
-		option_base *get_option(std::string_view name) override
+		MCFP_API option_base *get_option(std::string_view name) override
 		{
 			return get_option_by_nr<0>(name);
 		}
@@ -109,7 +109,7 @@ MCFP_EXPORT class section
 			}
 		}
 
-		option_base *get_option(char short_name) override
+		MCFP_API option_base *get_option(char short_name) override
 		{
 			return get_option_by_nr<0>(short_name);
 		}
@@ -126,7 +126,7 @@ MCFP_EXPORT class section
 			}
 		}
 
-		[[nodiscard]] size_t get_option_width(std::string_view section_name) const override
+		MCFP_API [[nodiscard]] size_t get_option_width(std::string_view section_name) const override
 		{
 			return std::apply([section_name](Options const &...opts)
 				{
@@ -135,7 +135,7 @@ MCFP_EXPORT class section
 				return width; }, m_options);
 		}
 
-		void write(std::ostream &os, std::string_view section_name, size_t wrap_width, size_t output_width) const override
+		MCFP_API void write(std::ostream &os, std::string_view section_name, size_t wrap_width, size_t output_width) const override
 		{
 			std::apply([&os, section_name, wrap_width, output_width](auto const &...opts)
 				{ (opts.write(os, section_name, wrap_width, output_width), ...); }, m_options);

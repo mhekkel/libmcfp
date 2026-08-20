@@ -60,7 +60,7 @@ struct is_container_type<T>
 };
 
 template <typename T>
-MCFP_INLINE constexpr bool is_container_type_v = is_container_type<T>::value;
+constexpr bool is_container_type_v = is_container_type<T>::value;
 
 static_assert(is_container_type_v<std::vector<int>>);
 static_assert(is_container_type_v<std::vector<std::string>>);
@@ -86,7 +86,7 @@ struct ostring
 	std::string_view m_short;
 
 	template <size_t N>
-	consteval MCFP_INLINE ostring(const char (&s)[N]) // NOLINT(hicpp-explicit-conversions)
+	consteval ostring(const char (&s)[N]) // NOLINT(hicpp-explicit-conversions)
 		: m_str(s, N - 1)
 	{
 		parse();
@@ -163,7 +163,7 @@ struct option_traits<T>
 {
 	using value_type = T;
 
-	static value_type set_value(std::string_view argument, std::error_code &ec)
+	MCFP_API static value_type set_value(std::string_view argument, std::error_code &ec)
 	{
 		value_type value{};
 		auto r =
@@ -175,7 +175,7 @@ struct option_traits<T>
 		return value;
 	}
 
-	static std::string to_string(const T &value)
+	MCFP_API static std::string to_string(const T &value)
 	{
 		char b[32];
 		auto r = std::to_chars(b, b + sizeof(b), value);
@@ -190,13 +190,13 @@ struct option_traits<std::filesystem::path>
 {
 	using value_type = std::filesystem::path;
 
-	static value_type set_value(std::string_view argument,
+	MCFP_API static value_type set_value(std::string_view argument,
 		std::error_code & /*ec*/)
 	{
 		return value_type{ argument };
 	}
 
-	static std::string to_string(const std::filesystem::path &value)
+	MCFP_API static std::string to_string(const std::filesystem::path &value)
 	{
 		return value.string();
 	}
@@ -208,13 +208,13 @@ struct option_traits<T>
 {
 	using value_type = std::string;
 
-	static value_type set_value(std::string_view argument,
+	MCFP_API static value_type set_value(std::string_view argument,
 		std::error_code & /*ec*/)
 	{
 		return value_type{ argument };
 	}
 
-	static std::string to_string(const T &value) { return { value }; }
+	MCFP_API static std::string to_string(const T &value) { return { value }; }
 };
 
 // The Options. The reason to have this weird constructing of
@@ -236,9 +236,9 @@ struct option_base
 	std::vector<std::string> m_value;
 	std::optional<std::string> m_default_value;
 
-	option_base(const option_base &rhs) = default;
+	MCFP_API option_base(const option_base &rhs) = default;
 
-	constexpr option_base(std::string_view name_long, std::string_view name_short,
+	MCFP_API constexpr option_base(std::string_view name_long, std::string_view name_short,
 		std::string desc, bool hidden)
 		: m_name(name_long.begin(), name_long.end())
 		, m_desc(std::move(desc))
@@ -247,13 +247,13 @@ struct option_base
 	{
 	}
 
-	virtual ~option_base() = default;
+	MCFP_API virtual ~option_base() = default;
 
-	virtual void set_value(std::string_view /*value*/,
+	MCFP_API virtual void set_value(std::string_view /*value*/,
 		std::error_code & /*ec*/) = 0;
 
 	template <typename T>
-	T get_value(std::error_code &ec) const
+	MCFP_API T get_value(std::error_code &ec) const
 	{
 		T result{};
 
@@ -302,16 +302,16 @@ struct option : public option_base
 	using traits_type = option_traits<T>;
 	using value_type = typename option_traits<T>::value_type;
 
-	option(const option &rhs) = default;
+	MCFP_API option(const option &rhs) = default;
 
-	option(std::string_view name_long, std::string_view name_short, std::string desc,
+	MCFP_API option(std::string_view name_long, std::string_view name_short, std::string desc,
 		bool hidden)
 		: option_base(name_long, name_short, std::move(desc), hidden)
 	{
 		m_is_flag = false;
 	}
 
-	option(std::string_view name_long, std::string_view name_short,
+	MCFP_API option(std::string_view name_long, std::string_view name_short,
 		const value_type &default_value, std::string desc, bool hidden)
 		: option(name_long, name_short, std::move(desc), hidden)
 	{
@@ -321,7 +321,7 @@ struct option : public option_base
 			m_default_value = traits_type::to_string(default_value);
 	}
 
-	void set_value(std::string_view argument, std::error_code &ec) override
+	MCFP_API void set_value(std::string_view argument, std::error_code &ec) override
 	{
 		traits_type::set_value(argument, ec);
 		if (not ec)
@@ -338,9 +338,9 @@ struct multiple_option : public option_base
 	using value_type = typename T::value_type;
 	using traits_type = option_traits<value_type>;
 
-	multiple_option(const multiple_option &rhs) = default;
+	MCFP_API multiple_option(const multiple_option &rhs) = default;
 
-	multiple_option(std::string_view name_long, std::string_view name_short,
+	MCFP_API multiple_option(std::string_view name_long, std::string_view name_short,
 		std::string desc, bool hidden)
 		: option_base(name_long, name_short, std::move(desc), hidden)
 	{
@@ -348,7 +348,7 @@ struct multiple_option : public option_base
 		m_multi = true;
 	}
 
-	void set_value(std::string_view argument, std::error_code &ec) override
+	MCFP_API void set_value(std::string_view argument, std::error_code &ec) override
 	{
 		traits_type::set_value(argument, ec);
 		if (not ec)
@@ -359,15 +359,15 @@ struct multiple_option : public option_base
 template <>
 struct option<void> : public option_base
 {
-	option(const option &rhs) = default;
+	MCFP_API option(const option &rhs) = default;
 
-	option(std::string_view name_long, std::string_view name_short, std::string desc,
+	MCFP_API option(std::string_view name_long, std::string_view name_short, std::string desc,
 		bool hidden)
 		: option_base(name_long, name_short, std::move(desc), hidden)
 	{
 	}
 
-	void set_value(std::string_view value, std::error_code &ec) override
+	MCFP_API void set_value(std::string_view value, std::error_code &ec) override
 	{
 		if (value == "true")
 			m_seen = 1;

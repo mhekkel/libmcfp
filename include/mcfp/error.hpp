@@ -57,10 +57,7 @@ MCFP_EXPORT MCFP_API std::error_category &config_category();
  * @param e A config_error enum
  * @return std::error_code
  */
-MCFP_EXPORT MCFP_INLINE std::error_code make_error_code(config_error e)
-{
-	return { static_cast<int>(e), config_category() };
-}
+MCFP_EXPORT MCFP_API std::error_code make_error_code(config_error e);
 
 } // namespace mcfp
 
