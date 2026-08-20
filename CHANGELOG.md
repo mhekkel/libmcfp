@@ -3,6 +3,10 @@ SPDX-FileCopyrightText: 2026 Maarten L. Hekkelman
 SPDX-License-Identifier: CC0-1.0
 -->
 
+Version 2.1.1
+- Create a shared library for the module version instead
+  of always a static one.
+
 Version 2.1.0
 - Changes required to build the library on WIN32 with
   shared libs enabled.
