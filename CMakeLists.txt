@@ -83,6 +83,7 @@ target_compile_definitions(mcfp PUBLIC USE_MODULE_STD=${CMAKE_CXX_MODULE_STD})
 
 if(BUILD_SHARED_LIBS AND WIN32)
     target_compile_definitions(mcfp PRIVATE MCFP_SHARED_BUILD)
+	set_target_properties(mcfp PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif()
 
 if(NOT STD_CHARCONV_COMPILING)
@@ -116,7 +117,8 @@ install(EXPORT mcfp-targets
 if(MCFP_BUILD_CXX_MODULE)
     if(BUILD_SHARED_LIBS)
         add_library(mcfp-module SHARED ${mcfp_cxx})
-        target_compile_definitions(mcfp PRIVATE MCFP_SHARED_BUILD)
+        target_compile_definitions(mcfp-module PRIVATE MCFP_SHARED_BUILD)
+		set_target_properties(mcfp-module PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
     else()
         add_library(mcfp-module STATIC ${mcfp_cxx})
     endif()
