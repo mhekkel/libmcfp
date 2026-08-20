@@ -23,7 +23,6 @@ import std;
 #endif
 
 #if __has_include(<sys/ioctl.h>)
-// #  include <fcntl.h>
 # include <sys/ioctl.h>
 # include <unistd.h>
 #elif defined(_WIN32)

@@ -14,7 +14,6 @@
 # include <ostream>
 
 # if __has_include(<sys/ioctl.h>)
-// #  include <fcntl.h>
 #  include <sys/ioctl.h>
 #  include <unistd.h>
 # elif defined(_WIN32)
@@ -265,7 +264,7 @@ void config::parse_config_file(std::string_view config_option, std::string_view 
 		std::string file = has(config_option) ? get(config_option) : std::string{ config_file_name };
 
 		if (get_last_option().empty())
-			throw std::system_error(ec, "while parsing config file '" + file);
+			throw std::system_error(ec, "while parsing config file '" + file + '\'');
 		else
 			throw std::system_error(ec, "while parsing config file '" + file + "', option '" + error_option + "'");
 	}

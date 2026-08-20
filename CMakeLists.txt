@@ -32,38 +32,38 @@ option(BUILD_DOCUMENTATION "Build the documentation" OFF)
 option(MCFP_BUILD_CXX_MODULE "Build the library as a C++ 20 module library" ON)
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-    if(MCFP_BUILD_CXX_MODULE AND NOT CMAKE_CXX_SCANDEP_SOURCE)
-        message(WARNING "Building c++20 modules on macOS currently only works with llvm compilers installed by homebrew")
-        set(MCFP_BUILD_CXX_MODULE OFF)
-    endif()
+	if(MCFP_BUILD_CXX_MODULE AND NOT CMAKE_CXX_SCANDEP_SOURCE)
+		message(WARNING "Building c++20 modules on macOS currently only works with llvm compilers installed by homebrew")
+		set(MCFP_BUILD_CXX_MODULE OFF)
+	endif()
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    if(MCFP_BUILD_CXX_MODULE AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 15)
-        message(WARNING "Sorry, your compiler is too old, not building the module library")
-        set(MCFP_BUILD_CXX_MODULE OFF)
-    endif()
+	if(MCFP_BUILD_CXX_MODULE AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 15)
+		message(WARNING "Sorry, your compiler is too old, not building the module library")
+		set(MCFP_BUILD_CXX_MODULE OFF)
+	endif()
 
-    add_compile_options(-Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers)
+	add_compile_options(-Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers)
 elseif(MSVC)
-    add_compile_options(/W4)
-    add_definitions(-DNOMINMAX)
+	add_compile_options(/W4)
+	add_definitions(-DNOMINMAX)
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD")
-    if(MCFP_BUILD_CXX_MODULE AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 20)
-        message(WARNING "Sorry, your compiler is too old, not building the module library")
-        set(MCFP_BUILD_CXX_MODULE OFF)
-    endif()
+	if(MCFP_BUILD_CXX_MODULE AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 20)
+		message(WARNING "Sorry, your compiler is too old, not building the module library")
+		set(MCFP_BUILD_CXX_MODULE OFF)
+	endif()
 endif()
 
 try_compile(STD_CHARCONV_COMPILING
-    SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/test-charconv.cpp
-    CXX_STANDARD 23)
+	SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/test-charconv.cpp
+	CXX_STANDARD 23)
 
 if(NOT STD_CHARCONV_COMPILING)
-    message(NOTICE "mcfp: Using fast_float for std::from_chars")
-    CPMFindPackage(
-        NAME FastFloat
-        GIT_REPOSITORY "https://github.com/fastfloat/fast_float"
-        GIT_TAG v8.0.2
-        EXCLUDE_FROM_ALL YES)
+	message(NOTICE "mcfp: Using fast_float for std::from_chars")
+	CPMFindPackage(
+		NAME FastFloat
+		GIT_REPOSITORY "https://github.com/fastfloat/fast_float"
+		GIT_TAG v8.0.2
+		EXCLUDE_FROM_ALL YES)
 endif()
 
 file(GLOB_RECURSE mcfp_headers include/*.hpp)
@@ -72,8 +72,8 @@ file(GLOB_RECURSE mcfp_cpp src/*.cpp)
 file(GLOB_RECURSE mcfp_cxx src/*.cxx)
 
 if(STD_CHARCONV_COMPILING)
-    list(FILTER mcfp_cpp EXCLUDE REGEX src/charconv-fast_float\.cpp)
-    list(FILTER mcfp_cxx EXCLUDE REGEX src/charconv-fast_float\.cxx)
+	list(FILTER mcfp_cpp EXCLUDE REGEX src/charconv-fast_float\.cpp)
+	list(FILTER mcfp_cxx EXCLUDE REGEX src/charconv-fast_float\.cxx)
 endif()
 
 add_library(mcfp ${mcfp_cpp})
@@ -83,113 +83,103 @@ target_compile_features(mcfp PUBLIC cxx_std_23)
 target_compile_definitions(mcfp PUBLIC USE_MODULE_STD=${CMAKE_CXX_MODULE_STD})
 
 if(BUILD_SHARED_LIBS AND WIN32)
-    target_compile_definitions(mcfp PRIVATE MCFP_SHARED_BUILD)
+	target_compile_definitions(mcfp PRIVATE MCFP_SHARED_BUILD)
 	set_target_properties(mcfp PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif()
 
 if(NOT STD_CHARCONV_COMPILING)
-    target_include_directories(mcfp PRIVATE $<TARGET_PROPERTY:FastFloat::fast_float,INTERFACE_INCLUDE_DIRECTORIES>)
-    target_compile_definitions(mcfp PRIVATE USE_FAST_FLOAT)
+	target_include_directories(mcfp PRIVATE $<TARGET_PROPERTY:FastFloat::fast_float,INTERFACE_INCLUDE_DIRECTORIES>)
+	target_compile_definitions(mcfp PRIVATE USE_FAST_FLOAT)
 endif()
 
 target_sources(mcfp
-    PUBLIC
-    FILE_SET mcfp_classic TYPE HEADERS
-    BASE_DIRS include
-    FILES
-    ${mcfp_headers})
+	PUBLIC
+	FILE_SET mcfp_classic TYPE HEADERS
+	BASE_DIRS include
+	FILES
+	${mcfp_headers})
 
 set(mcfp_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
 set_target_properties(mcfp PROPERTIES
-    VERSION ${PROJECT_VERSION}
-    SOVERSION ${PROJECT_VERSION_MAJOR}
-    INTERFACE_mcfp_MAJOR_VERSION ${PROJECT_VERSION_MAJOR}
-    COMPATIBLE_INTERFACE_STRING mcfp_MAJOR_VERSION)
+	VERSION ${PROJECT_VERSION}
+	SOVERSION ${PROJECT_VERSION_MAJOR}
+	INTERFACE_mcfp_MAJOR_VERSION ${PROJECT_VERSION_MAJOR}
+	COMPATIBLE_INTERFACE_STRING mcfp_MAJOR_VERSION)
 
 install(TARGETS mcfp
-    EXPORT mcfp-targets
-    FILE_SET mcfp_classic
-    DESTINATION "include")
+	EXPORT mcfp-targets
+	FILE_SET mcfp_classic
+	DESTINATION "include")
 
 install(EXPORT mcfp-targets
-    NAMESPACE mcfp::
-    DESTINATION lib/cmake/mcfp)
+	NAMESPACE mcfp::
+	DESTINATION lib/cmake/mcfp)
 
 if(MCFP_BUILD_CXX_MODULE)
-    if(BUILD_SHARED_LIBS)
-        add_library(mcfp-module SHARED ${mcfp_cxx})
-        target_compile_definitions(mcfp-module PRIVATE MCFP_SHARED_BUILD)
+	if(BUILD_SHARED_LIBS)
+		add_library(mcfp-module SHARED ${mcfp_cxx})
+		target_compile_definitions(mcfp-module PRIVATE MCFP_SHARED_BUILD)
 		set_target_properties(mcfp-module PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
-    else()
-        add_library(mcfp-module STATIC ${mcfp_cxx})
-    endif()
-    add_library(mcfp::mcfp-module ALIAS mcfp-module)
+	else()
+		add_library(mcfp-module STATIC ${mcfp_cxx})
+	endif()
+	add_library(mcfp::mcfp-module ALIAS mcfp-module)
 
-    target_compile_features(mcfp-module PUBLIC cxx_std_23)
+	target_compile_features(mcfp-module PUBLIC cxx_std_23)
 
-    if(NOT STD_CHARCONV_COMPILING)
-        target_include_directories(mcfp-module PRIVATE $<TARGET_PROPERTY:FastFloat::fast_float,INTERFACE_INCLUDE_DIRECTORIES>)
-	    target_compile_definitions(mcfp-module PRIVATE USE_FAST_FLOAT)
-    endif()
+	if(NOT STD_CHARCONV_COMPILING)
+		target_include_directories(mcfp-module PRIVATE $<TARGET_PROPERTY:FastFloat::fast_float,INTERFACE_INCLUDE_DIRECTORIES>)
+		target_compile_definitions(mcfp-module PRIVATE USE_FAST_FLOAT)
+	endif()
 
-    target_sources(mcfp-module
-        PUBLIC
-        FILE_SET mcfp_module TYPE CXX_MODULES
-        BASE_DIRS include
-        FILES
-        ${mcfp_modules})
+	target_sources(mcfp-module
+		PUBLIC
+		FILE_SET mcfp_module TYPE CXX_MODULES
+		BASE_DIRS include
+		FILES
+		${mcfp_modules})
 
-    target_compile_definitions(mcfp-module PUBLIC MCFP_MODULE_MODE)
+	target_compile_definitions(mcfp-module PUBLIC MCFP_MODULE_MODE)
 
-    set_target_properties(mcfp-module PROPERTIES
-        VERSION ${PROJECT_VERSION}
-        SOVERSION ${PROJECT_VERSION_MAJOR}
-        INTERFACE_mcfp_MAJOR_VERSION ${PROJECT_VERSION_MAJOR}
-        COMPATIBLE_INTERFACE_STRING mcfp_MAJOR_VERSION)
-    target_include_directories(mcfp-module
-        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
-        PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/mcfp>)
+	set_target_properties(mcfp-module PROPERTIES
+		VERSION ${PROJECT_VERSION}
+		SOVERSION ${PROJECT_VERSION_MAJOR}
+		INTERFACE_mcfp_MAJOR_VERSION ${PROJECT_VERSION_MAJOR}
+		COMPATIBLE_INTERFACE_STRING mcfp_MAJOR_VERSION)
+	target_include_directories(mcfp-module
+		PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+		PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/mcfp>)
 
-    install(TARGETS mcfp-module
-        EXPORT mcfp-module-targets
-        CXX_MODULES_BMI DESTINATION "lib/cxx/bmi"
-        FILE_SET mcfp_module DESTINATION "lib/cxx/miu")
+	install(TARGETS mcfp-module
+		EXPORT mcfp-module-targets
+		CXX_MODULES_BMI DESTINATION "lib/cxx/bmi"
+		FILE_SET mcfp_module DESTINATION "lib/cxx/miu")
 
-    install(EXPORT mcfp-module-targets
-        NAMESPACE mcfp::
-        DESTINATION lib/cmake/mcfp
-        FILE "mcfp-module-targets.cmake")
+	install(EXPORT mcfp-module-targets
+		NAMESPACE mcfp::
+		DESTINATION lib/cmake/mcfp
+		FILE "mcfp-module-targets.cmake")
 endif()
 
 configure_package_config_file(
-    ${PROJECT_SOURCE_DIR}/cmake/mcfp-config.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/mcfp-config.cmake
-    INSTALL_DESTINATION lib/cmake/mcfp)
+	${PROJECT_SOURCE_DIR}/cmake/mcfp-config.cmake.in
+	${CMAKE_CURRENT_BINARY_DIR}/mcfp-config.cmake
+	INSTALL_DESTINATION lib/cmake/mcfp)
 write_basic_package_version_file(
-    ${CMAKE_CURRENT_BINARY_DIR}/mcfp-config-version.cmake
-    VERSION ${PROJECT_VERSION}
-    COMPATIBILITY AnyNewerVersion)
+	${CMAKE_CURRENT_BINARY_DIR}/mcfp-config-version.cmake
+	VERSION ${PROJECT_VERSION}
+	COMPATIBILITY AnyNewerVersion)
 
 install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/mcfp-config.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/mcfp-config-version.cmake"
-    DESTINATION lib/cmake/mcfp)
-
-set(generator -G "${CMAKE_GENERATOR}")
-
-if(CMAKE_GENERATOR_TOOLSET)
-    list(APPEND generator -T "${CMAKE_GENERATOR_TOOLSET}")
-endif()
-
-if(CMAKE_GENERATOR_PLATFORM)
-    list(APPEND generator -A "${CMAKE_GENERATOR_PLATFORM}")
-endif()
+	"${CMAKE_CURRENT_BINARY_DIR}/mcfp-config.cmake"
+	"${CMAKE_CURRENT_BINARY_DIR}/mcfp-config-version.cmake"
+	DESTINATION lib/cmake/mcfp)
 
 if(BUILD_TESTING AND PROJECT_IS_TOP_LEVEL)
-    add_subdirectory(test)
-    add_subdirectory(examples)
+	add_subdirectory(test)
+	add_subdirectory(examples)
 endif()
 
 if(BUILD_DOCUMENTATION)
-    add_subdirectory(docs)
+	add_subdirectory(docs)
 endif()

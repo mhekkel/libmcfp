@@ -13,7 +13,7 @@
 #endif
 
 #ifndef MCFP_API
-# if defined(_WIN32) && defined(MCFP_SHARED_BUILD)
+# if defined(_WIN32) and defined(MCFP_SHARED_BUILD)
 #  define MCFP_API __declspec(dllexport)
 # else
 #  define MCFP_API
